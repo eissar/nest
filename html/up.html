@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline Example</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/htmx.min.js"></script>
+</head>
+
+<body>
+    <div class="timeline-container">
+        <button hx-get="/api/ping" hx-trigger="every 2s">
+            Check Server Status
+        </button>
+
+        <div id="status">Server status will appear here</div>
+
+        <script>
+            // Optional: Add some JavaScript for better visual feedback
+            htmx.config.timeout = 1000;
+            document.body.addEventListener('htmx:afterRequest', function (evt) {
+                console.log(evt);
+                if (evt.detail.successful) {
+                    document.getElementById('status').innerText = 'Server is ONLINE';
+                    document.getElementById('status').style.color = 'green';
+                } else {
+                    document.getElementById('status').innerText = 'Server is OFFLINE';
+                    document.getElementById('status').style.color = 'red';
+                }
+            });
+        </script>
+    </div>
+</body>
+
+</html>

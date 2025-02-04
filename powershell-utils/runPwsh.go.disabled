@@ -1,0 +1,31 @@
+func runPwsh() *struct{ WaterfoxTabs string } {
+	cmd := exec.Command("pwsh.exe", "-NoProfile", "-c", "./waterfoxTabs.ps1")
+	// Capture the output
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		fmt.Println("Error executing command:", err)
+		// You might want to handle specific exit codes differently:
+		if exitError, ok := err.(*exec.ExitError); ok {
+			fmt.Printf("Exit code: %d\n", exitError.ExitCode())
+			fmt.Printf("Stderr: %s\n", exitError.Stderr)
+
+			// Example: Check if PowerShell command didn't find any processes
+			if exitError.ExitCode() == 1 { // Exit code 1 is returned when PowerShell doesn't error but the script returns $null or nothing (e.g. no processes found)
+				fmt.Println("No Waterfox processes found.")
+				return nil
+			}
+		}
+
+		return nil // Exit if there's an error
+	}
+
+	// Trim whitespace and newlines from the output
+	countStr := struct {
+		WaterfoxTabs string
+	}{
+		strings.TrimSpace(string(output)),
+	}
+
+	return &countStr
+}
+

@@ -1,0 +1,22 @@
+<div class="refresh" hx-get="/template/key-value" hx-trigger="click[ctrlKey]" hx-swap="outerHTML">
+    <h2>key value<h2>
+    {{range .}}
+        {{if not .Details}}
+            <a>"error retrieving details from this endpoint."</a>
+        {{end}}
+        {{if .Details}}
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">Env: Prod</div>
+                <div class="card-buttons">
+                  <button class="card-button">Cancel</button>
+                  <button class="card-button">Run</button>
+                </div>
+              </div>
+              <div class="card-content">{{range $key, $value := .Details}}{{$key}}=<span class="highlight-grey">{{$value}}</span><br>{{end}}</div>
+            </div>
+        {{else}}
+            <p>No details available.</p>
+        {{end}}
+    {{end}}
+</div>

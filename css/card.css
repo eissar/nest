@@ -1,0 +1,19 @@
+.card-container {
+    max-height: 25rem;
+    width: 100%;
+}
+
+.card-container > div {
+    left:0;
+    padding: 20px;
+    width: fit-container;
+    font-family: monospace;
+}
+
+.card_label {
+    position: absolute;
+    top:0;
+    padding: .6em;
+
+}
+

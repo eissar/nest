@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline Example</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <script src="../js/htmx.min.js"></script>
+</head>
+<body>
+    <div class="timeline-container">
+        <h1>Hi there! Let's update your profile.</h1>
+        <timeline>
+            <node data-status='complete'>
+                <a class="title">Started learning on Quizlet</a>
+                <a class="details">Add your courses to see what others might be studying</a>
+                <a class="timestamp">May 22, 2019</a>
+            </node>
+            <node data-status='incomplete'>
+                <a class="title">Update your profile</a>
+                <a class="details">Add your courses to see what others might be studying</a>
+                <a class="timestamp"></a>
+            </node>
+        </timeline>
+    </div>
+</body>
+</html>

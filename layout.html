@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeline Example</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/card.css">
+    <script src="../js/htmx.min.js"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+</head>
+
+<body>
+    <div hx-get="/template/timeline_layout" hx-trigger="load" hx-swap="outerHTML"></div>
+    <div hx-get="/template/recent-notes_layout" hx-trigger="load" hx-swap="outerHTML"></div>
+    <div hx-get="/template/ping" hx-trigger="load" hx-swap="outerHTML"></div>
+</body>
+
+</html>

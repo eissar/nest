@@ -1,0 +1,250 @@
+body {
+    background: linear-gradient(135deg, #28313B 0%, #485461 100%); /* Gradient background */
+    font-family: menlo,sans-serif;
+    color: #eee; /* Light text color */
+    display: grid;
+    place-items: center;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    min-height: 100vh;
+    margin: 0;
+}
+.rowx2 {
+    grid-row: span 2;
+}
+.timeline-container {
+    padding: 20px;
+    border-radius: 8px;
+    // max-width: 600px;
+    width: 100%;
+}
+.container {
+    padding: 20px;
+    border-radius: 8px;
+    // max-width: 600px;
+    width: 100%;
+}
+h1 {
+    margin-bottom: 40px;
+    font-size: x-large;
+}
+timeline {
+    font-family: monospace;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    margin-left: 30px; /* Space for the timeline circles */
+}
+timeline::before {
+    content: '';
+    position: absolute;
+    left: 2.5em;
+    top: 0;
+    width: 4px;
+    height: 100%;
+    background-color: #585197; /* Timeline line color */
+    border-radius: 4px;
+}
+
+node {
+    display: flex;
+    flex-direction: column;
+    padding-left: 3em;
+    margin-bottom: 20px;
+    position: relative; /* To position circles */
+}
+
+node::before {
+    content: '';
+    position: relative;
+    left: -2.6em; /* Position circle on the line */
+    top: 1.1em;
+    width: .8em;
+    height: .8em;
+    border-radius: 50%;
+    background-color: #585197;
+    border: 3px solid #585197; /* Circle border color */
+    z-index: 1; /* Ensure circle is above the line */
+}
+.title:hover {
+    cursor: pointer; /* Change cursor to a hand */
+    background-color: rgba(255, 255, 255, 0.1); /* Add a semi-transparent white background */
+    border-radius: 5px; /* Add a small border radius */
+}
+/* Corrected selector and properties for completed nodes */
+node[data-status="complete"]::before {
+    background-color: #397135; /* Background color for complete */
+    border-color: #4CAF50;
+}
+node[data-status="incomplete"]::before {
+    background-color: #9E9E9E; /* Background color for complete */
+    border-color: #9E9E9E;
+}
+node * {
+    padding: .1em;
+    padding-right: .5em;
+    padding-left: .5em
+}
+node .title {
+    font-weight: bold;
+    color: #eee;
+}
+
+node .details {
+    color: #aaa;
+}
+
+node .timestamp {
+    color: #eee;
+    font-size: 0.9em;
+}
+
+.details::before {
+    content: attr(data-note);
+    position: absolute;
+    left: -2em;
+    top: 0;
+}
+
+
+.card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0) 70%); /* Glassy gradient */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px); /* For Safari */
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 15px; /* More rounded corners */
+    padding: 25px;
+    color: #eee;
+    font-size: .8em;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.card-title {
+    font-weight: 700;
+    font-size: 1.2em;
+}
+
+.card-buttons {
+    display: flex;
+}
+
+.card-button {
+    background-color: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px); /* For Safari */
+    color: #eee;
+    border: none;
+    padding: 10px 20px;
+    margin-left: 10px;
+    border-radius: 20px; /* Pill-shaped buttons */
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.card-button:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.3);
+    transform: translateY(-2px); /* Slight lift on hover */
+}
+
+.card-button:active {
+    background-color: rgba(255, 255, 255, 0.35);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: translateY(0); /* Reset position on click */
+}
+
+.card-content {
+    white-space: pre-wrap;
+    overflow-x: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.3);
+    padding-top: 15px;
+    margin-top: 15px;
+    font-family:'Ubuntu Mono', monospace; /* Keep monospace for code */
+}
+/* Syntax highlighting */
+.highlight-grey {
+    color: #b1becb;
+}
+
+.highlight-red {
+    color: red;
+}
+
+
+.monospace.monospace {
+    font-family: monospace
+
+}
+
+.padded {
+
+}
+
+
+
+/* EXPERIMENTAL */
+//     .refresh {
+//         position: relative; /* Needed for absolute positioning of the pseudo-element */
+//         display: inline-block; /* Or block, depending on your layout needs */
+//         /* Add any other styling you want for the refresh element itself */
+//         padding-left: 20px; /* Make room for the icon */
+//     }
+//     
+//     .refresh::before {
+//         content: "";
+//         position: absolute;
+//         left: 0;
+//         top: 50%;
+//         transform: translateY(-50%); /* Vertically center the icon */
+//         width: 16px; /* Adjust size as needed */
+//         height: 16px;
+//         background-image: url("../img/refresh.svg"); /* Path to your SVG file */
+//         background-size: cover;
+//         background-repeat: no-repeat;
+//         transition: transform 1s linear; /* Optional: smooth start/stop of rotation */
+//         animation: rotate 3s linear infinite;
+//         /* Optional: Add animation for the refresh icon */
+//     }
+//     
+//     @keyframes rotate {
+//         from {
+//             transform: translateY(-50%) rotate(0deg);
+//         }
+//         to {
+//             transform: translateY(-50%) rotate(360deg);
+//         }
+//     }
+//     
+//     
+//     .refresh:hover::before { /* Hover on .refresh */
+//         animation-play-state: running;
+//     }
+//     
+//     .refresh:not(:hover)::before { /* Not hover on .refresh */
+//         animation-play-state: paused;
+//     }
+//     
+//     
+//     
+//     
+//     /* Optional: Hide the default text or content within the .refresh element */
+//     // .refresh span { /* Or target the specific element holding the text */
+//     //   display: none;
+//     // }
+//     
+//     /* Alternative if you want to use an inline SVG directly in your HTML (more flexible for styling) */
+//     .refresh svg {
+//         width: 16px;
+//         height: 16px;
+//         vertical-align: middle; /* Align with the text */
+//     }
+
+

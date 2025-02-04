@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>HTMX WebSocket Example</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/card.css">
+    <script src="../js/htmx.min.js"></script>
+    <script src="https://unpkg.com/htmx.org/dist/ext/ws.js"></script>
+</head>
+
+<body>
+    <h1>Messages:</h1>
+
+    <div id="messages" hx-ext="ws" ws-connect="/ws">
+        <div id="message-container"></div>
+    </div>
+</body>
+
+</html>

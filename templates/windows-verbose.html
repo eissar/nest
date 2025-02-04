@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>test</title>
+</head>
+
+<body>
+    <h1>Windows</h1>
+    {{range .}}
+    <h3>{{.Title}}</h3>
+    <a class="details">{{.Handle}}</a><br>
+    <a class="details">{{.ProcessId}}</a>
+    {{end}}
+</body>
+
+</html>

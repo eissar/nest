@@ -1,0 +1,22 @@
+<div class="timeline-container">
+    <button hx-get="/api/ping" hx-trigger="every 2s">
+        Check Server Status
+    </button>
+
+    <div id="status">Server status will appear here</div>
+
+    <script>
+        // make sure timeout is low...
+        htmx.config.timeout = 1500;
+        // Optional: Add some JavaScript for better visual feedback
+        document.body.addEventListener('htmx:afterRequest', function (evt) {
+            if (evt.detail.successful) {
+                document.getElementById('status').innerText = 'Server is ONLINE';
+                document.getElementById('status').style.color = 'green';
+            } else {
+                document.getElementById('status').innerText = 'Server is OFFLINE';
+                document.getElementById('status').style.color = 'red';
+            }
+        });
+    </script>
+</div>

@@ -1,0 +1,6 @@
+<div class="refresh" hx-get="/template/windows" hx-trigger="click[ctrlKey]" hx-swap="outerHTML">
+    <h1>Windows</h1>
+    {{range .}}
+    <a>{{.Title}}</a><br>
+    {{end}}
+</div>
