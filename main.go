@@ -4,7 +4,7 @@ package main
 import (
 	_ "net"
 	"path/filepath"
-	"sync"
+	_ "sync"
 	apiroutes "web-dashboard/api-routes"
 	pwsh "web-dashboard/powershell-utils"
 
@@ -20,7 +20,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"golang.org/x/net/websocket"
+	_ "golang.org/x/net/websocket"
 )
 
 /*
@@ -31,8 +31,9 @@ import (
 //  [X] - Recent notes
 //	[ ] - move time.now calls to middleware (custom)
 //  [ ] - add action to recent notes
+// 	q5s: enumerate-Windows.ps1
+//  [ ] - Try reflection for template functions.
 */
-// q5s: enumerate-Windows.ps1
 var debug = false
 var editor = "C:/Program Files/Neovim/bin/nvim.exe"
 var lastSong = "NULL SONG DATA"
@@ -49,49 +50,12 @@ func mustImportTemplates() *template.Template {
 	return templ
 }
 
-// Connection Management
-var (
-	connections = make(map[*websocket.Conn]bool)
-	mutex       sync.Mutex
-)
-
-func addConnection(ws *websocket.Conn) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	connections[ws] = true
-}
-
-func removeConnection(ws *websocket.Conn) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	delete(connections, ws)
-}
-
-func broadcast(message string) {
-	mutex.Lock()
-	defer mutex.Unlock()
-	lastSong = message
-	for ws := range connections {
-		go func(ws *websocket.Conn) {
-			// Send concurrently to avoid blocking
-			if err := websocket.Message.Send(ws, message); err != nil {
-				fmt.Println("Error sending to a connection:", err)
-				removeConnection(ws) // Remove the connection if sending fails
-				ws.Close()
-			}
-		}(ws)
-	}
-}
-
-/* WEBSOCKET */
-
 func runServer() {
 	var err error
 	templ := mustImportTemplates()
 	server := echo.New()
 
 	server.GET("/", func(c echo.Context) error {
-		// TODO: delete this...
 		a := (apiroutes.GetEnumerateWindows()[0])
 
 		err = templ.ExecuteTemplate(c.Response().Writer, "test.html", a)
@@ -103,13 +67,11 @@ func runServer() {
 		return nil
 	})
 	server.GET("/template/template-test", func(c echo.Context) error {
-		// TODO: delete this...
 		a := apiroutes.GetEnumerateWindows()[0]
 		err = templ.ExecuteTemplate(c.Response().Writer, "window.html", a)
 		return nil
 	})
 	server.GET("/template/windows", func(c echo.Context) error {
-		// TODO: delete this...
 		a := apiroutes.GetEnumerateWindows()
 		err = templ.ExecuteTemplate(c.Response().Writer, "windows.html", a)
 		return nil

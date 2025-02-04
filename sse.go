@@ -92,7 +92,7 @@ func BroadcastEvent(c echo.Context, kind string) error {
 		if !(len(message) >= 1) {
 			return c.String(400, "no query param.")
 		}
-		broadcast(message)
+		Broadcast(message)
 		return c.String(http.StatusOK, "OK")
 	}
 	if sent {

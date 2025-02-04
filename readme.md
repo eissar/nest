@@ -23,6 +23,19 @@
 [ ] - recent eagle items
 [ ] - recent
 
+[ ] - event based architecture?
+[ ] - websockets, or SSE?
+
+
+
+[ ] - does htmx support SSE?
+YES:
+<https://htmx.org/extensions/sse/>
+<https://htmx.org/extensions/ws/>
+## security considerations
+[ ] - Possible require api key for non-local connections?
+[ ] - How to tell local vs not?
+
 
 
 
