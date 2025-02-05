@@ -2,9 +2,12 @@ package main
 
 // dot source types
 import (
+	"context"
+	"errors"
 	_ "net"
 	"path/filepath"
 	_ "sync"
+	"time"
 	apiroutes "web-dashboard/api-routes"
 	pwsh "web-dashboard/powershell-utils"
 
@@ -23,6 +26,16 @@ import (
 	_ "golang.org/x/net/websocket"
 )
 
+/* __MACRO__
+```lua
+!wt.exe -d "$env:CLOUD_DIR\Code\go\web-dashboard" pwsh -c ./build.ps1
+```
+:so ./build.lua
+
+Explanation:
+open new terminal instance with the server running.
+*/
+
 /*
 //	TODO:
 //	[X] - move types to types.go
@@ -33,7 +46,9 @@ import (
 //  [ ] - add action to recent notes
 // 	q5s: enumerate-Windows.ps1
 //  [ ] - Try reflection for template functions.
+//  [X] - Create build.lua
 */
+
 var debug = false
 var editor = "C:/Program Files/Neovim/bin/nvim.exe"
 var lastSong = "NULL SONG DATA"
@@ -48,6 +63,12 @@ func mustImportTemplates() *template.Template {
 		panic(err)
 	}
 	return templ
+}
+func shutdownServerWithTimeout(timeoutCtx context.Context, server *echo.Echo) {
+	err := server.Shutdown(timeoutCtx)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func runServer() {
@@ -111,6 +132,25 @@ func runServer() {
 		return nil
 	})
 
+	server.GET("/api/server/close", func(c echo.Context) error {
+		//use go routine with timeout to allow time for response.
+		var err error
+
+		timeout := 10 * time.Second
+		timeoutCtx, shutdownRelease := context.WithTimeout(context.Background(), timeout)
+		defer shutdownRelease()
+		// go shutdownServerWithTimeout(timeoutCtx, server)
+		// try doing the shutdown inline without goroutine.
+
+		go func() {
+			err = server.Shutdown(timeoutCtx)
+		}()
+		if err != nil {
+			fmt.Println("err while graceful shutdown:", err)
+		}
+
+		return c.String(200, "shutdown cmd successful.")
+	})
 	server.GET("/api/windows", apiroutes.EnumWindows)
 	server.GET("/api/numTabs", apiroutes.NumTabs)
 	server.GET("/api/recentNotes", apiroutes.RecentNotes)
@@ -164,10 +204,19 @@ func runServer() {
 		Format: "[LOG] [${time_rfc3339}] ${level} path=${path}, Latency=${latency_human}\n",
 	}))
 	if debug {
-		PrintSiteMap(server)
+		//PrintSiteMap(server)
 	}
 	server.HideBanner = true
-	server.Start(":1323")
+
+	err = server.Start(":1323")
+	if err != nil {
+		// CASE: server was closed by Server.Shutdown or Server.Close.
+		if errors.Is(err, http.ErrServerClosed) {
+			fmt.Println("[LOG] [SHUTDOWN] Shutting down gracefully...")
+		} else {
+			panic(err)
+		}
+	}
 }
 
 func main() {
@@ -175,9 +224,9 @@ func main() {
 	flag.Parse()
 	debug = *d
 
-	runServer()
-	// when starting the server, send SSE to all yt-music clients if music is playing.
 	if debug {
 		pwsh.ExecPwshCmd("./openUrl.ps1 -Uri 'http://localhost:1323'")
 	}
+	runServer()
+	// when starting the server, send SSE to all yt-music clients if music is playing.
 }
