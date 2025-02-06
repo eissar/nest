@@ -155,8 +155,6 @@ func runServer() {
 		if c.QueryParam("first") == "" {
 			c.QueryParams().Add("first", "5")
 		}
-		// c.SetParamNames("first")
-		// c.SetParamValues("1200")
 		a := apiroutes.PopulateEnumerateWindows(c, "")
 		return c.Render(200, "windows.html", a)
 	})
@@ -185,6 +183,14 @@ func runServer() {
 	server.GET("/api/recentEagleItems", apiroutes.RecentEagleItems)
 	server.POST("/api/edit", apiroutes.Edit)
 	server.GET("/api/ping", apiroutes.Ping)
+	// activates a browser tab if it exists, creates a new tab if it does not.
+	// cache is created from browser history
+	// api.BrowserTabActivateOrOpen
+
+	// api.GetBrowserHistory
+
+	// about:profiles
+	// ["X:\Dropbox\Code\Projects\render-image-blazingly\db"]
 
 	server.GET("/api/broadcast/yt-music", broadcastHandler("ytMusicElement"))
 	server.GET("/api/broadcast/sse", broadcastHandler("getSong"))

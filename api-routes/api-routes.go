@@ -115,6 +115,10 @@ func GetEnumerateWindows() []Window {
 	return data
 }
 
+// populate funcs
+// set default params with pathparams
+// they are empty strings not nil null case.
+
 func PopulateEnumerateWindows(c echo.Context, templateName string) interface{} {
 	cmd := exec.Command("C:/Users/eshaa/Dropbox/Code/cs/enumerateWindowsExe/aot/enumerateWindows.exe")
 	var stdoutBuf, stderrBuf bytes.Buffer

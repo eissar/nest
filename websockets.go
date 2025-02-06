@@ -1,7 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"sync"
 
 	"github.com/labstack/echo/v4"
@@ -61,12 +63,15 @@ func HandleWS(c echo.Context) error {
 			msg := ""
 			err := websocket.Message.Receive(ws, &msg)
 			if err != nil {
-				// ... (Handle errors as before: EOF, network issues, etc.) ...
 				if err.Error() == "EOF" {
 					fmt.Println("[LOG] <HandleWS> Client disconnected (EOF)")
 					return
+				} else if errors.Is(err, io.EOF) {
+					fmt.Println("[LOG] <HandleWS> Client disconnected (EOF)")
+					return
 				} else {
-					fmt.Println("Unexpected error receiving message:", err)
+					fmt.Println("[ERROR] <HandleWS> Unexpected error receiving message:", err)
+					return
 				}
 			}
 
