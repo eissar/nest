@@ -41,7 +41,7 @@ func Broadcast(message string) {
 		}(ws)
 	}
 }
-func Hello(c echo.Context) error {
+func HandleWS(c echo.Context) error {
 	websocket.Handler(func(ws *websocket.Conn) {
 		addConnection(ws)
 		defer func() {
@@ -63,7 +63,7 @@ func Hello(c echo.Context) error {
 			if err != nil {
 				// ... (Handle errors as before: EOF, network issues, etc.) ...
 				if err.Error() == "EOF" {
-					fmt.Println("Client disconnected (EOF)")
+					fmt.Println("[LOG] <HandleWS> Client disconnected (EOF)")
 					return
 				} else {
 					fmt.Println("Unexpected error receiving message:", err)

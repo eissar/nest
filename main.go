@@ -4,7 +4,9 @@ package main
 import (
 	"errors"
 	_ "net"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	_ "sync"
 	apiroutes "web-dashboard/api-routes"
 	pwsh "web-dashboard/powershell-utils"
@@ -70,6 +72,7 @@ func runServer() {
 		templates: mustImportTemplates(),
 	}
 
+	// HANDLERS
 	// handler closures for satisfying echo.HandlerFunc signature so this can be pretty
 	// static templates
 	staticTemplateHandler := func(templateName string) echo.HandlerFunc {
@@ -77,12 +80,23 @@ func runServer() {
 			return c.Render(200, templateName, nil)
 		}
 	}
+	// special handler for user-facing static files
+	// so file endings are not shown in the URI
+	staticAppHandler := func(c echo.Context) error {
+		// Serve static files with fallback for /app/index
+		requestPath := c.Param("*") // Get the requested path after "/app/"
+		isFullPath := strings.HasSuffix(requestPath, ".html")
+		if !isFullPath {
+			requestPath = requestPath + ".html"
+		}
+		filePath := filepath.Join("html", requestPath)
+		return c.File(filePath)
+	}
 	broadcastHandler := func(broadcastName string) echo.HandlerFunc {
 		return func(c echo.Context) error {
 			return BroadcastEvent(c, broadcastName)
 		}
 	}
-
 	// dynamicTemplatePopulateFunc defines a function to populate a template
 	type dynamicTemplatePopulateFunc func(c echo.Context, templateName string) interface{}
 
@@ -92,18 +106,48 @@ func runServer() {
 			return c.Render(200, templateName, populateFunc(c, templateName))
 		}
 	}
+	type pwshTemplateType string
+	const (
+		pwshScript  pwshTemplateType = "pwshScript"
+		pwshCommand pwshTemplateType = "pwshCommand"
+	)
+	pwshTemplateHandler := func(templateName string, typ pwshTemplateType, p string) echo.HandlerFunc {
+		if typ != pwshScript {
+			panic("yeah")
+		}
+		return func(c echo.Context) error {
+			return c.Render(200, templateName, pwsh.RunPwshCmd(p))
+		}
+	}
+
+	// MIDDLEWARE
+	// LOGGING
+	server.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Skipper: func(c echo.Context) bool {
+			/* type Skipper func(c echo.Context) bool */
+			if c.Path() == "/api/ping" {
+				return true // (skip)
+			}
+			if c.Path() == "/template/open-tabs" {
+				return true // (skip)
+			}
+			return false
+		},
+		Format: "[LOG] [${time_rfc3339}] ${level} path=${path}, Latency=${latency_human}\n",
+	}))
 
 	//#region TEST
-	// try the renderer with recentNotes
-	// test := func(c echo.Context) error {
-	// 	a := apiroutes.GetNotesNamesDates()
-	// 	fmt.Println(a[0])
-	// 	return c.String(200, "OK")
+	/*
+		try the renderer with recentNotes
+		test := func(c echo.Context) error {
+			a := apiroutes.GetNotesNamesDates()
+			fmt.Println(a[0])
+			return c.String(200, "OK")
 
-	// }
+		}
+	*/
 	// server.GET("/test", test)
 	server.GET("/test", dynamicTemplateHandler("notes-struct.html", apiroutes.PopulateGetNotesDetail))
-	server.GET("/template/notes-struct", dynamicTemplateHandler("notes-struct.html", apiroutes.PopulateGetNotesDetail))
 	//#endregion TEST
 
 	server.GET("/", func(c echo.Context) error {
@@ -116,31 +160,18 @@ func runServer() {
 		a := apiroutes.PopulateEnumerateWindows(c, "")
 		return c.Render(200, "windows.html", a)
 	})
-	// server.GET("/template/window", func(c echo.Context) error {
-	// 	a := apiroutes.GetEnumerateWindows()[0]
-	// 	return c.Render(200, "window.html", a)
-	//// server.GET("/template/window", dynamicTemplateHandler("windows.html", apiroutes.PopulateEnumerateWindows))
-	// })
+	// WEBSOCKET
+	server.GET("/ws", HandleWS)
+	// SERVER SIDE EVENTS
+	server.GET("/sse", HandleSSE)
 
+	server.GET("/template/notes-struct", dynamicTemplateHandler("notes-struct.html", apiroutes.PopulateGetNotesDetail))
 	server.GET("/template/windows", dynamicTemplateHandler("windows.html", apiroutes.PopulateEnumerateWindows))
 
-	server.GET("/template/recent-notes", func(c echo.Context) error {
-		a := pwsh.RunPwshCmd("./recentNotes.ps1")
-		return c.Render(200, "recent-notes.html", a)
-	})
-
-	server.GET("/template/key-value", func(c echo.Context) error {
-		a := pwsh.RunPwshCmd("./mock_nvim.ps1")
-		return c.Render(200, "key-value.templ", a)
-	})
-	server.GET("/template/open-tabs", func(c echo.Context) error {
-		a := pwsh.RunPwshCmd("./waterfoxTabs.ps1")
-		return c.Render(200, "open-tabs.static.html", a)
-	})
-
-	// server.GET("/template/now-playing", func(c echo.Context) error {
-	// 	return c.Render(200, "now-playing.static.html", nil)
-	// })
+	server.GET("/template/recent-notes", pwshTemplateHandler("recent-notes.html", pwshScript, "./recentNotes.ps1"))
+	server.GET("/template/key-value", pwshTemplateHandler("key-value.templ", pwshScript, "./mock_nvim.ps1"))
+	server.GET("/template/open-tabs", pwshTemplateHandler("open-tabs.templ", pwshScript, "./waterfoxTabs.ps1"))
+	server.GET("/template/recent-eagle-items", pwshTemplateHandler("recent-eagle-items.templ", pwshScript, "./recentEagleItems.ps1"))
 
 	server.GET("/template/recent-notes_layout", staticTemplateHandler("recent-notes.layout.html"))
 	server.GET("/template/timeline_layout", staticTemplateHandler("timeline.layout.html"))
@@ -155,44 +186,41 @@ func runServer() {
 	server.POST("/api/edit", apiroutes.Edit)
 	server.GET("/api/ping", apiroutes.Ping)
 
-	server.GET("/api/broadcast/yt-music", func(c echo.Context) error {
-		return BroadcastEvent(c, "ytMusicElement")
-	})
+	server.GET("/api/broadcast/yt-music", broadcastHandler("ytMusicElement"))
 	server.GET("/api/broadcast/sse", broadcastHandler("getSong"))
 
-	// WEBSOCKET
-	server.GET("/ws", Hello)
-	// SERVER SIDE EVENTS
-	server.GET("/sse", HandleSSE)
+	openURI := func(uri string) error {
+		var cmd *exec.Cmd
+
+		fmt.Println("[LOG] <openUri> opening...", uri)
+		switch runtime.GOOS {
+		case "windows":
+			cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", uri)
+		case "darwin":
+			cmd = exec.Command("open", uri)
+		default: // Linux and other Unix-like systems
+			cmd = exec.Command("xdg-open", uri)
+		}
+
+		return cmd.Run()
+	}
+
+	server.GET("/api/eagleOpen/:id", func(c echo.Context) error {
+		id := c.Param("id")
+		uri := fmt.Sprintf("eagle://item/%s", id)
+		openURI(uri)
+		return c.String(200, "OK")
+	})
 
 	// route prefix, directory
 	server.Static("css", "css")
 	server.Static("js", "js")
 	server.Static("img", "img")
-	server.GET("/app/*", func(c echo.Context) error {
-		// Serve static files with fallback for /app/index
-		requestPath := c.Param("*") // Get the requested path after "/app/"
-		isFullPath := strings.HasSuffix(requestPath, ".html")
-		if !isFullPath {
-			requestPath = requestPath + ".html"
-		}
-		filePath := filepath.Join("html", requestPath)
-		return c.File(filePath)
-	})
 
-	server.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Skipper: func(c echo.Context) bool {
-			/* type Skipper func(c echo.Context) bool */
-			if c.Path() == "/api/ping" {
-				return true // (skip)
-			}
-			if c.Path() == "/template/open-tabs" {
-				return true // (skip)
-			}
-			return false
-		},
-		Format: "[LOG] [${time_rfc3339}] ${level} path=${path}, Latency=${latency_human}\n",
-	}))
+	// special handler for user-facing static files
+	// so file endings are not shown in the URI
+	server.GET("/app/*", staticAppHandler)
+
 	if debug {
 		//PrintSiteMap(server)
 	}
@@ -217,8 +245,7 @@ func main() {
 	//#endregion
 
 	if debug {
-		pwsh.ExecPwshCmd("./openUrl.ps1 -Uri 'http://localhost:1323/test'")
+		pwsh.ExecPwshCmd("./openUrl.ps1 -Uri 'http://localhost:1323/api/eagleOpen/1'")
 	}
 	runServer() //blocking
-
 }

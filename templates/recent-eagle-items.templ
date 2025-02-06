@@ -1,0 +1,11 @@
+<div class="timeline-container rowx2" hx-get=" /template/recent-notes" hx-trigger="click[ctrlKey]" hx-swap="outerHTML">
+    <h2 class="card_label">Recent Eagle Items</h2>
+    <timeline>
+        {{range .}}
+        <node class="monospace" data-status='complete'>
+            <a class="title" hx-get="/api/eagleOpen/{{.id}}" hx-trigger="click" hx-swap="none">{{.name}} type: {{.ext}}</a>
+            <a class="details">modtime: {{.lastModified}}</a>
+        </node>
+        {{end}}
+    </timeline>
+</div>

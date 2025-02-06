@@ -43,7 +43,7 @@ func HandleSSE(c echo.Context) error {
 		delete(clients, client)
 		clientsMu.Unlock()
 		close(client.ch)
-		fmt.Println("Client disconnected")
+		fmt.Println("[LOG] <HandleSSE> Client disconnected")
 	}()
 
 	go func() {
@@ -55,7 +55,7 @@ func HandleSSE(c echo.Context) error {
 
 	// Keep the connection open.  No need to read from the client.
 	<-c.Request().Context().Done() // Block until client disconnects
-	fmt.Println("Client disconnected")
+	fmt.Println("[LOG] <HandleSSE> Client disconnected")
 	return nil
 }
 
