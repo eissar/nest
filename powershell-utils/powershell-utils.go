@@ -26,7 +26,7 @@ func RunPwshCmd(ScriptPath string) []interface{} {
 	}
 	var messageData []interface{}
 	if err := json.Unmarshal(output, &messageData); err != nil {
-		panic(err)
+		fmt.Printf("[ERROR]", err)
 	}
 
 	return messageData

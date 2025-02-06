@@ -74,14 +74,18 @@ func SendSSEAll(message string) {
 	}
 }
 
+// api function
+// inputs:
+// c echo.Context
+// kind string : type of broadcast for case matching.
 func BroadcastEvent(c echo.Context, kind string) error {
 	fmt.Println("[LOG] <BroadcastEvent> sending event", kind)
 	sent := false
-	if kind == "getSong" {
+	switch kind {
+	case "getSong":
 		SendSSEAll(`{"event":"getSong"}`)
 		sent = true
-	}
-	if kind == "ytMusicElement" {
+	case "ytMusicElement":
 		elem := c.QueryParam("elem")
 		var message string
 		// TODO: Create case to take songName param
@@ -93,7 +97,7 @@ func BroadcastEvent(c echo.Context, kind string) error {
 			return c.String(400, "no query param.")
 		}
 		Broadcast(message)
-		return c.String(http.StatusOK, "OK")
+		sent = true
 	}
 	if sent {
 		return c.String(http.StatusOK, "OK")

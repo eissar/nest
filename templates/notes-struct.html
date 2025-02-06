@@ -1,0 +1,12 @@
+<div class="timeline-container rowx2" hx-get=" /template/notes-struct" hx-trigger="click[ctrlKey]" hx-swap="outerHTML">
+    <h2 class="card_label">Recent Notes</h2>
+    <timeline>
+        {{range .}}
+        <node class="monospace" data-status='complete'>
+            <a class="title" hx-post="/api/edit?fileName={{.Name}}" hx-trigger="click[ctrlKey]"
+                hx-swap="none">{{.Name}}</a>
+            <a class="details">{{.ModifiedTime}}</a>
+        </node>
+        {{end}}
+    </timeline>
+</div>

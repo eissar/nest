@@ -2,12 +2,10 @@ package main
 
 // dot source types
 import (
-	"context"
 	"errors"
 	_ "net"
 	"path/filepath"
 	_ "sync"
-	"time"
 	apiroutes "web-dashboard/api-routes"
 	pwsh "web-dashboard/powershell-utils"
 
@@ -42,9 +40,9 @@ open new terminal instance with the server running.
 //	[X] - add HTMX
 //	[X] - add middleware to serve url without file suffix.
 //  [X] - Recent notes
-//	[ ] - move time.now calls to middleware (custom)
-//  [ ] - add action to recent notes
+//	[X] - move time.now calls to middleware (custom)
 // 	q5s: enumerate-Windows.ps1
+//  [ ] - add action to recent notes
 //  [ ] - Try reflection for template functions.
 //  [X] - Create build.lua
 */
@@ -54,8 +52,8 @@ var editor = "C:/Program Files/Neovim/bin/nvim.exe"
 var lastSong = "NULL SONG DATA"
 
 /*
-//	Inputs: path to .ps1 script
-//	Outputs: array-contained json data.
+Inputs: path to .ps1 script
+Outputs: array-contained json data.
 */
 func mustImportTemplates() *template.Template {
 	templ, err := template.ParseGlob("templates/*") // Parses all .html files in the templates directory
@@ -64,93 +62,92 @@ func mustImportTemplates() *template.Template {
 	}
 	return templ
 }
-func shutdownServerWithTimeout(timeoutCtx context.Context, server *echo.Echo) {
-	err := server.Shutdown(timeoutCtx)
-	if err != nil {
-		panic(err)
-	}
-}
 
 func runServer() {
 	var err error
-	templ := mustImportTemplates()
 	server := echo.New()
+	server.Renderer = &Template{
+		templates: mustImportTemplates(),
+	}
+
+	// handler closures for satisfying echo.HandlerFunc signature so this can be pretty
+	// static templates
+	staticTemplateHandler := func(templateName string) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			return c.Render(200, templateName, nil)
+		}
+	}
+	broadcastHandler := func(broadcastName string) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			return BroadcastEvent(c, broadcastName)
+		}
+	}
+
+	// dynamicTemplatePopulateFunc defines a function to populate a template
+	type dynamicTemplatePopulateFunc func(c echo.Context, templateName string) interface{}
+
+	dynamicTemplateHandler := func(templateName string, populateFunc dynamicTemplatePopulateFunc) echo.HandlerFunc {
+		// dynamicTemplatePopulateFunc
+		return func(c echo.Context) error {
+			return c.Render(200, templateName, populateFunc(c, templateName))
+		}
+	}
+
+	//#region TEST
+	// try the renderer with recentNotes
+	// test := func(c echo.Context) error {
+	// 	a := apiroutes.GetNotesNamesDates()
+	// 	fmt.Println(a[0])
+	// 	return c.String(200, "OK")
+
+	// }
+	// server.GET("/test", test)
+	server.GET("/test", dynamicTemplateHandler("notes-struct.html", apiroutes.PopulateGetNotesDetail))
+	server.GET("/template/notes-struct", dynamicTemplateHandler("notes-struct.html", apiroutes.PopulateGetNotesDetail))
+	//#endregion TEST
 
 	server.GET("/", func(c echo.Context) error {
-		a := (apiroutes.GetEnumerateWindows()[0])
-
-		err = templ.ExecuteTemplate(c.Response().Writer, "test.html", a)
-		if err != nil {
-			fmt.Println(err)
-			return c.String(http.StatusInternalServerError, "Error rendering template, check logs")
+		// fmt.Println(c.ParamNames())
+		if c.QueryParam("first") == "" {
+			c.QueryParams().Add("first", "5")
 		}
+		// c.SetParamNames("first")
+		// c.SetParamValues("1200")
+		a := apiroutes.PopulateEnumerateWindows(c, "")
+		return c.Render(200, "windows.html", a)
+	})
+	// server.GET("/template/window", func(c echo.Context) error {
+	// 	a := apiroutes.GetEnumerateWindows()[0]
+	// 	return c.Render(200, "window.html", a)
+	//// server.GET("/template/window", dynamicTemplateHandler("windows.html", apiroutes.PopulateEnumerateWindows))
+	// })
 
-		return nil
-	})
-	server.GET("/template/template-test", func(c echo.Context) error {
-		a := apiroutes.GetEnumerateWindows()[0]
-		err = templ.ExecuteTemplate(c.Response().Writer, "window.html", a)
-		return nil
-	})
-	server.GET("/template/windows", func(c echo.Context) error {
-		a := apiroutes.GetEnumerateWindows()
-		err = templ.ExecuteTemplate(c.Response().Writer, "windows.html", a)
-		return nil
-	})
+	server.GET("/template/windows", dynamicTemplateHandler("windows.html", apiroutes.PopulateEnumerateWindows))
+
 	server.GET("/template/recent-notes", func(c echo.Context) error {
 		a := pwsh.RunPwshCmd("./recentNotes.ps1")
-		err = templ.ExecuteTemplate(c.Response().Writer, "recent-notes.html", a)
-		return nil
+		return c.Render(200, "recent-notes.html", a)
 	})
-	server.GET("/template/recent-notes_layout", func(c echo.Context) error {
-		err = templ.ExecuteTemplate(c.Response().Writer, "recent-notes.layout.html", nil)
-		return nil
-	})
-	server.GET("/template/timeline_layout", func(c echo.Context) error {
-		err = templ.ExecuteTemplate(c.Response().Writer, "timeline.layout.html", nil)
-		return nil
-	})
+
 	server.GET("/template/key-value", func(c echo.Context) error {
 		a := pwsh.RunPwshCmd("./mock_nvim.ps1")
-		err = templ.ExecuteTemplate(c.Response().Writer, "key-value.templ", a)
-		if err != nil {
-			fmt.Println(err)
-		}
-		return nil
-	})
-	server.GET("/template/ping", func(c echo.Context) error {
-		err = templ.ExecuteTemplate(c.Response().Writer, "ping.html", nil)
-		return nil
-	})
-	server.GET("/template/now-playing", func(c echo.Context) error {
-		err = templ.ExecuteTemplate(c.Response().Writer, "now-playing.static.html", nil)
-		return nil
+		return c.Render(200, "key-value.templ", a)
 	})
 	server.GET("/template/open-tabs", func(c echo.Context) error {
 		a := pwsh.RunPwshCmd("./waterfoxTabs.ps1")
-		err = templ.ExecuteTemplate(c.Response().Writer, "open-tabs.static.html", a)
-		return nil
+		return c.Render(200, "open-tabs.static.html", a)
 	})
 
-	server.GET("/api/server/close", func(c echo.Context) error {
-		//use go routine with timeout to allow time for response.
-		var err error
+	// server.GET("/template/now-playing", func(c echo.Context) error {
+	// 	return c.Render(200, "now-playing.static.html", nil)
+	// })
 
-		timeout := 10 * time.Second
-		timeoutCtx, shutdownRelease := context.WithTimeout(context.Background(), timeout)
-		defer shutdownRelease()
-		// go shutdownServerWithTimeout(timeoutCtx, server)
-		// try doing the shutdown inline without goroutine.
+	server.GET("/template/recent-notes_layout", staticTemplateHandler("recent-notes.layout.html"))
+	server.GET("/template/timeline_layout", staticTemplateHandler("timeline.layout.html"))
+	server.GET("/template/now-playing", staticTemplateHandler("now-playing.static.html"))
+	server.GET("/template/ping", staticTemplateHandler("key-value.templ"))
 
-		go func() {
-			err = server.Shutdown(timeoutCtx)
-		}()
-		if err != nil {
-			fmt.Println("err while graceful shutdown:", err)
-		}
-
-		return c.String(200, "shutdown cmd successful.")
-	})
+	server.GET("/api/server/close", apiroutes.ServerShutdown)
 	server.GET("/api/windows", apiroutes.EnumWindows)
 	server.GET("/api/numTabs", apiroutes.NumTabs)
 	server.GET("/api/recentNotes", apiroutes.RecentNotes)
@@ -161,9 +158,7 @@ func runServer() {
 	server.GET("/api/broadcast/yt-music", func(c echo.Context) error {
 		return BroadcastEvent(c, "ytMusicElement")
 	})
-	server.GET("/api/broadcast/sse", func(c echo.Context) error {
-		return BroadcastEvent(c, "getSong")
-	})
+	server.GET("/api/broadcast/sse", broadcastHandler("getSong"))
 
 	// WEBSOCKET
 	server.GET("/ws", Hello)
@@ -175,7 +170,7 @@ func runServer() {
 	server.Static("js", "js")
 	server.Static("img", "img")
 	server.GET("/app/*", func(c echo.Context) error {
-		// Serve static files manually with fallback for /app/index
+		// Serve static files with fallback for /app/index
 		requestPath := c.Param("*") // Get the requested path after "/app/"
 		isFullPath := strings.HasSuffix(requestPath, ".html")
 		if !isFullPath {
@@ -184,11 +179,6 @@ func runServer() {
 		filePath := filepath.Join("html", requestPath)
 		return c.File(filePath)
 	})
-	//server.GET("/template/*", func(c echo.Context) error {
-	//	requestPath := c.Param("*") // Get the requested path after "/app/"
-	//	filePath := filepath.Join("html", requestPath)
-	//	return nil
-	//})
 
 	server.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Skipper: func(c echo.Context) bool {
@@ -220,13 +210,15 @@ func runServer() {
 }
 
 func main() {
+	//#region parseFlags
 	d := flag.Bool("debug", true, "shows additional information in the console while running.")
 	flag.Parse()
 	debug = *d
+	//#endregion
 
 	if debug {
-		pwsh.ExecPwshCmd("./openUrl.ps1 -Uri 'http://localhost:1323'")
+		pwsh.ExecPwshCmd("./openUrl.ps1 -Uri 'http://localhost:1323/test'")
 	}
-	runServer()
-	// when starting the server, send SSE to all yt-music clients if music is playing.
+	runServer() //blocking
+
 }
