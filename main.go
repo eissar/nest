@@ -166,10 +166,10 @@ func runServer() {
 	server.GET("/template/notes-struct", dynamicTemplateHandler("notes-struct.html", apiroutes.PopulateGetNotesDetail))
 	server.GET("/template/windows", dynamicTemplateHandler("windows.html", apiroutes.PopulateEnumerateWindows))
 
-	server.GET("/template/recent-notes", pwshTemplateHandler("recent-notes.html", pwshScript, "./recentNotes.ps1"))
-	server.GET("/template/key-value", pwshTemplateHandler("key-value.templ", pwshScript, "./mock_nvim.ps1"))
-	server.GET("/template/open-tabs", pwshTemplateHandler("open-tabs.templ", pwshScript, "./waterfoxTabs.ps1"))
-	server.GET("/template/recent-eagle-items", pwshTemplateHandler("recent-eagle-items.templ", pwshScript, "./recentEagleItems.ps1"))
+	server.GET("/template/recent-notes", pwshTemplateHandler("recent-notes.html", pwshScript, "./powershell-utils/recentNotes.ps1"))
+	server.GET("/template/key-value", pwshTemplateHandler("key-value.templ", pwshScript, "./powershell-utils/mock_nvim.ps1"))
+	server.GET("/template/open-tabs", pwshTemplateHandler("open-tabs.templ", pwshScript, "./powershell-utils/waterfoxTabs.ps1"))
+	server.GET("/template/recent-eagle-items", pwshTemplateHandler("recent-eagle-items.templ", pwshScript, "./powershell-utils/recentEagleItems.ps1"))
 
 	server.GET("/template/recent-notes_layout", staticTemplateHandler("recent-notes.layout.html"))
 	server.GET("/template/timeline_layout", staticTemplateHandler("timeline.layout.html"))
@@ -251,7 +251,7 @@ func main() {
 	//#endregion
 
 	if debug {
-		pwsh.ExecPwshCmd("./openUrl.ps1 -Uri 'http://localhost:1323/api/eagleOpen/1'")
+		pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/api/eagleOpen/1'")
 	}
 	runServer() //blocking
 }

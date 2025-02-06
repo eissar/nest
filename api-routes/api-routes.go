@@ -39,19 +39,19 @@ func Edit(c echo.Context) error {
 func RecentEagleItems(c echo.Context) error {
 	//  TODO: IMPROVE SPEED (791.9206ms)
 	start := time.Now()
-	a := pwsh.RunPwshCmd("./recentEagleItems.ps1")
+	a := pwsh.RunPwshCmd("./powershell-utils/recentEagleItems.ps1")
 	fmt.Println("[Debug] (", c.Path(), ") request elapsed time:", time.Since(start))
 	return c.JSON(200, a)
 }
 
 func RecentNotes(c echo.Context) error {
-	a := pwsh.RunPwshCmd("./recentNotes.ps1")
+	a := pwsh.RunPwshCmd("./powershell-utils/recentNotes.ps1")
 	return c.JSON(200, a)
 }
 
 func NumTabs(c echo.Context) error {
 	start := time.Now()
-	a := pwsh.RunPwshCmd("./waterfoxTabs.ps1")
+	a := pwsh.RunPwshCmd("./powershell-utils/waterfoxTabs.ps1")
 	fmt.Println("[Debug] (", c.Path(), ") request elapsed time:", time.Since(start))
 	return c.JSON(200, a)
 }
