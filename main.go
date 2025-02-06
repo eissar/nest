@@ -9,6 +9,8 @@ import (
 	"runtime"
 	_ "sync"
 	apiroutes "web-dashboard/api-routes"
+	browsermodule "web-dashboard/browser_module"
+	"web-dashboard/eagle_module"
 	pwsh "web-dashboard/powershell-utils"
 
 	_ "encoding/json"
@@ -218,10 +220,25 @@ func runServer() {
 		return c.String(200, "OK")
 	})
 
+	// Static routes;
 	// route prefix, directory
 	server.Static("css", "css")
 	server.Static("js", "js")
 	server.Static("img", "img")
+
+	// Module philosophy:
+	// UNDER NO CIRCUMSTANCES
+	// should html or css be tightly coupled with
+	// or packaged in a module (e.g., eagle_module) TODO:
+
+	// ??? access routes in a module like:
+	// server.GET("/eagleApp/*", eaglemodule.HandleModuleRoutes)
+	// OR
+	eagle_group := server.Group("/eagleApp")
+	eaglemodule.RegisterRoutesFromGroup(eagle_group)
+
+	browser_group := server.Group("/browser")
+	browsermodule.RegisterRoutesFromGroup(browser_group)
 
 	// special handler for user-facing static files
 	// so file endings are not shown in the URI
@@ -251,7 +268,7 @@ func main() {
 	//#endregion
 
 	if debug {
-		pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/api/eagleOpen/1'")
+		pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/browser/test'")
 	}
 	runServer() //blocking
 }

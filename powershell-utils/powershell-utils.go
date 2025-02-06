@@ -44,8 +44,7 @@ func ExecPwshCmd(Cmd string) {
 
 			// Example: Check if PowerShell command didn't find any processes
 			if exitError.ExitCode() == 1 { // Exit code 1 is returned when PowerShell doesn't error but the script returns $null or nothing (e.g. no processes found)
-				fmt.Println("Null or empty output.")
-				panic(err)
+				fmt.Println("[ERROR] <RunPwshCmd> Null or empty output. Error", exitError.Error())
 			}
 		}
 	}
