@@ -38,9 +38,7 @@ func Edit(c echo.Context) error {
 
 func RecentEagleItems(c echo.Context) error {
 	//  TODO: IMPROVE SPEED (791.9206ms)
-	start := time.Now()
 	a := pwsh.RunPwshCmd("./powershell-utils/recentEagleItems.ps1")
-	fmt.Println("[Debug] (", c.Path(), ") request elapsed time:", time.Since(start))
 	return c.JSON(200, a)
 }
 
@@ -190,7 +188,8 @@ func PopulateEnumerateWindows(c echo.Context, templateName string) interface{} {
 			)
 			fmt.Println("[ERROR]", msg)
 			e := fmt.Sprintf("<p>%s</p>", msg)
-			return c.String(http.StatusBadRequest, e)
+			c.String(http.StatusBadRequest, e)
+			return nil
 		}
 		// return the first `f` or the whole array,
 		// whichever is bigger
@@ -203,11 +202,11 @@ func PopulateEnumerateWindows(c echo.Context, templateName string) interface{} {
 	return data
 }
 func PopulateGetNotesDetail(c echo.Context, templateName string) interface{} {
-	return GetNotesNamesDates()
+	return GetNotesNamesDates(-1, 0)
 }
 
-func PopulateQueryFrontmatter() {}
-func PopulateGetRecentNotes()   {}
+// func PopulateQueryFrontmatter() {}
+// func PopulateGetRecentNotes()   {}
 
 func EnumWindows(c echo.Context) error {
 	a := GetEnumerateWindows()
@@ -230,4 +229,19 @@ func ServerShutdown(c echo.Context) error {
 	}
 
 	return c.String(200, "shutdown cmd successful.")
+}
+
+type uploadTabsBody struct {
+	Body string `json:"body"`
+}
+
+func UploadTabs(c echo.Context) error {
+	a := c.Request().Body
+	b := []byte{}
+	_, err := a.Read(b)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("[SUCCESS]", c)
+	return c.String(200, "OK")
 }

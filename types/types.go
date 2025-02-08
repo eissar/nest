@@ -1,8 +1,14 @@
 package types
 
 import (
-	"fmt"
+	_ "fmt"
+	"net/http"
 )
+
+type Client struct {
+	Conn http.ResponseWriter
+	Ch   chan string
+}
 
 type Window struct {
 	Handle    string `json:"handle"`
@@ -10,6 +16,6 @@ type Window struct {
 	ProcessId string `json:"processid"`
 }
 
-func Hey() {
-	fmt.Println("HEY")
-}
+//func Hey() {
+//	fmt.Println("HEY")
+//}

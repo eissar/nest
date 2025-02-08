@@ -4,14 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"sync"
+	. "web-dashboard/types"
 
 	"github.com/labstack/echo/v4"
 )
-
-type Client struct {
-	conn http.ResponseWriter
-	ch   chan string
-}
 
 var (
 	clientsMu sync.RWMutex
@@ -30,8 +26,8 @@ func HandleSSE(c echo.Context) error {
 	}
 
 	client := &Client{
-		conn: c.Response(),
-		ch:   make(chan string),
+		Conn: c.Response(),
+		Ch:   make(chan string),
 	}
 
 	clientsMu.Lock()
@@ -42,13 +38,13 @@ func HandleSSE(c echo.Context) error {
 		clientsMu.Lock()
 		delete(clients, client)
 		clientsMu.Unlock()
-		close(client.ch)
+		close(client.Ch)
 		fmt.Println("[LOG] <HandleSSE> Client disconnected")
 	}()
 
 	go func() {
-		for msg := range client.ch {
-			fmt.Fprintf(client.conn, "data: %s\n\n", msg)
+		for msg := range client.Ch {
+			fmt.Fprintf(client.Conn, "data: %s\n\n", msg)
 			flusher.Flush()
 		}
 	}()
@@ -64,7 +60,21 @@ func SendSSEAll(message string) {
 	defer clientsMu.RUnlock()
 	for client := range clients {
 		select { // Non-blocking send to avoid deadlocks
-		case client.ch <- message:
+		case client.Ch <- message:
+		default:
+			// If the client's channel is full, it means the client
+			// might have disconnected.  We don't want to block here.
+			fmt.Println("Client's channel full. Skipping message.")
+		}
+
+	}
+}
+func SendSSETargeted(message string, clients map[*Client]bool) {
+	clientsMu.RLock()
+	defer clientsMu.RUnlock()
+	for client := range clients {
+		select { // Non-blocking send to avoid deadlocks
+		case client.Ch <- message:
 		default:
 			// If the client's channel is full, it means the client
 			// might have disconnected.  We don't want to block here.

@@ -41,9 +41,17 @@ func (t *Template) Render(wr io.Writer, name string, data interface{}, c echo.Co
 
 func (t *Template) Populate(name string) interface{} {
 	// maps template names to api routes
+	// return a callback?
 
 	return apiroutes.GetEnumerateWindows()
+}
 
+func mustImportTemplates() *template.Template {
+	templ, err := template.ParseGlob("templates/*") // Parses all .html files in the templates directory
+	if err != nil {
+		panic(err)
+	}
+	return templ
 }
 
 // TRASH

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -86,13 +87,39 @@ type NotesInfo struct {
 	ModifiedTime time.Time `json:"modifiedTime"`
 }
 
-func GetNotesNamesDates() []NotesInfo {
+func GetNotesNamesDates(first int, offset uint) []NotesInfo {
 	a := []NotesInfo{}
-	for _, note := range GetNotesDetail() {
+	b := GetNotesDetail()
+	if first == -1 {
+		first = 100
+	}
+
+	// ignore index
+	for _, note := range b {
 		a = append(a, NotesInfo{
 			Name:         note.Name(),
 			ModifiedTime: note.ModTime(),
 		})
 	}
+
+	// sort notes
+
+	func() []NotesInfo {
+		// var a []NotesInfo{...}
+		notesInfoLen := len(a)
+		if notesInfoLen == 0 {
+			return nil
+		}
+		if first > notesInfoLen {
+			first = notesInfoLen
+		}
+
+		// inplace sort?
+		sort.Slice(a, func(i, j int) bool {
+			return a[i].ModifiedTime.After(a[j].ModifiedTime)
+		})
+		return nil
+	}() // iife
+
 	return a
 }

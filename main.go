@@ -16,7 +16,6 @@ import (
 	_ "encoding/json"
 	"flag"
 	"fmt"
-	"html/template"
 	"net/http"
 	_ "net/http"
 
@@ -39,18 +38,28 @@ open new terminal instance with the server running.
 */
 
 /*
-//	TODO:
-//	[X] - move types to types.go
-//	[X] - add HTMX
-//	[X] - add middleware to serve url without file suffix.
-//  [X] - Recent notes
-//	[X] - move time.now calls to middleware (custom)
-// 	q5s: enumerate-Windows.ps1
-//  [ ] - add action to recent notes
-//  [ ] - Try reflection for template functions.
-//  [X] - Create build.lua
+// TODO:
+			[X] - move types to types.go
+			[X] - add HTMX
+			[X] - add middleware to serve url without file suffix.
+			[X] - Recent notes
+			[X] - move time.now calls to middleware (custom)
+			q5s: enumerate-Windows.ps1
+			[ ] - Try reflection for template functions?
+			[ ] - add action parameter to recent notes
+			[X] - Create build.lua
+			[X] - add sse listener to eagle-plugin
+				[X] - for eagle.tabs.query({})
+				on BroadcastSSETargeted({event:"getTabs"...})
+					-> eagle.tabs.query({})
+					-> post("api/uploadTabs")
+					-> fmt.PrintLn tabs
 */
 
+// make api skip certain urls
+// skipper = uri=/api/ping
+
+// globals
 var debug = false
 var editor = "C:/Program Files/Neovim/bin/nvim.exe"
 var lastSong = "NULL SONG DATA"
@@ -59,13 +68,6 @@ var lastSong = "NULL SONG DATA"
 Inputs: path to .ps1 script
 Outputs: array-contained json data.
 */
-func mustImportTemplates() *template.Template {
-	templ, err := template.ParseGlob("templates/*") // Parses all .html files in the templates directory
-	if err != nil {
-		panic(err)
-	}
-	return templ
-}
 
 func runServer() {
 	var err error
@@ -102,9 +104,20 @@ func runServer() {
 	// dynamicTemplatePopulateFunc defines a function to populate a template
 	type dynamicTemplatePopulateFunc func(c echo.Context, templateName string) interface{}
 
+	// type dynamicTemplateHandlerOpts struct {
+	// 	args  []string
+	// 	first int
+	// }
+	// dynamicTemplateHandler := func(templateName string, populateFunc dynamicTemplatePopulateFunc, opts dynamicTemplateHandlerOpts) echo.HandlerFunc {
+
+	// closure generator
+	// returns echo.HandlerFunc
+	// uses populateFunc to populate template with template name (incl. ending)
+	// opts are { args: []string{} }
 	dynamicTemplateHandler := func(templateName string, populateFunc dynamicTemplatePopulateFunc) echo.HandlerFunc {
 		// dynamicTemplatePopulateFunc
 		return func(c echo.Context) error {
+			// to set default parameters, update them in the populateFunc.
 			return c.Render(200, templateName, populateFunc(c, templateName))
 		}
 	}
@@ -164,6 +177,7 @@ func runServer() {
 	server.GET("/ws", HandleWS)
 	// SERVER SIDE EVENTS
 	server.GET("/sse", HandleSSE)
+	// server.GET("/eagle/sse", HandleSSE) in eaglemodule
 
 	server.GET("/template/notes-struct", dynamicTemplateHandler("notes-struct.html", apiroutes.PopulateGetNotesDetail))
 	server.GET("/template/windows", dynamicTemplateHandler("windows.html", apiroutes.PopulateEnumerateWindows))
@@ -172,6 +186,8 @@ func runServer() {
 	server.GET("/template/key-value", pwshTemplateHandler("key-value.templ", pwshScript, "./powershell-utils/mock_nvim.ps1"))
 	server.GET("/template/open-tabs", pwshTemplateHandler("open-tabs.templ", pwshScript, "./powershell-utils/waterfoxTabs.ps1"))
 	server.GET("/template/recent-eagle-items", pwshTemplateHandler("recent-eagle-items.templ", pwshScript, "./powershell-utils/recentEagleItems.ps1"))
+
+	server.GET("/template/sse-browser-tabs", staticTemplateHandler("sse-browser-tabs.templ"))
 
 	server.GET("/template/recent-notes_layout", staticTemplateHandler("recent-notes.layout.html"))
 	server.GET("/template/timeline_layout", staticTemplateHandler("timeline.layout.html"))
@@ -185,6 +201,7 @@ func runServer() {
 	server.GET("/api/recentEagleItems", apiroutes.RecentEagleItems)
 	server.POST("/api/edit", apiroutes.Edit)
 	server.GET("/api/ping", apiroutes.Ping)
+	server.POST("/api/uploadTabs", apiroutes.UploadTabs)
 	// activates a browser tab if it exists, creates a new tab if it does not.
 	// cache is created from browser history
 	// api.BrowserTabActivateOrOpen
@@ -268,7 +285,7 @@ func main() {
 	//#endregion
 
 	if debug {
-		pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/browser/test'")
+		pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/sse-test'")
 	}
 	runServer() //blocking
 }
