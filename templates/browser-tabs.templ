@@ -1,2 +1,5 @@
 <div class="container" hx-get="/template/open-tabs" hx-trigger="every 2s" hx-swap="outerHTML">
+    {{range .}}
+    <a>{{.WaterfoxTabs}}</a>
+    {{end}}
 </div>

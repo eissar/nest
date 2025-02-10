@@ -46,8 +46,15 @@ func (t *Template) Populate(name string) interface{} {
 	return apiroutes.GetEnumerateWindows()
 }
 
+func templateTemplateGenerator() *template.Template {
+	return nil
+}
+
+// parses tempalates in templates/*
+// returns pointer to *template.Template or panics.
 func mustImportTemplates() *template.Template {
-	templ, err := template.ParseGlob("templates/*") // Parses all .html files in the templates directory
+	templ, err := template.ParseGlob("templates/*.templ") // Parses all files in the templates directory
+	templ.ParseGlob("templates/*.html")                   // parse static templates
 	if err != nil {
 		panic(err)
 	}

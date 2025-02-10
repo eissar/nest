@@ -1,4 +1,4 @@
-package main
+package ytmmodule
 
 import (
 	"fmt"
@@ -66,7 +66,6 @@ func SendSSEAll(message string) {
 			// might have disconnected.  We don't want to block here.
 			fmt.Println("Client's channel full. Skipping message.")
 		}
-
 	}
 }
 func SendSSETargeted(message string, clients map[*Client]bool) {
@@ -84,37 +83,39 @@ func SendSSETargeted(message string, clients map[*Client]bool) {
 	}
 }
 
-// api function
-// inputs:
-// c echo.Context
-// kind string : type of broadcast for case matching.
-func BroadcastEvent(c echo.Context, kind string) error {
-	fmt.Println("[LOG] <BroadcastEvent> sending event", kind)
-	sent := false
-	switch kind {
-	case "getSong":
-		SendSSEAll(`{"event":"getSong"}`)
-		sent = true
-	case "ytMusicElement":
-		elem := c.QueryParam("elem")
-		var message string
-		// TODO: Create case to take songName param
+/*
+//  api function
+//  inputs:
+//  c echo.Context
+//  kind string : type of broadcast for case matching.
+ func BroadcastEvent(c echo.Context, kind string) error {
+ 	fmt.Println("[LOG] <BroadcastEvent> sending event", kind)
+ 	sent := false
+ 	switch kind {
+ 	case "getSong":
+ 		SendSSEAll(`{"event":"getSong"}`)
+ 		sent = true
+ 	case "ytMusicElement":
+ 		elem := c.QueryParam("elem")
+ 		var message string
+ 		// TODO: Create case to take songName param
 
-		if len(elem) >= 1 {
-			message = elem
-		}
-		if !(len(message) >= 1) {
-			return c.String(400, "no query param.")
-		}
-		Broadcast(message)
-		sent = true
-	}
-	if sent {
-		return c.String(http.StatusOK, "OK")
-	} else {
-		return c.String(400, "server err")
-	}
-}
+ 		if len(elem) >= 1 {
+ 			message = elem
+ 		}
+ 		if !(len(message) >= 1) {
+ 			return c.String(400, "no query param.")
+ 		}
+ 		Broadcast(message)
+ 		sent = true
+ 	}
+ 	if sent {
+ 		return c.String(http.StatusOK, "OK")
+ 	} else {
+ 		return c.String(400, "server err")
+ 	}
+ }
+*/
 
 // func RetrieveDataAndExecuteTemplate(c echo.Context, name string, data any) {
 // 	a := GetEnumerateWindows()[0]

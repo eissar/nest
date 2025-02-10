@@ -9,9 +9,12 @@ import (
 	"runtime"
 	_ "sync"
 	apiroutes "web-dashboard/api-routes"
-	browsermodule "web-dashboard/browser_module"
-	"web-dashboard/eagle_module"
+	browser_module "web-dashboard/browser_module"
+	databaseutils "web-dashboard/database-utils"
+	eagle_module "web-dashboard/eagle_module"
 	pwsh "web-dashboard/powershell-utils"
+	_ "web-dashboard/websocket-utils"
+	ytm_module "web-dashboard/ytm_module"
 
 	_ "encoding/json"
 	"flag"
@@ -62,7 +65,6 @@ open new terminal instance with the server running.
 // globals
 var debug = false
 var editor = "C:/Program Files/Neovim/bin/nvim.exe"
-var lastSong = "NULL SONG DATA"
 
 /*
 Inputs: path to .ps1 script
@@ -72,6 +74,14 @@ Outputs: array-contained json data.
 func runServer() {
 	var err error
 	server := echo.New()
+
+	// NOTE: Template rules:
+	// 1. ending in .html:  static template.
+	// 2. ending in .templ:  dynamic template
+	// 3. prefix ws, sse, ending in .templ:  template which retrieves data...
+	// using websockets or server-side events respectively.
+	// 4. no prefix, ending in .templ: template which retrieves data...
+	// dynamically using htmx.
 	server.Renderer = &Template{
 		templates: mustImportTemplates(),
 	}
@@ -96,11 +106,11 @@ func runServer() {
 		filePath := filepath.Join("html", requestPath)
 		return c.File(filePath)
 	}
-	broadcastHandler := func(broadcastName string) echo.HandlerFunc {
-		return func(c echo.Context) error {
-			return BroadcastEvent(c, broadcastName)
-		}
-	}
+	// broadcastHandler := func(broadcastName string) echo.HandlerFunc {
+	// 	return func(c echo.Context) error {
+	// 		return BroadcastEvent(c, broadcastName)
+	// 	}
+	// }
 	// dynamicTemplatePopulateFunc defines a function to populate a template
 	type dynamicTemplatePopulateFunc func(c echo.Context, templateName string) interface{}
 
@@ -148,7 +158,7 @@ func runServer() {
 			}
 			return false
 		},
-		Format: "[LOG] [${time_rfc3339}] ${level} path=${path}, Latency=${latency_human}\n",
+		Format: "[LOG] [${time_rfc3339}] ${level} method=${method} path=${path}, Latency=${latency_human}\n",
 	}))
 
 	//#region TEST
@@ -163,6 +173,16 @@ func runServer() {
 	*/
 	// server.GET("/test", test)
 	server.GET("/test", dynamicTemplateHandler("notes-struct.html", apiroutes.PopulateGetNotesDetail))
+
+	server.GET("/test1", func(c echo.Context) error {
+		db, err := databaseutils.GetDatabase()
+		if err != nil {
+			fmt.Println("error calling <GetDatabase>", err)
+			return c.String(400, "NOT OK")
+		}
+		fmt.Println(db.Data)
+		return c.String(200, "OK")
+	})
 	//#endregion TEST
 
 	server.GET("/", func(c echo.Context) error {
@@ -174,9 +194,10 @@ func runServer() {
 		return c.Render(200, "windows.html", a)
 	})
 	// WEBSOCKET
-	server.GET("/ws", HandleWS)
+	//server.GET("/ws", websockettest.HandleWS)
+
 	// SERVER SIDE EVENTS
-	server.GET("/sse", HandleSSE)
+	//server.GET("/sse", HandleSSE)
 	// server.GET("/eagle/sse", HandleSSE) in eaglemodule
 
 	server.GET("/template/notes-struct", dynamicTemplateHandler("notes-struct.html", apiroutes.PopulateGetNotesDetail))
@@ -184,15 +205,19 @@ func runServer() {
 
 	server.GET("/template/recent-notes", pwshTemplateHandler("recent-notes.html", pwshScript, "./powershell-utils/recentNotes.ps1"))
 	server.GET("/template/key-value", pwshTemplateHandler("key-value.templ", pwshScript, "./powershell-utils/mock_nvim.ps1"))
-	server.GET("/template/open-tabs", pwshTemplateHandler("open-tabs.templ", pwshScript, "./powershell-utils/waterfoxTabs.ps1"))
+	server.GET("/template/open-tabs-count", pwshTemplateHandler("open-tabs-count.templ", pwshScript, "./powershell-utils/waterfoxTabs.ps1"))
+	//server.GET("/template/open-tabs", dynamicTemplateHandler("open-tabs.templ", apiroutes.PopulateOpenTabs))
+
 	server.GET("/template/recent-eagle-items", pwshTemplateHandler("recent-eagle-items.templ", pwshScript, "./powershell-utils/recentEagleItems.ps1"))
 
 	server.GET("/template/sse-browser-tabs", staticTemplateHandler("sse-browser-tabs.templ"))
 
+	server.GET("/template/browser-tabs", staticTemplateHandler("browser-tabs.templ"))
+
 	server.GET("/template/recent-notes_layout", staticTemplateHandler("recent-notes.layout.html"))
 	server.GET("/template/timeline_layout", staticTemplateHandler("timeline.layout.html"))
-	server.GET("/template/now-playing", staticTemplateHandler("now-playing.static.html"))
-	server.GET("/template/ping", staticTemplateHandler("key-value.templ"))
+	server.GET("/template/now-playing", staticTemplateHandler("ws-now-playing.ytm.templ")) // ./templates/ws-now-playing.ytm.templ
+	server.GET("/template/ping", staticTemplateHandler("ping.templ"))
 
 	server.GET("/api/server/close", apiroutes.ServerShutdown)
 	server.GET("/api/windows", apiroutes.EnumWindows)
@@ -211,8 +236,7 @@ func runServer() {
 	// about:profiles
 	// ["X:\Dropbox\Code\Projects\render-image-blazingly\db"]
 
-	server.GET("/api/broadcast/yt-music", broadcastHandler("ytMusicElement"))
-	server.GET("/api/broadcast/sse", broadcastHandler("getSong"))
+	//server.GET("/api/broadcast/sse", broadcastHandler("getSong"))
 
 	openURI := func(uri string) error {
 		var cmd *exec.Cmd
@@ -251,11 +275,15 @@ func runServer() {
 	// ??? access routes in a module like:
 	// server.GET("/eagleApp/*", eaglemodule.HandleModuleRoutes)
 	// OR
+
 	eagle_group := server.Group("/eagleApp")
-	eaglemodule.RegisterRoutesFromGroup(eagle_group)
+	eagle_module.RegisterRoutesFromGroup(eagle_group)
 
 	browser_group := server.Group("/browser")
-	browsermodule.RegisterRoutesFromGroup(browser_group)
+	browser_module.RegisterRoutesFromGroup(browser_group)
+
+	ytm_group := server.Group("/ytm")
+	ytm_module.RegisterRoutesFromGroup(ytm_group)
 
 	// special handler for user-facing static files
 	// so file endings are not shown in the URI
@@ -285,7 +313,7 @@ func main() {
 	//#endregion
 
 	if debug {
-		pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/sse-test'")
+		//pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'")
 	}
 	runServer() //blocking
 }

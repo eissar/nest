@@ -116,6 +116,14 @@ func GetEnumerateWindows() []Window {
 // populate funcs
 // set default params with pathparams
 // they are empty strings not nil null case.
+/*
+Every PopulateFunction returns data that will be consumed by a template.
+using the context, we can extract parameters or default arguments we can pass to the API calls.
+
+if there is an error, the .error member is populated. This is checked first in the template and if it exists, the template is populated in the error case.
+
+some of the populate functions bubbled errors by just returning c.string(400,err) which is less flexible.
+*/
 
 func PopulateEnumerateWindows(c echo.Context, templateName string) interface{} {
 	cmd := exec.Command("C:/Users/eshaa/Dropbox/Code/cs/enumerateWindowsExe/aot/enumerateWindows.exe")

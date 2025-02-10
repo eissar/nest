@@ -64,6 +64,8 @@ func RegisterRoutesFromGroup(g *echo.Group) {
 
 		return c.String(200, "OK")
 	})
+
+	//g.GET("/browser/ws", HandleWS)
 }
 
 // func GetBrowserDomains
