@@ -1,4 +1,4 @@
-package apiroutes
+package core
 
 import (
 	"fmt"

@@ -1,17 +1,25 @@
-package main
+package rendererutils
 
 import (
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
-	apiroutes "web-dashboard/api-routes"
+	//apiroutes "web-dashboard/api-routes"
 
 	"github.com/labstack/echo/v4"
 )
 
+// NOTE: Template rules:
+// 1. ending in .html:  static template.
+// 2. ending in .templ:  dynamic template
+// 3. prefix ws, sse, ending in .templ:  template which retrieves data...
+// using websockets or server-side events respectively.
+// 4. no prefix, ending in .templ: template which retrieves data...
+// dynamically using htmx.
+
 type Template struct {
-	templates *template.Template
+	Templates *template.Template
 }
 
 /*
@@ -24,7 +32,7 @@ type Template struct {
 */
 
 func (t *Template) Render(wr io.Writer, name string, data interface{}, c echo.Context) error {
-	err := t.templates.ExecuteTemplate(wr, name, data)
+	err := t.Templates.ExecuteTemplate(wr, name, data)
 
 	// some error handling.
 	if err != nil {
@@ -39,20 +47,18 @@ func (t *Template) Render(wr io.Writer, name string, data interface{}, c echo.Co
 	return nil
 }
 
+/*
 func (t *Template) Populate(name string) interface{} {
 	// maps template names to api routes
 	// return a callback?
 
 	return apiroutes.GetEnumerateWindows()
 }
+*/
 
-func templateTemplateGenerator() *template.Template {
-	return nil
-}
+var Templates *template.Template
 
-// parses tempalates in templates/*
-// returns pointer to *template.Template or panics.
-func mustImportTemplates() *template.Template {
+func MustImportTemplates() *template.Template {
 	templ, err := template.ParseGlob("templates/*.templ") // Parses all files in the templates directory
 	templ.ParseGlob("templates/*.html")                   // parse static templates
 	if err != nil {
@@ -61,20 +67,8 @@ func mustImportTemplates() *template.Template {
 	return templ
 }
 
-// TRASH
-// populate := map[string]func() []interface{}{
-// 	"open-tabs.static.html": func() []interface{} {
-// 		a := pwsh.RunPwshCmd("./waterfoxTabs.ps1")
-// 		return a
-// 	},
-// }
+type DynamicTemplatePopulateFunc func(c echo.Context, templateName string) interface{}
 
-// The logic for retrieving data should be defined in this function,
-// and retrievable from the echo.Context.
-//
-// e.g. tries to get populate function from a map[string]func() []interface{}
-// interfaces can be nil...
-// so return nil if no function for the template's populate fn request.path
-// any filtering logic, etc can be in parameters.
-// any other logic should be in middleware.
-// good.
+func InitRenderer() {
+	Templates = MustImportTemplates()
+}

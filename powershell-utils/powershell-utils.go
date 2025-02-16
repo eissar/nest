@@ -6,6 +6,13 @@ import (
 	"os/exec"
 )
 
+type CmdType string
+
+const (
+	PwshScript  CmdType = "pwshScript"
+	PwshCommand CmdType = "pwshCommand"
+)
+
 func RunPwshCmd(ScriptPath string) []interface{} {
 	cmd := exec.Command("pwsh.exe", "-NoProfile", "-c", ScriptPath)
 	// Capture the output

@@ -102,7 +102,7 @@ func HandleWS(c echo.Context, cfg *wsu.WsConfig) error {
 
 var WSConfig wsu.WsConfig
 
-type songData struct {
+type SongData struct {
 	Song     string `json:"song"`
 	Duration string `json:"duration"`
 	Channel  string `json:"channelName"`
@@ -148,7 +148,7 @@ func RegisterRoutesFromGroup(g *echo.Group) {
 			return c.String(400, "OK")
 		}
 
-		dat := songData{
+		dat := SongData{
 			Song:     c.QueryParam("song"),
 			Channel:  c.QueryParam("channelName"),
 			Duration: c.QueryParam("duration"),
@@ -160,7 +160,7 @@ func RegisterRoutesFromGroup(g *echo.Group) {
 		// matching id.
 
 		out := buf.String()
-		fmt.Println("data:", out)
+		//fmt.Println("data:", out)
 		WSConfig.Broadcast(out)
 		return c.String(200, "OK")
 	})

@@ -1,22 +1,47 @@
 <div class="timeline-container">
-    <button hx-get="/api/ping" hx-trigger="every 2s">
+    <button hx-get="/api/ping" hx-trigger="load, every 2s">
         Check Server Status
     </button>
 
     <div id="status">Server status will appear here</div>
 
-    <script>
-        // make sure timeout is low...
-        htmx.config.timeout = 1500;
-        // Optional: Add some JavaScript for better visual feedback
-        document.body.addEventListener('htmx:afterRequest', function (evt) {
-            if (evt.detail.successful) {
-                document.getElementById('status').innerText = 'Server is ONLINE';
-                document.getElementById('status').style.color = 'green';
-            } else {
-                document.getElementById('status').innerText = 'Server is OFFLINE';
-                document.getElementById('status').style.color = 'red';
+<script>
+// make sure timeout is low...
+htmx.config.timeout = 1500;
+
+// Optional: Add some JavaScript for better visual feedback
+document.body.addEventListener('htmx:afterRequest', function (evt) {
+    // Safely access properties and handle potential null/undefined values
+    const xhr = evt?.detail?.xhr;
+    const url = xhr?.responseURL;
+
+    if (url) {
+        try {
+            const urlObj = new URL(url);
+            const pathname = urlObj.pathname;
+            const lastPathSegment = pathname.split('/').pop(); // Use pop() for last element
+
+            if (lastPathSegment === "ping") {
+                const statusElement = document.getElementById('status'); // Store element reference
+
+                if (statusElement) { // Check if element exists
+                    if (evt.detail.successful) {
+                        statusElement.innerText = 'Server is ONLINE';
+                        statusElement.style.color = 'green';
+                    } else {
+                        statusElement.innerText = 'Server is OFFLINE';
+                        statusElement.style.color = 'red';
+                    }
+                } else {
+                    console.error("Status element not found!"); // Handle missing element
+                }
             }
-        });
-    </script>
+        } catch (error) {
+            console.error("Error parsing URL:", error); // Handle URL parsing errors
+        }
+    } else {
+        console.log("No URL available in event details."); // Handle missing URL
+    }
+});
+</script>
 </div>

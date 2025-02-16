@@ -15,7 +15,3 @@ type Window struct {
 	Title     string `json:"title"`
 	ProcessId string `json:"processid"`
 }
-
-//func Hey() {
-//	fmt.Println("HEY")
-//}
