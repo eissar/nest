@@ -8,13 +8,14 @@ import (
 	"web-dashboard/config"
 	"web-dashboard/core"
 
-	//actual_eagle_module "web-dashboard/"
-	browser_module "web-dashboard/browser_module"
-	eagle_module "web-dashboard/eagle_module"
 	handlers "web-dashboard/handlers"
+
+	browser_module "web-dashboard/modules/browser"
+	eagle_module "web-dashboard/modules/eagle"
+	ytm_module "web-dashboard/modules/ytm"
+
 	render "web-dashboard/renderer-utils"
 	_ "web-dashboard/websocket-utils"
-	ytm_module "web-dashboard/ytm_module"
 
 	_ "encoding/json"
 	"flag"
