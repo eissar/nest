@@ -71,6 +71,13 @@ func RegisterRootRoutes(server *echo.Echo) {
 	nestCfg := config.GetConfig()
 	server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&nestCfg))
 	server.GET("/:itemId", ServeThumbnailHandler(&nestCfg))
+	server.GET("/api/eagleOpen/:id", func(c echo.Context) error {
+		id := c.Param("id")
+		uri := fmt.Sprintf("eagle://item/%s", id)
+		helpers.OpenURI(uri)
+		return c.String(200, "OK")
+	})
+
 	/*
 		server.GET("/:id", func(c echo.Context) error {
 			id := EagleItemId(c.Param("id"))

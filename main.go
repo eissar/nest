@@ -113,13 +113,6 @@ func runServer() {
 	// server.GET("/eagleApp/*", eaglemodule.HandleModuleRoutes)
 	// OR
 
-	server.GET("/api/eagleOpen/:id", func(c echo.Context) error {
-		id := c.Param("id")
-		uri := fmt.Sprintf("eagle://item/%s", id)
-		openURI(uri)
-		return c.String(200, "OK")
-	})
-
 	// routes for:
 	// /eagle://item/<itemId>
 	// /<itemId>
