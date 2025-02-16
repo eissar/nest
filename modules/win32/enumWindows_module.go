@@ -10,8 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	. "github.com/eissar/nest/types"
 	"github.com/labstack/echo/v4"
-	. "web-dashboard/types"
 )
 
 // returns: array of window structs.

@@ -3,19 +3,19 @@ package main
 // dot source types
 import (
 	"errors"
+	"github.com/eissar/nest/config"
+	"github.com/eissar/nest/core"
 	_ "net"
 	_ "sync"
-	"web-dashboard/config"
-	"web-dashboard/core"
 
-	handlers "web-dashboard/handlers"
+	handlers "github.com/eissar/nest/handlers"
 
-	browser_module "web-dashboard/modules/browser"
-	eagle_module "web-dashboard/modules/eagle"
-	ytm_module "web-dashboard/modules/ytm"
+	browser_module "github.com/eissar/nest/modules/browser"
+	eagle_module "github.com/eissar/nest/modules/eagle"
+	ytm_module "github.com/eissar/nest/modules/ytm"
 
-	render "web-dashboard/renderer-utils"
-	_ "web-dashboard/websocket-utils"
+	"github.com/eissar/nest/render"
+	_ "github.com/eissar/nest/websocket-utils"
 
 	_ "encoding/json"
 	"flag"
@@ -29,9 +29,6 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	_ "golang.org/x/net/websocket"
 )
-
-// make api skip certain urls
-// skipper = uri=/api/ping
 
 // globals
 var debug = false
@@ -90,10 +87,6 @@ func runServer() {
 	server.GET("/api/ping", core.Ping)
 
 	// move somewhere else
-	//server.GET("/api/windows", core.EnumWindows)
-	server.GET("/api/numTabs", core.NumTabs)
-	server.GET("/api/recentNotes", core.RecentNotes)
-	server.POST("/api/edit", core.Edit)
 	server.POST("/api/uploadTabs", core.UploadTabs)
 
 	//server.GET("/api/broadcast/sse", broadcastHandler("getSong"))
@@ -116,20 +109,19 @@ func runServer() {
 	// routes for:
 	// /eagle://item/<itemId>
 	// /<itemId>
-	eagle_module.RegisterRootRoutes(server)
+	eagle_module.RegisterRootRoutes(nestConfig, server)
 
 	eagle_group := server.Group("/eagle")
-	eagle_module.RegisterRoutesFromGroup(eagle_group)
+	eagle_module.RegisterGroupRoutes(eagle_group)
 
 	browser_group := server.Group("/browser")
-	browser_module.RegisterRoutesFromGroup(browser_group)
+	browser_module.RegisterGroupRoutes(browser_group)
 
 	ytm_group := server.Group("/ytm")
-	ytm_module.RegisterRoutesFromGroup(ytm_group)
+	ytm_module.RegisterGroupRoutes(ytm_group)
 
 	test_group := server.Group("/test")
 	RegisterTestRoutes(test_group)
-
 	template_group := server.Group("/template")
 	RegisterTemplateRoutes(template_group)
 

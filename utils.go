@@ -4,6 +4,7 @@ import (
 	_ "bytes"
 	_ "encoding/csv"
 	"fmt"
+	_ "github.com/eissar/nest/types"
 	_ "io"
 	"os"
 	"os/exec"
@@ -11,7 +12,6 @@ import (
 	"path/filepath"
 	"runtime"
 	_ "strings"
-	_ "web-dashboard/types"
 
 	"github.com/labstack/echo/v4"
 )

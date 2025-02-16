@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/eissar/nest/fileUtils"
 	"log"
 	"os"
 	"path/filepath"
-	"web-dashboard/fileUtils"
 )
 
 type NestConfig struct {

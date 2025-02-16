@@ -1,11 +1,11 @@
-package rendererutils
+package render
 
 import (
 	"fmt"
 	"html/template"
 	"io"
 	"net/http"
-	//apiroutes "web-dashboard/api-routes"
+	//apiroutes "github.com/eissar/nest/api-routes"
 
 	"github.com/labstack/echo/v4"
 )

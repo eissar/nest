@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	wsu "github.com/eissar/nest/websocket-utils"
 	"html/template"
 	"io"
 	"sync"
 	"time"
-	wsu "web-dashboard/websocket-utils"
 
 	"github.com/labstack/echo/v4"
 	"golang.org/x/net/websocket"
@@ -119,10 +119,8 @@ type SongData struct {
 
 // ytm.RegisterRoutesFromGroup
 // prefix ytm
-func RegisterRoutesFromGroup(g *echo.Group) {
-
+func RegisterGroupRoutes(g *echo.Group) {
 	templ := template.Must(template.ParseFiles("templates/song.templ"))
-
 	WSConfig := wsu.WsConfig{
 		Connections: make(map[*websocket.Conn]bool),
 		Mutex:       sync.Mutex{},

@@ -2,9 +2,9 @@ package eaglemodule
 
 import (
 	"fmt"
-	"web-dashboard/config"
-	"web-dashboard/fileUtils"
-	pwsh "web-dashboard/powershell-utils"
+	"github.com/eissar/nest/config"
+	"github.com/eissar/nest/fileUtils"
+	//"github.com/eissar/nest/modules/pwsh"
 
 	"github.com/labstack/echo/v4"
 )
@@ -31,9 +31,4 @@ func ServeThumbnailHandler(cfg *config.NestConfig) echo.HandlerFunc {
 		return c.File(thumbnail.ThumbnailPath)
 		//return c.JSON(200, thumb)
 	}
-}
-func RecentEagleItems(c echo.Context) error {
-	//  TODO: IMPROVE SPEED (791.9206ms)
-	a := pwsh.RunPwshCmd("./powershell-utils/recentEagleItems.ps1")
-	return c.JSON(200, a)
 }

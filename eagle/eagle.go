@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/eissar/nest/config"
+	"github.com/eissar/nest/fileUtils"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
-	"web-dashboard/config"
-	"web-dashboard/fileUtils"
 )
 
 type Library struct {

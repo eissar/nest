@@ -1,15 +1,15 @@
 package handlers
 
 import (
+	"github.com/eissar/nest/modules/pwsh"
+	render "github.com/eissar/nest/render"
 	"path/filepath"
 	"strings"
-	pwsh "web-dashboard/powershell-utils"
-	renderer "web-dashboard/renderer-utils"
 
 	"github.com/labstack/echo/v4"
 )
 
-type dynamicPopulateFunc = renderer.DynamicTemplatePopulateFunc
+type dynamicPopulateFunc = render.DynamicTemplatePopulateFunc
 
 // handlers for satisfying echo.HandlerFunc
 // and closures for generating the same.
@@ -53,12 +53,9 @@ func DynamicTemplateHandler(templateName string, populateFunc dynamicPopulateFun
 	}
 }
 
-func PwshTemplateHandler(templateName string, typ pwsh.CmdType, p string) echo.HandlerFunc {
-	if typ != pwsh.PwshScript {
-		panic("yeah")
-	}
+func PwshTemplateHandler(templateName string, p string) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		return c.Render(200, templateName, pwsh.RunPwshCmd(p))
+		return c.Render(200, templateName, pwsh.RunScript(p))
 	}
 }
 

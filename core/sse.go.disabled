@@ -2,8 +2,8 @@ package core
 
 import (
 	"fmt"
+	. "github.com/eissar/nest/types"
 	"sync"
-	. "web-dashboard/types"
 )
 
 func SendSSETargeted(message string, clients map[*Client]bool, mu *sync.RWMutex) {

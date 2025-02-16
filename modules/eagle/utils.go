@@ -3,6 +3,7 @@ package eaglemodule
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/eissar/nest/config"
 	"io"
 	"log"
 	"net/http"
@@ -11,7 +12,6 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"web-dashboard/config"
 )
 
 type nestCfg config.NestConfig

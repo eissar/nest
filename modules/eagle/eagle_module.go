@@ -3,8 +3,10 @@ package eaglemodule
 import (
 	"fmt"
 	"sync"
-	"web-dashboard/config"
-	"web-dashboard/helpers"
+
+	"github.com/eissar/nest/config"
+	"github.com/eissar/nest/helpers"
+	"github.com/eissar/nest/modules/pwsh"
 
 	"github.com/labstack/echo/v4"
 )
@@ -19,7 +21,7 @@ type Eagle struct {
 	Libraries []*Library
 }
 
-func RegisterRoutesFromGroup(g *echo.Group) {
+func RegisterGroupRoutes(g *echo.Group) {
 	//nestCfg := GetConfig()
 
 	g.GET("/testcfg", func(c echo.Context) error {
@@ -54,7 +56,9 @@ func RegisterRoutesFromGroup(g *echo.Group) {
 		helpers.OpenURI(uri)
 		return c.String(200, "OK")
 	})
-	g.GET("/api/recentEagleItems", RecentEagleItems)
+	g.GET("/api/recentEagleItems", pwsh.RecentEagleItems)
+	g.GET("/api/recent-items", pwsh.RecentEagleItems)
+	g.GET("/recent-items", pwsh.RecentEagleItems)
 
 	//g.GET("/eagle\\://item/:itemId", func(c echo.Context) error {
 	//	fmt.Print("test")
@@ -67,10 +71,9 @@ func RegisterRoutesFromGroup(g *echo.Group) {
 }
 
 // registers routes on the server root (/)
-func RegisterRootRoutes(server *echo.Echo) {
-	nestCfg := config.GetConfig()
-	server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&nestCfg))
-	server.GET("/:itemId", ServeThumbnailHandler(&nestCfg))
+func RegisterRootRoutes(n config.NestConfig, server *echo.Echo) {
+	server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
+	server.GET("/:itemId", ServeThumbnailHandler(&n))
 	server.GET("/api/eagleOpen/:id", func(c echo.Context) error {
 		id := c.Param("id")
 		uri := fmt.Sprintf("eagle://item/%s", id)

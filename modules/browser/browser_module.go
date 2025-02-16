@@ -5,11 +5,10 @@ import (
 	"sync"
 	"time"
 	_ "time"
-	"web-dashboard/core"
-	//browsermodule "web-dashboard/browser_module"
-	//. "web-dashboard/types"
+	//browsermodule "github.com/eissar/nest/browser_module"
+	//. "github.com/eissar/nest/types"
 
-	wsu "web-dashboard/websocket-utils"
+	wsu "github.com/eissar/nest/websocket-utils"
 
 	_ "github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -35,7 +34,7 @@ var (
 var PendingRequests wsu.PendingWSRequests
 var PendingRequestsV2 wsu.PendingWSRequestsV2
 
-func RegisterRoutesFromGroup(g *echo.Group) {
+func RegisterGroupRoutes(g *echo.Group) {
 	trimmer := time.NewTicker(5 * time.Minute)
 	defer trimmer.Stop()
 	go func() {
@@ -46,11 +45,11 @@ func RegisterRoutesFromGroup(g *echo.Group) {
 
 	//#region sse
 	g.GET("/sse", HandleSSE)
-	g.GET("/test-broadcast-to-sse-clients", func(c echo.Context) error {
-		core.SendSSETargeted(`{"data": "test","event": "getTabs"}`, clients, &clientsMu)
-		//apiroutes.SendSSETargeted("data: test\nevent: message", clients, &clientsMu)
-		return c.String(200, "OK")
-	})
+	// g.GET("/test-broadcast-to-sse-clients", func(c echo.Context) error {
+	// 	core.SendSSETargeted(`{"data": "test","event": "getTabs"}`, clients, &clientsMu)
+	// 	//apiroutes.SendSSETargeted("data: test\nevent: message", clients, &clientsMu)
+	// 	return c.String(200, "OK")
+	// })
 	//#endregion sse
 
 	//#region ws

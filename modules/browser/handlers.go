@@ -9,8 +9,10 @@ import (
 	"strings"
 	"sync"
 	"time"
-	. "web-dashboard/types"
-	wsu "web-dashboard/websocket-utils"
+
+	"github.com/eissar/nest/modules/pwsh"
+	. "github.com/eissar/nest/types"
+	wsu "github.com/eissar/nest/websocket-utils"
 
 	"github.com/gobwas/glob"
 	"github.com/labstack/echo/v4"
@@ -64,6 +66,14 @@ func HandleGetTabs(w *wsu.WsConfig) echo.HandlerFunc {
 		}
 		return c.String(http.StatusInternalServerError, "FALSE")
 	}
+}
+
+// server.GET("/api/numTabs", NumTabs)
+func NumTabs(c echo.Context) error {
+	start := time.Now()
+	a := pwsh.RunScript("waterfoxTabs.ps1")
+	fmt.Println("[Debug] (", c.Path(), ") request elapsed time:", time.Since(start))
+	return c.JSON(200, a)
 }
 
 type TabData struct {

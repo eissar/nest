@@ -1,2 +1,2 @@
-go build && .\web-dashboard.exe -debug=true;
+go build && .\nest.exe -debug=true;
 Start-Sleep -Seconds 5
