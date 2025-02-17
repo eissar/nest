@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eissar/nest/modules/pwsh"
+	"github.com/eissar/nest/plugins/pwsh"
 	. "github.com/eissar/nest/types"
 	wsu "github.com/eissar/nest/websocket-utils"
 

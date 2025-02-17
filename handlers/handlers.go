@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/eissar/nest/modules/pwsh"
+	"github.com/eissar/nest/plugins/pwsh"
 	render "github.com/eissar/nest/render"
 	"path/filepath"
 	"strings"

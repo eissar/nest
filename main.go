@@ -3,16 +3,18 @@ package main
 // dot source types
 import (
 	"errors"
-	"github.com/eissar/nest/config"
-	"github.com/eissar/nest/core"
 	_ "net"
 	_ "sync"
 
+	"github.com/eissar/nest/config"
+	"github.com/eissar/nest/core"
+	"github.com/eissar/nest/eagle/api"
+
 	handlers "github.com/eissar/nest/handlers"
 
-	browser_module "github.com/eissar/nest/modules/browser"
-	eagle_module "github.com/eissar/nest/modules/eagle"
-	ytm_module "github.com/eissar/nest/modules/ytm"
+	browser_module "github.com/eissar/nest/plugins/browser"
+	eagle_module "github.com/eissar/nest/plugins/eagle"
+	ytm_module "github.com/eissar/nest/plugins/ytm"
 
 	"github.com/eissar/nest/render"
 	_ "github.com/eissar/nest/websocket-utils"
@@ -124,6 +126,9 @@ func runServer() {
 	RegisterTestRoutes(test_group)
 	template_group := server.Group("/template")
 	RegisterTemplateRoutes(template_group)
+
+	api_group := server.Group("/api")
+	api.RegisterGroupRoutes(api_group)
 
 	// special handler for user-facing static files
 	// so file endings are not shown in the URI

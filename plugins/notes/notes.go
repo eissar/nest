@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/eissar/nest/config"
-	"github.com/eissar/nest/modules/pwsh"
+	"github.com/eissar/nest/plugins/pwsh"
 	"github.com/labstack/echo"
 )
 
