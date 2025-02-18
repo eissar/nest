@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/eissar/nest/config"
-	"github.com/eissar/nest/fileUtils"
 )
 
 // related to importing libraries into the
@@ -55,16 +54,15 @@ func (e *LibrariesImportErr) Error() string {
 }
 
 // and returns length of bytes read, and error
-// populates v with contents of <configdir>/filename.json
+// populates v with contents of p (filepath)
 func unmarshalLibraries(p string, v *[]string) (int, error) {
-	cfg := filepath.Join(config.GetPath(), p)
-	bytes, err := os.ReadFile(cfg)
+	bytes, err := os.ReadFile(p)
 	if err != nil {
-		return -1, fmt.Errorf("populateJson: err=%w", err)
+		return -1, fmt.Errorf("unmarshalLibraries: err=%w", err)
 	}
 	err = json.Unmarshal(bytes, v)
 	if err != nil {
-		return len(bytes), fmt.Errorf("populateJson: unmarshalling json err=%w", err)
+		return len(bytes), fmt.Errorf("unmarshalLibraries: unmarshalling json err=%w", err)
 	}
 	return len(bytes), nil
 }

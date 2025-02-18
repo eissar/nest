@@ -2,12 +2,13 @@ package eagle
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
 	"os"
 	"path/filepath"
-	"sync"
+	"strings"
 	"time"
 )
 
@@ -21,10 +22,14 @@ type Eagle struct {
 }
 
 type Image struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-	Size int    `json:"size"`
-	Ext  string `json:"ext"`
+	Id           string   `json:"id"`
+	Name         string   `json:"name"`
+	Size         int      `json:"size"`
+	Ext          string   `json:"ext"`
+	LastModified int      `json:"lastModified"` //eagleModTime
+	Tags         []string `json:"tags"`
+	Url          string   `json:"url"`
+	Annotation   string   `json:"annotation"`
 }
 
 // Ptr is a type constraint for pointers to any type.
@@ -46,9 +51,6 @@ func MustParseJson[T any, P Ptr[T]](pth string, v P) error {
 }
 
 func (lib *Library) EnumJson() {
-	lib.Mutex.Lock()
-	defer lib.Mutex.Unlock()
-
 	start := time.Now()
 	pth := filepath.Join(lib.Path, "images")
 
@@ -81,9 +83,6 @@ func (lib *Library) EnumJson() {
 }
 
 func (lib *Library) FirstFiveImages() []*Image {
-	lib.Mutex.Lock()
-	defer lib.Mutex.Unlock()
-
 	pth := filepath.Join(lib.Path, "images")
 
 	totalCnt := 0
@@ -121,4 +120,39 @@ func New() (Eagle, error) {
 		return eag, err
 	}
 	return eag, nil
+}
+
+// get metadata.json
+func (lib *Library) WalkImageDirs() (items []string) {
+	imagesDir := filepath.Join(lib.Path, "images")
+	imagesDirSeps := strings.Count(imagesDir, string(filepath.Separator))
+	filepath.WalkDir(imagesDir, func(path string, d fs.DirEntry, err error) error {
+		depth := strings.Count(path, string(filepath.Separator)) - imagesDirSeps
+		if depth == 0 {
+			// root
+			return nil
+		} else if depth == 1 {
+			items = append(items, filepath.Join(path, "metadata.json"))
+			return fs.SkipDir
+		}
+		return fs.SkipDir
+	})
+	return items
+}
+
+func ParseItemMetadata[T any, P Ptr[T]](pth string, v P) error {
+	bytes, err := os.ReadFile(pth)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("ParseItemMetadata: %w", err)
+		} else {
+			return fmt.Errorf("ParseItemMetadata: %w", err)
+		}
+	}
+
+	err = json.Unmarshal(bytes, v)
+	if err != nil {
+		return fmt.Errorf("unmarshalling json ParseItemMetadata: err=%s", err)
+	}
+	return nil
 }

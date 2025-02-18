@@ -33,6 +33,21 @@ func ServerShutdown(c echo.Context) error {
 
 	return c.String(200, "shutdown cmd successful.")
 }
+func Shutdown(s *echo.Echo) error {
+	var err error
+	//use go routine with timeout to allow time for response.
+	timeout := 10 * time.Second
+	timeoutCtx, shutdownRelease := context.WithTimeout(context.Background(), timeout)
+	defer shutdownRelease()
+
+	go func() {
+		err = s.Shutdown(timeoutCtx)
+	}()
+	if err != nil {
+		fmt.Println("err while graceful shutdown:", err)
+	}
+	return nil
+}
 
 type uploadTabsBody struct {
 	Body string `json:"body"`

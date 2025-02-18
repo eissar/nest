@@ -3,17 +3,22 @@ package main
 // dot source types
 import (
 	"errors"
+	"log"
 	_ "net"
 	_ "sync"
+	"time"
 
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/core"
+	trayicon "github.com/eissar/nest/core/tray-icon"
+	"github.com/eissar/nest/eagle"
 	"github.com/eissar/nest/eagle/api"
 
 	handlers "github.com/eissar/nest/handlers"
 
 	browser_module "github.com/eissar/nest/plugins/browser"
 	eagle_module "github.com/eissar/nest/plugins/eagle"
+	"github.com/eissar/nest/plugins/search"
 	ytm_module "github.com/eissar/nest/plugins/ytm"
 
 	"github.com/eissar/nest/render"
@@ -39,6 +44,12 @@ var editor = "C:/Program Files/Neovim/bin/nvim.exe"
 func runServer() {
 	var err error
 	server := echo.New()
+
+	// TRAY ICON
+	trayicon.Run(func() {
+		core.Shutdown(server)
+	})
+	defer trayicon.Quit()
 
 	// NOTE: Template rules:
 	// 1. ending in .html:  static template.
@@ -75,15 +86,6 @@ func runServer() {
 		},
 		Format: "[LOG] [${time_rfc3339}] ${level} method=${method} path=${path}, Latency=${latency_human}\n",
 	}))
-
-	// server.GET("/", func(c echo.Context) error {
-	// 	// fmt.Println(c.ParamNames())
-	// 	if c.QueryParam("first") == "" {
-	// 		c.QueryParams().Add("first", "5")
-	// 	}
-	// 	a := apiroutes.PopulateEnumerateWindows(c, "")
-	// 	return c.Render(200, "windows.html", a)
-	// })
 
 	server.GET("/api/server/close", core.ServerShutdown)
 	server.GET("/api/ping", core.Ping)
@@ -124,6 +126,7 @@ func runServer() {
 
 	test_group := server.Group("/test")
 	RegisterTestRoutes(test_group)
+
 	template_group := server.Group("/template")
 	RegisterTemplateRoutes(template_group)
 
@@ -150,6 +153,24 @@ func runServer() {
 	}
 }
 
+func trySearch() {
+	e, err := eagle.New()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
+	s := search.New(e)
+	defer s.Index.Close()
+
+	//go search.Index(e, s.Index)
+	//search.ForceReIndex(e, s.Index)
+	search.ForceReIndexStreaming(e, s.Index)
+	return
+
+	start := time.Now()
+	s.Query("vallejo")
+	fmt.Print("search took: ", time.Since(start))
+}
+
 func main() {
 	//#region parseFlags
 	d := flag.Bool("debug", true, "shows additional information in the console while running.")
@@ -158,7 +179,8 @@ func main() {
 	//#endregion
 
 	if debug {
-		//pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'")
+		// pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'")
 	}
+	// trySearch()
 	runServer() //blocking
 }
