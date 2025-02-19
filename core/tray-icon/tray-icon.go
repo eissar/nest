@@ -6,6 +6,8 @@ import (
 
 	"fyne.io/systray"
 	"fyne.io/systray/example/icon"
+	"github.com/eissar/nest/core"
+	"github.com/labstack/echo/v4"
 )
 
 // may panic
@@ -47,6 +49,17 @@ func Quit() {
 
 // make sure to build with flag go build -ldflags -H=windowsgui
 // onExit can be emitted by calling systray.Quit.
-func Run(onExit func()) {
+func RunOld(onExit func()) {
 	go systray.Run(onReady, onExit)
+}
+
+// param s echo server.
+func Run(s *echo.Echo) {
+
+	onExit := func() {
+		core.Shutdown(s)
+	}
+
+	go systray.Run(onReady, onExit)
+
 }

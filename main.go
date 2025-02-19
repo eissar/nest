@@ -46,9 +46,7 @@ func runServer() {
 	server := echo.New()
 
 	// TRAY ICON
-	trayicon.Run(func() {
-		core.Shutdown(server)
-	})
+	trayicon.Run(server)
 	defer trayicon.Quit()
 
 	// NOTE: Template rules:
