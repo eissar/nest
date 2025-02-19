@@ -1,13 +1,18 @@
 package handlers
 
 import (
-	"github.com/eissar/nest/plugins/pwsh"
-	render "github.com/eissar/nest/render"
 	"path/filepath"
 	"strings"
 
+	"github.com/eissar/nest/plugins/pwsh"
+	render "github.com/eissar/nest/render"
+
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
+
+// handlers for satisfying echo.HandlerFunc
+// and middlewareFunc
 
 type dynamicPopulateFunc = render.DynamicTemplatePopulateFunc
 
@@ -57,6 +62,22 @@ func PwshTemplateHandler(templateName string, p string) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		return c.Render(200, templateName, pwsh.RunScript(p))
 	}
+}
+
+// param excl []string excluded paths (paths we don't log)
+func LoggerMiddleware(excl []string) echo.MiddlewareFunc {
+	return middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Skipper: func(c echo.Context) bool {
+			/* type Skipper func(c echo.Context) bool */
+			for _, p := range excl {
+				if c.Path() == p {
+					return true // (skip)
+				}
+			}
+			return false
+		},
+		Format: "[LOG] [${time_rfc3339}] ${level} method=${method} path=${path}, Latency=${latency_human}\n",
+	})
 }
 
 // old

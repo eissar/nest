@@ -33,7 +33,6 @@ import (
 	_ "time"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	_ "golang.org/x/net/websocket"
 )
 
@@ -69,21 +68,9 @@ func runServer() {
 	// }
 	// dynamicTemplateHandler := func(templateName string, populateFunc dynamicTemplatePopulateFunc, opts dynamicTemplateHandlerOpts) echo.HandlerFunc {
 
-	// MIDDLEWARE
-	// LOGGING
-	noLog := []string{"/api/ping", "/template/open-tabs"}
-	server.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Skipper: func(c echo.Context) bool {
-			/* type Skipper func(c echo.Context) bool */
-			for _, p := range noLog {
-				if c.Path() == p {
-					return true // (skip)
-				}
-			}
-			return false
-		},
-		Format: "[LOG] [${time_rfc3339}] ${level} method=${method} path=${path}, Latency=${latency_human}\n",
-	}))
+	// MIDDLEWARE LOGGING
+	excludedPaths := []string{"/api/ping", "/template/open-tabs"}
+	server.Use(handlers.LoggerMiddleware(excludedPaths))
 
 	server.GET("/api/server/close", core.ServerShutdown)
 	server.GET("/api/ping", core.Ping)
@@ -181,4 +168,10 @@ func main() {
 	}
 	// trySearch()
 	runServer() //blocking
+
+	// TODO:
+	// replace runServer()
+	// with:
+	// server = echo.New()
+	// core.RegisterRoutes(server)
 }
