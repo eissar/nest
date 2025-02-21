@@ -21,7 +21,7 @@ var cfg = config.GetConfig()
 func TestList(t *testing.T) {
 	baseUrl := "http://" + cfg.Host + ":" + strconv.Itoa(cfg.Port)
 
-	result, err := List(baseUrl, 1)
+	result, err := ListV2(baseUrl)
 	if err != nil {
 		t.Error(err)
 	}

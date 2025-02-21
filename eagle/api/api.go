@@ -12,15 +12,27 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+type EagleApiResponse struct {
+	Status string
+	Data   []interface{} // optional
+}
+type EagleResponse struct {
+	Status string
+	Data   []Item // optional
+}
+type EagleData struct {
+	Status string
+	Data   []interface{} // optional
+}
+
 type EagleApiErr struct {
 	Message  string
 	Endpoint endpoints.Endpoint
 	Err      error
 }
 
-type EagleResponse struct {
-	Status string
-	Data   []Item
+func (e *EagleApiErr) Error() string {
+	return fmt.Sprintf("eagle api error calling path=%s docurl=%s err=%v ", e.Endpoint.Path, e.Endpoint.HelpUri(), e.Err)
 }
 
 type ApiKeyErr struct {
@@ -29,10 +41,6 @@ type ApiKeyErr struct {
 
 func (e *ApiKeyErr) Error() string {
 	return fmt.Sprintf("eagleapi: api key invalid; err=%s", e.Message)
-}
-
-func (e *EagleApiErr) Error() string {
-	return fmt.Sprintf("eagle api error calling path=%s docurl=%s err=%v ", e.Endpoint.Path, e.Endpoint.HelpUri(), e.Err)
 }
 
 func getApiKey() (string, error) {
@@ -54,7 +62,7 @@ func InvokeEagleAPI(req *http.Request, body interface{}) (*EagleResponse, error)
 	var result EagleResponse
 	key, err := getApiKey()
 	if err != nil {
-		return &result, err
+		return nil, err
 	}
 
 	query := req.URL.Query()
@@ -80,6 +88,49 @@ func InvokeEagleAPI(req *http.Request, body interface{}) (*EagleResponse, error)
 	}
 
 	return &result, nil
+}
+
+// mutates r
+func addApiTokenToRequest(r *http.Request) error {
+	key, err := getApiKey()
+	if err != nil {
+		return err
+	}
+
+	query := r.URL.Query()
+	query.Add("token", key)
+	return nil
+}
+
+// all responses have a status
+// (excl. /api/library/icon)
+func InvokeEagleAPIV1(req *http.Request) (result *EagleData, e error) {
+	err := addApiTokenToRequest(req)
+	if err != nil {
+		return result, err
+	}
+	req.URL.RawQuery = req.URL.Query().Encode()
+	//req.Body
+
+	// make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return result, fmt.Errorf("error making request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// parse the response
+	err = json.NewDecoder(resp.Body).Decode(&result)
+	if err != nil {
+		return result, fmt.Errorf("error decoding response: %v", err)
+	}
+
+	if result.Status != "success" {
+		return result, fmt.Errorf("error decoding response: result object's response was not `success`, but instead, %s ", result.Status)
+	}
+
+	return result, nil
 }
 
 func wrapperHandler(e echo.Context) error {

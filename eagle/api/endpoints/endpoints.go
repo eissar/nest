@@ -1,6 +1,7 @@
 package endpoints
 
 // get helpUri of this endpoint.
+// TODO: use path.join...
 func (e Endpoint) HelpUri() string {
 	return "https://api.eagle.cool" + e.Path
 }
@@ -106,7 +107,7 @@ var Library = map[string]Endpoint{
 		Path:   "/api/library/switch", // https://api.eagle.cool/library/switch
 		Method: "POST",
 	},
-	"icon": { // returns imageBytes in request body.
+	"icon": { // returns imageBytes in response body.
 		Path:   "/api/library/icon", // https://api.eagle.cool/library/icon
 		Method: "GET",
 	},

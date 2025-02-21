@@ -5,16 +5,17 @@ import (
 
 	//handlers "github.com/eissar/nest/handlers"
 
-	"github.com/eissar/nest/eagle/api"
+	_ "github.com/eissar/nest/eagle/api"
 	"github.com/labstack/echo/v4"
 )
 
 func test(c echo.Context) error {
-	a, err := api.InvokeRaindropAPI(api.Endpoint{}, nil)
-	if err != nil {
-		return c.String(400, fmt.Sprintf("err=%v", err))
-	}
-	return c.String(200, a)
+	return c.String(200, "YAYA")
+	//a, err := api.InvokeRaindropAPI(api.Endpoint{}, nil)
+	//if err != nil {
+	//	return c.String(400, fmt.Sprintf("err=%v", err))
+	//}
+	//return c.String(200, a)
 }
 
 func RegisterTestRoutes(g *echo.Group) {
