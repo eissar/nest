@@ -11,103 +11,103 @@ type Endpoint struct {
 }
 
 // maps defining endpoints
-
 var Application = map[string]Endpoint{
-	"info": {
-		Path:   "/api/application/info",
-		Method: "POST",
+	"info": { // returns status, data
+		Path:   "/api/application/info", // https://api.eagle.cool/application/info
+		Method: "GET",
 	},
 }
 
 var Folder = map[string]Endpoint{
-	"create": {
-		Path:   "/api/folder/create",
+	"create": { // returns status, data
+		Path:   "/api/folder/create", // https://api.eagle.cool/folder/create
 		Method: "POST",
 	},
-	"rename": {
-		Path:   "/api/folder/rename",
+	"rename": { // returns status, data
+		Path:   "/api/folder/rename", // https://api.eagle.cool/folder/rename
 		Method: "POST",
 	},
-	"update": {
-		Path:   "/api/folder/update",
+	"update": { // returns status, data
+		Path:   "/api/folder/update", // https://api.eagle.cool/folder/update
 		Method: "POST",
 	},
-	"list": {
-		Path:   "/api/folder/list",
+	"list": { // returns status, data
+		Path:   "/api/folder/list", // https://api.eagle.cool/folder/list
 		Method: "GET",
 	},
-	"listRecent": {
-		Path:   "/api/folder/listRecent",
+	"listRecent": { // returns status, data
+		Path:   "/api/folder/listRecent", // https://api.eagle.cool/folder/listRecent
 		Method: "GET",
 	},
 }
 
-var ItemEndpoints = map[string]Endpoint{
-	"addFromURL": {
-		Path:   "/api/item/addFromURL",
+//eagle.cool/api/item/ endpoints
+var Item = map[string]Endpoint{
+	"addFromURL": { // returns status
+		Path:   "/api/item/addFromURL", // https://api.eagle.cool/item/add-from-uRL
 		Method: "POST",
 	},
-	"addFromURLs": {
-		Path:   "/api/item/addFromURLs",
+	"addFromURLs": { // returns status
+		Path:   "/api/item/addFromURLs", // https://api.eagle.cool/item/add-From-URLs
 		Method: "POST",
 	},
-	"addFromPath": {
-		Path:   "/api/item/addFromPath",
+	"addFromPath": { // returns status
+		Path:   "/api/item/addFromPath", // https://api.eagle.cool/item/addFromPath
 		Method: "POST",
 	},
-	"addFromPaths": {
-		Path:   "/api/item/addFromPaths",
+	"addFromPaths": { // returns status
+		Path:   "/api/item/addFromPaths", // https://api.eagle.cool/item/addFromPaths
 		Method: "POST",
 	},
-	"addBookmark": {
-		Path:   "/api/item/addBookmark",
+	"addBookmark": { // returns status
+		Path:   "/api/item/addBookmark", // https://api.eagle.cool/item/addBookmark
 		Method: "POST",
 	},
-	"info": {
-		Path:   "/api/item/info",
+	"info": { // returns status, data
+		Path:   "/api/item/info", // https://api.eagle.cool/item/info
 		Method: "GET",
 	},
-	"thumbnail": {
-		Path:   "/api/item/thumbnail",
+	"thumbnail": { // returns status, data
+		Path:   "/api/item/thumbnail", // https://api.eagle.cool/item/thumbnail
 		Method: "GET",
 	},
-	"list": {
-		Path:   "/api/item/list",
+	"list": { // returns status, data
+		Path:   "/api/item/list", // https://api.eagle.cool/item/list
 		Method: "GET",
 	},
-	"moveToTrash": {
-		Path:   "/api/item/moveToTrash",
+	"moveToTrash": { // returns status
+		Path:   "/api/item/moveToTrash", // https://api.eagle.cool/item/moveToTrash
 		Method: "POST",
 	},
-	"refreshPalette": {
-		Path:   "/api/item/refreshPalette",
+	"refreshPalette": { // returns status
+		Path:   "/api/item/refreshPalette", // https://api.eagle.cool/item/refreshPalette
 		Method: "POST",
 	},
-	"refreshThumbnail": {
-		Path:   "/api/item/refreshThumbnail",
+	"refreshThumbnail": { // returns status
+		Path:   "/api/item/refreshThumbnail", // https://api.eagle.cool/item/refreshThumbnail
 		Method: "POST",
 	},
-	"update": {
-		Path:   "/api/item/update",
+	"update": { // returns status, data
+		Path:   "/api/item/update", // https://api.eagle.cool/item/update
 		Method: "POST",
 	},
 }
 
 var Library = map[string]Endpoint{
-	"info": {
-		Path:   "/api/library/info",
+	"info": { // returns status, data
+		Path:   "/api/library/info", // https://api.eagle.cool/library/info
 		Method: "GET",
 	},
-	"history": {
-		Path:   "/api/library/history",
+	"history": { // returns status, data
+		Path:   "/api/library/history", // https://api.eagle.cool/library/history
 		Method: "GET",
 	},
-	"switch": {
-		Path:   "/api/library/switch",
+	"switch": { // returns status ( does not wait )
+		Path:   "/api/library/switch", // https://api.eagle.cool/library/switch
 		Method: "POST",
 	},
-	"icon": {
-		Path:   "/api/library/icon",
+	"icon": { // returns imageBytes in request body.
+		Path:   "/api/library/icon", // https://api.eagle.cool/library/icon
 		Method: "GET",
 	},
 }

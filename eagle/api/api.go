@@ -50,7 +50,7 @@ func getApiKey() (string, error) {
 //
 // TODO: we check if status == success anyways, so
 // should we just return EagleResponse.Data?
-func InvokeRaindropAPI(req *http.Request, body interface{}) (*EagleResponse, error) {
+func InvokeEagleAPI(req *http.Request, body interface{}) (*EagleResponse, error) {
 	var result EagleResponse
 	key, err := getApiKey()
 	if err != nil {
@@ -80,6 +80,28 @@ func InvokeRaindropAPI(req *http.Request, body interface{}) (*EagleResponse, err
 	}
 
 	return &result, nil
+}
+
+func wrapperHandler(e echo.Context) error {
+	panic("wrapperHandler: not implemented")
+	if e.Request().Method == "GET" {
+		// ... get logic
+	}
+
+	return nil
+}
+
+func RegisterEagleWrapper(g *echo.Group) {
+	//for _, ep := range endpoints.Application {
+	//for _, ep := range endpoints.Folder {
+	for _, ep := range endpoints.Item {
+		if ep.Method == "GET" {
+			g.GET(ep.Path, wrapperHandler)
+		} else if ep.Method == "POST" {
+			g.POST(ep.Path, wrapperHandler)
+		}
+	}
+	//for _, ep := range endpoints.Library {
 }
 
 // docs: https://api.eagle.cool/item/add-from-url
