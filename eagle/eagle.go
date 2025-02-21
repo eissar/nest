@@ -16,8 +16,18 @@ type Library struct {
 	Name string
 	Path string
 }
+
+// user custom folder enabling
+// use of certain api functions
+// over this folder...
+type Folder struct {
+	Name string
+	Path string
+}
+
 type Eagle struct {
-	Libraries []Library
+	Libraries   []Library
+	Directories []Folder
 	//Db        *sql.DB
 }
 
@@ -155,4 +165,41 @@ func ParseItemMetadata[T any, P Ptr[T]](pth string, v P) error {
 		return fmt.Errorf("unmarshalling json ParseItemMetadata: err=%s", err)
 	}
 	return nil
+}
+
+func (e *Eagle) MetadataParse() {
+	fp := filepath.Join(e.Libraries[0].Path, "metadata.json")
+	_, err := os.Stat(fp)
+	if err != nil {
+		panic(err.Error())
+	}
+	bytes, err := os.ReadFile(fp)
+
+	var out map[string]int
+	json.Unmarshal(bytes, &out)
+
+	if val, ok := out["all"]; ok {
+		fmt.Println(val)
+	}
+
+	fmt.Println(out)
+}
+
+func (e *Eagle) MtimeCount() (int, error) {
+	fp := filepath.Join(e.Libraries[0].Path, "mtime.json")
+	_, err := os.Stat(fp)
+	if err != nil {
+		panic(err.Error())
+	}
+	bytes, err := os.ReadFile(fp)
+
+	var out map[string]int
+	json.Unmarshal(bytes, &out)
+
+	if all, ok := out["all"]; ok {
+		fmt.Println(all)
+		return all, nil
+	} else {
+		return 0, fmt.Errorf("getmtime: missing `all` key after parse %s", fp)
+	}
 }

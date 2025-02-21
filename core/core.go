@@ -63,3 +63,12 @@ func UploadTabs(c echo.Context) error {
 	fmt.Println("[SUCCESS]", c)
 	return c.String(200, "OK")
 }
+
+// registers routes on the server root (/)
+func RegisterRootRoutes(server *echo.Echo) {
+	//server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
+	server.GET("/api/server/close", ServerShutdown)
+	server.GET("/api/ping", Ping)
+	server.POST("/api/uploadTabs", UploadTabs)
+
+}

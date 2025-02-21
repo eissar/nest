@@ -90,7 +90,13 @@ func GetConfig() NestConfig {
 	a := filepath.Join(GetConfigPath(), "config.json")
 	cfg, err := os.ReadFile(a)
 	if err != nil {
-		log.Fatalf("getconfig: error reading file err=%s", err)
+		if errors.Is(err, os.ErrNotExist) {
+			fmt.Println("[INFO] getconfig: creating new config file at", a)
+			MustNewConfig()
+			return initialConfig()
+		} else {
+			log.Fatalf("getconfig: error reading file err=%s", err)
+		}
 	}
 	var v NestConfig
 	err = json.Unmarshal(cfg, &v)

@@ -21,6 +21,7 @@
 
 
 # Features
+[ ] - generalized wrapper fallback for //api...
 [ ] - Filter by Tag Count [1]
 [ ] - Query across libraries
 [ ] - recent eagle items
@@ -28,8 +29,20 @@
 1. (make-a-wish-readonly) <https://discord.com/channels/1169553626860101672/1178804692655034539/1178804692655034539>
 
 
+Libraries.json
 
+{
+	Libraries: []
+	Folders: []
+}
+@ZackaryW non index files? can i link normal files n folders from HDD?
 
+--> using ./eagle/eagle.go:
+    type Folder struct { ...
+
+Nest: GOAL:
+30ms parse 5k files
+metadata.json for mtime.
 
 
 /* __MACRO__
@@ -44,21 +57,19 @@ open new terminal instance with the server running.
 
 /*
 // TODO:
-			[X] - move types to types.go
-			[X] - add HTMX
-			[X] - add middleware to serve url without file suffix.
-			[X] - Recent notes
-			[X] - move time.now calls to middleware (custom)
-			q5s: enumerate-Windows.ps1
-			[ ] - Try reflection for template functions?
-			[ ] - add action parameter to recent notes
-			[X] - Create build.lua
-			[X] - add sse listener to eagle-plugin
-				[X] - for eagle.tabs.query({})
-				on BroadcastSSETargeted({event:"getTabs"...})
-					-> eagle.tabs.query({})
-					-> post("api/uploadTabs")
-					-> fmt.PrintLn tabs
+    [X] - move types to types.go
+    [X] - add HTMX
+    [X] - add middleware to serve url without file suffix.
+    [X] - Recent notes
+    [X] - move time.now calls to middleware (custom)
+    q5s: enumerate-Windows.ps1
+    [X] - Create build.lua
+    [X] - add sse listener to eagle-plugin
+        [X] - for eagle.tabs.query({})
+        on BroadcastSSETargeted({event:"getTabs"...})
+            -> eagle.tabs.query({})
+            -> post("api/uploadTabs")
+            -> fmt.PrintLn tabs
 */
 
 [ ] - recent eagle items

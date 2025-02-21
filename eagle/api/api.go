@@ -8,18 +8,13 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/eissar/nest/eagle/api/endpoints"
 	"github.com/labstack/echo/v4"
 )
 
-type Endpoint struct {
-	Path    string
-	HelpUri string
-	Method  string
-}
-
 type EagleApiErr struct {
 	Message  string
-	Endpoint Endpoint
+	Endpoint endpoints.Endpoint
 	Err      error
 }
 
@@ -37,7 +32,7 @@ func (e *ApiKeyErr) Error() string {
 }
 
 func (e *EagleApiErr) Error() string {
-	return fmt.Sprintf("eagle api error calling path=%s docurl=%s err=%v ", e.Endpoint.Path, e.Endpoint.HelpUri, e.Err)
+	return fmt.Sprintf("eagle api error calling path=%s docurl=%s err=%v ", e.Endpoint.Path, e.Endpoint.HelpUri(), e.Err)
 }
 
 func getApiKey() (string, error) {
@@ -54,7 +49,7 @@ func getApiKey() (string, error) {
 // returns *EagleResponse.
 //
 // TODO: we check if status == success anyways, so
-// can we just return EagleResponse.Data?
+// should we just return EagleResponse.Data?
 func InvokeRaindropAPI(req *http.Request, body interface{}) (*EagleResponse, error) {
 	var result EagleResponse
 	key, err := getApiKey()

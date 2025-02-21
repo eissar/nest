@@ -4,8 +4,6 @@ package main
 import (
 	"errors"
 	"log"
-	_ "net"
-	_ "sync"
 	"time"
 
 	"github.com/eissar/nest/config"
@@ -22,18 +20,12 @@ import (
 	ytm_module "github.com/eissar/nest/plugins/ytm"
 
 	"github.com/eissar/nest/render"
-	_ "github.com/eissar/nest/websocket-utils"
 
-	_ "encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
-	_ "net/http"
-
-	_ "time"
 
 	"github.com/labstack/echo/v4"
-	_ "golang.org/x/net/websocket"
 )
 
 // globals
@@ -42,6 +34,9 @@ var editor = "C:/Program Files/Neovim/bin/nvim.exe"
 
 func runServer() {
 	var err error
+
+	nestConfig := config.GetConfig()
+
 	server := echo.New()
 
 	// TRAY ICON
@@ -59,49 +54,17 @@ func runServer() {
 		Templates: render.MustImportTemplates(),
 	}
 
-	nestConfig := config.GetConfig()
-	fmt.Printf(nestConfig.Host)
-
-	// type dynamicTemplateHandlerOpts struct {
-	// 	args  []string
-	// 	first int
-	// }
-	// dynamicTemplateHandler := func(templateName string, populateFunc dynamicTemplatePopulateFunc, opts dynamicTemplateHandlerOpts) echo.HandlerFunc {
+	fmt.Printf("%s", nestConfig.Host)
 
 	// MIDDLEWARE LOGGING
 	excludedPaths := []string{"/api/ping", "/template/open-tabs"}
 	server.Use(handlers.LoggerMiddleware(excludedPaths))
 
-	server.GET("/api/server/close", core.ServerShutdown)
-	server.GET("/api/ping", core.Ping)
-
-	// move somewhere else
-	server.POST("/api/uploadTabs", core.UploadTabs)
-
-	//server.GET("/api/broadcast/sse", broadcastHandler("getSong"))
-
-	// Static routes;
-	// route prefix, directory
-	server.Static("css", "css")
-	server.Static("js", "js")
-	server.Static("img", "img")
-
-	// Module philosophy:
-	// UNDER NO CIRCUMSTANCES
-	// should html or css be tightly coupled with
-	// or packaged in a module (e.g., eagle_module) TODO:
-
-	// ??? access routes in a module like:
-	// server.GET("/eagleApp/*", eaglemodule.HandleModuleRoutes)
-	// OR
-
-	// routes for:
-	// /eagle://item/<itemId>
-	// /<itemId>
-	eagle_module.RegisterRootRoutes(nestConfig, server)
-
 	eagle_group := server.Group("/eagle")
 	eagle_module.RegisterGroupRoutes(eagle_group)
+
+	eagleapi_group := server.Group("/api")
+	api.RegisterGroupRoutes(eagleapi_group)
 
 	browser_group := server.Group("/browser")
 	browser_module.RegisterGroupRoutes(browser_group)
@@ -115,8 +78,15 @@ func runServer() {
 	template_group := server.Group("/template")
 	RegisterTemplateRoutes(template_group)
 
-	api_group := server.Group("/api")
-	api.RegisterGroupRoutes(api_group)
+	eagle_module.RegisterRootRoutes(nestConfig, server)
+
+	core.RegisterRootRoutes(server)
+
+	// Static routes;
+	// route prefix, directory
+	server.Static("css", "css")
+	server.Static("js", "js")
+	server.Static("img", "img")
 
 	// special handler for user-facing static files
 	// so file endings are not shown in the URI
@@ -129,10 +99,11 @@ func runServer() {
 
 	err = server.Start(":1323")
 	if err != nil {
-		// CASE: server was closed by Server.Shutdown or Server.Close.
 		if errors.Is(err, http.ErrServerClosed) {
+			// shutdown was requested
 			fmt.Println("[LOG] [SHUTDOWN] Shutting down gracefully...")
 		} else {
+			// crash
 			panic(err)
 		}
 	}
@@ -141,7 +112,7 @@ func runServer() {
 func trySearch() {
 	e, err := eagle.New()
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatalf("%s", err.Error())
 	}
 	s := search.New(e)
 	defer s.Index.Close()
@@ -166,10 +137,11 @@ func main() {
 	if debug {
 		// pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'")
 	}
+
 	// trySearch()
 	runServer() //blocking
 
-	// TODO:
+	// TODO:?
 	// replace runServer()
 	// with:
 	// server = echo.New()
