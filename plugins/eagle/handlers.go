@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/eissar/nest/config"
-	"github.com/eissar/nest/fileUtils"
 
 	//"github.com/eissar/nest/plugins/pwsh"
 

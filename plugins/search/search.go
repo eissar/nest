@@ -14,7 +14,6 @@ import (
 	"github.com/blevesearch/bleve/v2"
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/eagle"
-	"github.com/eissar/nest/fileUtils"
 )
 
 type Search struct {

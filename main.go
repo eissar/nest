@@ -11,10 +11,8 @@ import (
 
 	handlers "github.com/eissar/nest/handlers"
 
-	browser_module "github.com/eissar/nest/plugins/browser"
 	eagle_module "github.com/eissar/nest/plugins/eagle"
 	_ "github.com/eissar/nest/plugins/search"
-	ytm_module "github.com/eissar/nest/plugins/ytm"
 
 	"github.com/eissar/nest/render"
 
@@ -62,12 +60,6 @@ func runServer() {
 
 	eagleapi_group := server.Group("/api")
 	api.RegisterGroupRoutes(eagleapi_group)
-
-	browser_group := server.Group("/browser")
-	browser_module.RegisterGroupRoutes(browser_group)
-
-	ytm_group := server.Group("/ytm")
-	ytm_module.RegisterGroupRoutes(ytm_group)
 
 	test_group := server.Group("/test")
 	RegisterTestRoutes(test_group)

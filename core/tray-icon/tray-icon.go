@@ -19,7 +19,7 @@ func handleQuit() {
 }
 
 func onReady() {
-	iconBytes, err := os.ReadFile("./icon/twig.ico")
+	iconBytes, err := os.ReadFile("./assets/img/twig.ico")
 	if err != nil {
 		panic(err)
 	}
