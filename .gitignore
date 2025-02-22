@@ -1,6 +1,11 @@
 
 # temp files
 *~
+
+# builds
+/build
+
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -10,7 +15,6 @@
 *.zip
 
 # misc
-
 *.disabled
 *.internal.md
 *.vim

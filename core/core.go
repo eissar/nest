@@ -15,6 +15,7 @@ import (
 	"github.com/eissar/nest/render"
 	"github.com/eissar/nest/templates"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func Start() {
@@ -46,6 +47,10 @@ func Start() {
 	// MIDDLEWARE LOGGING
 	excludedPaths := []string{"/api/ping", "/template/open-tabs"}
 	server.Use(handlers.LoggerMiddleware(excludedPaths))
+
+	server.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"app://obsidian.md"},
+	}))
 
 	// SCOPED ROUTES
 	eagle_group := server.Group("/eagle")
