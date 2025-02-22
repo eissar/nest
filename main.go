@@ -60,6 +60,7 @@ func runServer() {
 	excludedPaths := []string{"/api/ping", "/template/open-tabs"}
 	server.Use(handlers.LoggerMiddleware(excludedPaths))
 
+	// SCOPED ROUTES
 	eagle_group := server.Group("/eagle")
 	eagle_module.RegisterGroupRoutes(eagle_group)
 
@@ -78,12 +79,12 @@ func runServer() {
 	template_group := server.Group("/template")
 	RegisterTemplateRoutes(template_group)
 
+	// ROOT ROUTES
 	eagle_module.RegisterRootRoutes(nestConfig, server)
-
 	core.RegisterRootRoutes(server)
+	api.RegisterRootRoutes(server)
 
-	// Static routes;
-	// route prefix, directory
+	// STATIC ROUTES (route prefix, directory)
 	server.Static("css", "css")
 	server.Static("js", "js")
 	server.Static("img", "img")

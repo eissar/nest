@@ -20,11 +20,26 @@
 */
 
 
-# Features
-[ ] - generalized wrapper fallback for //api...
+# TODO:
+[X] - generalized wrapper fallback for //api...
+[ ] - synchronous api/library/switch
 [ ] - Filter by Tag Count [1]
 [ ] - Query across libraries
 [ ] - recent eagle items
+[ ] - dynamic key in libraries.json
+
+# Features:
+Just
+
+### Tray Icon
+[X] - quit the program
+[ ] - open config files from tray icon
+
+### Configuration
+On starting the server, libraries
+[ ] - dynamic library reading from eagle.
+
+
 
 1. (make-a-wish-readonly) <https://discord.com/channels/1169553626860101672/1178804692655034539/1178804692655034539>
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	_ "net/url"
 	"strconv"
 
 	"github.com/eissar/nest/eagle/api/endpoints"
@@ -69,8 +70,8 @@ func AddItemFromURL(baseURL string, item Item) (map[string]interface{}, error) {
 	return result, nil
 }
 
-func List(baseURL string, limit int) (EagleResponse, error) {
-	var result EagleResponse
+func List(baseURL string, limit int) (EagleApiResponse, error) {
+	var result EagleApiResponse
 
 	req, err := http.NewRequest(http.MethodGet, baseURL+"/api/item/list", http.NoBody)
 	if err != nil {
@@ -97,15 +98,15 @@ func List(baseURL string, limit int) (EagleResponse, error) {
 	}
 
 	if result.Status != "success" {
-		fmt.Errorf("error decoding response: result object's response was not `success`, but instead, %s ", result.Status)
+		return result, fmt.Errorf("error decoding response: result object's response was not `success`, but instead, %s ", result.Status)
 	}
 
 	resp.Body.Close()
 	return result, nil
 }
 
-func ListV1(baseURL string, limit int) (EagleResponse, error) {
-	var result EagleResponse
+func ListV1(baseURL string, limit int) (EagleApiResponse, error) {
+	var result EagleApiResponse
 
 	req, err := http.NewRequest(http.MethodGet, baseURL+"/api/item/list", http.NoBody)
 	if err != nil {
@@ -139,7 +140,7 @@ func ListV1(baseURL string, limit int) (EagleResponse, error) {
 }
 
 // creates an *http.Request and sends to InvokeEagleAPIV1
-func ListV2(baseUrl string) (*EagleData, error) {
+func ListV2(baseUrl string, limit int) (*EagleData, error) {
 	/*
 		PARAMS
 			limit
@@ -169,6 +170,14 @@ func ListV2(baseUrl string) (*EagleData, error) {
 	if err != nil {
 		return nil, fmt.Errorf("list: error creating request err=%w", err)
 	}
+
+	// add query params
+	query := req.URL.Query()
+	if limit > 0 {
+		query.Add("limit", strconv.Itoa(limit))
+	}
+	req.URL.RawQuery = query.Encode()
+	// fmt.Println("query here:", req.URL.Query().Encode())
 
 	return InvokeEagleAPIV1(req)
 }

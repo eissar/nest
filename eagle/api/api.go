@@ -16,10 +16,11 @@ type EagleApiResponse struct {
 	Status string
 	Data   []interface{} // optional
 }
-type EagleResponse struct {
-	Status string
-	Data   []Item // optional
-}
+
+//	type EagleResponse struct {
+//		Status string
+//		Data   []Item // optional
+//	}
 type EagleData struct {
 	Status string
 	Data   []interface{} // optional
@@ -58,8 +59,8 @@ func getApiKey() (string, error) {
 //
 // TODO: we check if status == success anyways, so
 // should we just return EagleResponse.Data?
-func InvokeEagleAPI(req *http.Request, body interface{}) (*EagleResponse, error) {
-	var result EagleResponse
+func InvokeEagleAPI(req *http.Request, body interface{}) (*EagleApiResponse, error) {
+	var result EagleApiResponse
 	key, err := getApiKey()
 	if err != nil {
 		return nil, err
@@ -91,7 +92,7 @@ func InvokeEagleAPI(req *http.Request, body interface{}) (*EagleResponse, error)
 }
 
 // mutates r
-func addApiTokenToRequest(r *http.Request) error {
+func addTokenAndEncodeQueryParams(r *http.Request) error {
 	key, err := getApiKey()
 	if err != nil {
 		return err
@@ -99,18 +100,17 @@ func addApiTokenToRequest(r *http.Request) error {
 
 	query := r.URL.Query()
 	query.Add("token", key)
+	r.URL.RawQuery = query.Encode()
 	return nil
 }
 
 // all responses have a status
 // (excl. /api/library/icon)
 func InvokeEagleAPIV1(req *http.Request) (result *EagleData, e error) {
-	err := addApiTokenToRequest(req)
+	err := addTokenAndEncodeQueryParams(req)
 	if err != nil {
 		return result, err
 	}
-	req.URL.RawQuery = req.URL.Query().Encode()
-	//req.Body
 
 	// make the request
 	client := &http.Client{}
@@ -133,13 +133,11 @@ func InvokeEagleAPIV1(req *http.Request) (result *EagleData, e error) {
 	return result, nil
 }
 
-func wrapperHandler(e echo.Context) error {
-	panic("wrapperHandler: not implemented")
-	if e.Request().Method == "GET" {
-		// ... get logic
-	}
+func wrapperHandler(c echo.Context) error {
+	if c.Request().Method == "GET" {
 
-	return nil
+	}
+	return c.String(200, c.Request().URL.Path)
 }
 
 func RegisterEagleWrapper(g *echo.Group) {
@@ -158,7 +156,14 @@ func RegisterEagleWrapper(g *echo.Group) {
 // docs: https://api.eagle.cool/item/add-from-url
 
 func RegisterGroupRoutes(g *echo.Group) {
-	g.GET("/item/addFromURL", handleAddItemFromUrl)
+	g.GET("*", wrapperHandler)
+	//g.GET("/item/addFromURL", handleAddItemFromUrl)
+}
+
+func RegisterRootRoutes(server *echo.Echo) {
+	server.GET("/http\\:*", func(c echo.Context) error {
+		return c.String(200, c.Request().URL.Path)
+	})
 
 }
 

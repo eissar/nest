@@ -4,9 +4,15 @@ import (
 	"fmt"
 	"strconv"
 	"testing"
+
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+
 	//"time"
 
 	"github.com/eissar/nest/config"
+	"github.com/labstack/echo/v4"
 )
 
 /*
@@ -16,12 +22,13 @@ import (
 */
 
 var cfg = config.GetConfig()
+var host = cfg.Host + ":" + strconv.Itoa(cfg.Port)
 
 // lists 1
 func TestList(t *testing.T) {
 	baseUrl := "http://" + cfg.Host + ":" + strconv.Itoa(cfg.Port)
 
-	result, err := ListV2(baseUrl)
+	result, err := ListV2(baseUrl, 0)
 	if err != nil {
 		t.Error(err)
 	}
@@ -32,12 +39,12 @@ func TestList(t *testing.T) {
 // get count of all items in library
 
 func TestListLengths(t *testing.T) {
-	baseUrl := "http://" + cfg.Host + ":" + strconv.Itoa(cfg.Port)
+	baseUrl := cfg.FmtURL()
 
 	lens := []int{1, 5, 20, 200}
 
 	for _, limit := range lens {
-		result, err := List(baseUrl, limit)
+		result, err := ListV2(baseUrl, limit)
 		if err != nil {
 			t.Fatalf("%s", err.Error())
 		}
@@ -45,5 +52,50 @@ func TestListLengths(t *testing.T) {
 		if limit != l {
 			t.Fatalf("expected data of len %v, but got %v", limit, l)
 		}
+	}
+}
+
+func TestListWrapper(t *testing.T) {
+	ep := "http://" + host + "/api/item/list"
+
+	urls := []string{
+		ep + "?limit=10",
+	}
+
+	for _, u := range urls {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, u, nil)
+		rec := httptest.NewRecorder()
+
+		c := e.NewContext(req, rec)
+		err := wrapperHandler(c)
+		if err != nil {
+			t.Fatalf("%s", err.Error())
+		}
+	}
+}
+
+func TestListInvoke(t *testing.T) {
+	ep := "http://" + host + "/api/item/list"
+
+	urls := []string{
+		ep + "?limit=10",
+	}
+
+	for _, u := range urls {
+		var err error
+		req := httptest.NewRequest(http.MethodGet, u, nil)
+		t.Fatalf("test")
+		req.URL, err = url.Parse(u)
+		//if err != nil {
+		//	t.Fatalf("%s", err.Error())
+		//}
+
+		result, err := InvokeEagleAPIV1(req)
+		if err != nil {
+			t.Fatalf("%s", err.Error())
+		}
+
+		fmt.Println(result)
 	}
 }

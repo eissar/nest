@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/eissar/nest/fileUtils"
 	"log"
 	"os"
 	"path/filepath"
+	"strconv"
+
+	"github.com/eissar/nest/fileUtils"
 )
 
 type NestConfig struct {
@@ -17,6 +19,10 @@ type NestConfig struct {
 	GetLibraryInfo string `json:"getLibraryInfo"`
 	GetThumbnail   string `json:"getThumbnail"`
 	ApiKey         string `json:"apiKey"`
+}
+
+func (n NestConfig) FmtURL() string {
+	return "http://" + n.Host + ":" + strconv.Itoa(n.Port)
 }
 
 // gets config path,
