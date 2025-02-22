@@ -26,8 +26,8 @@ the second supported link scheme is the output you get from the context menu opt
 in eagle (e.g, http://localhost:41595/item?id=M787F6GA16D3D).
 
 ### Tray icon
-[X] - quit the program <br>
-[ ] - open config files from tray icon <br>
+ - [X] quit the program <br>
+ - [ ] open config files from tray icon <br>
 manage the server (close)
 Planned:
 update configuration
@@ -37,24 +37,24 @@ You can call endpoints in the eagle api using the same syntax as the default eag
 /api/item/list?...
 
 ### (PLANNED) Re-Implementation/ Extensions to the eagle API
-[ ] - autogen docs <br>
-[ ] - improved error messages <br>
-[ ] - Search <br>
-    [ ] - glob fts search <br>
-    [ ] - Filter items by Tag Count <br>
-[ ] - api/item/reveal <br>
-[ ] - synchronous api/library/switch <br>
+ - [ ] autogen docs <br>
+ - [ ] improved error messages <br>
+ - [ ] Search <br>
+     - [ ] glob fts search <br>
+     - [ ] Filter items by Tag Count <br>
+ - [ ] api/item/reveal <br>
+ - [ ] synchronous api/library/switch <br>
 
-[ ] - open config files from tray icon <br>
+ - [ ] open config files from tray icon <br>
 # TODO:
-[X] - generalized wrapper fallback for //api... <br>
-[ ] - method Query across libraries <br>
-[ ] - dynamic key in config/libraries.json <br>
+ - [X] generalized wrapper fallback for //api... <br>
+ - [ ] method Query across libraries <br>
+ - [ ] dynamic key in config/libraries.json <br>
 
 
 ### Configuration
 (move to wiki) On starting the server, libraries are loaded from libraries.json.
-[ ] - dynamic library reading from eagle. <br>
+ - [ ] dynamic library reading from eagle. <br>
 
 > Disclaimer: <br>
 > at the moment, this is experimental software. I will be making breaking changes and changing apis.
