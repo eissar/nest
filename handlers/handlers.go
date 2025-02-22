@@ -36,7 +36,7 @@ func StaticAppHandler(c echo.Context) error {
 	if !isFullPath {
 		requestPath = requestPath + ".html"
 	}
-	filePath := filepath.Join("html", requestPath)
+	filePath := filepath.Join("assets", "html", requestPath)
 	return c.File(filePath)
 }
 

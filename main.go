@@ -3,20 +3,17 @@ package main
 // dot source types
 import (
 	"errors"
-	"log"
-	"time"
 
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/core"
 	trayicon "github.com/eissar/nest/core/tray-icon"
-	"github.com/eissar/nest/eagle"
 	"github.com/eissar/nest/eagle/api"
 
 	handlers "github.com/eissar/nest/handlers"
 
 	browser_module "github.com/eissar/nest/plugins/browser"
 	eagle_module "github.com/eissar/nest/plugins/eagle"
-	"github.com/eissar/nest/plugins/search"
+	_ "github.com/eissar/nest/plugins/search"
 	ytm_module "github.com/eissar/nest/plugins/ytm"
 
 	"github.com/eissar/nest/render"
@@ -84,12 +81,12 @@ func runServer() {
 	api.RegisterRootRoutes(server)
 
 	// STATIC ROUTES (route prefix, directory)
-	server.Static("css", "css")
-	server.Static("js", "js")
-	server.Static("img", "img")
+	server.Static("css", "./assets/css")
+	server.Static("js", "./assets/js")
+	server.Static("img", "./assets/img")
 
 	// special handler for user-facing static files
-	// so file endings are not shown in the URI
+	// so file endings don't have to be shown in the URI
 	server.GET("/app/*", handlers.StaticAppHandler)
 
 	if debug {
@@ -107,24 +104,6 @@ func runServer() {
 			panic(err)
 		}
 	}
-}
-
-func trySearch() {
-	e, err := eagle.New()
-	if err != nil {
-		log.Fatalf("%s", err.Error())
-	}
-	s := search.New(e)
-	defer s.Index.Close()
-
-	//go search.Index(e, s.Index)
-	//search.ForceReIndex(e, s.Index)
-	search.ForceReIndexStreaming(e, s.Index)
-	return
-
-	start := time.Now()
-	s.Query("vallejo")
-	fmt.Print("search took: ", time.Since(start))
 }
 
 func main() {
