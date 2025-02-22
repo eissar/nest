@@ -7,3 +7,9 @@
 *.dll
 *.so
 *.dylib
+
+# misc
+
+*.disabled
+*.internal.md
+*.vim
