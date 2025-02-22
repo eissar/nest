@@ -6,7 +6,6 @@ import (
 
 	"fyne.io/systray"
 	"fyne.io/systray/example/icon"
-	"github.com/eissar/nest/core"
 	"github.com/labstack/echo/v4"
 )
 
@@ -54,12 +53,7 @@ func RunOld(onExit func()) {
 }
 
 // param s echo server.
-func Run(s *echo.Echo) {
-
-	onExit := func() {
-		core.Shutdown(s)
-	}
-
+func Run(s *echo.Echo, onExit func()) {
 	go systray.Run(onReady, onExit)
 
 }

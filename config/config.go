@@ -8,8 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-
-	"github.com/eissar/nest/fileUtils"
 )
 
 type NestConfig struct {
@@ -39,7 +37,7 @@ func GetConfigPath() string {
 	createFlag := false
 	_, err := os.Stat(configPath)
 	if err != nil {
-		if errors.Is(err, fileUtils.ErrNotExist) {
+		if errors.Is(err, os.ErrNotExist) {
 			createFlag = true
 		} else {
 			log.Fatalf("config.get: %v", err.Error())
@@ -64,7 +62,7 @@ func GetPath() string {
 	createFlag := false
 	_, err := os.Stat(configPath)
 	if err != nil {
-		if errors.Is(err, fileUtils.ErrNotExist) {
+		if errors.Is(err, os.ErrNotExist) {
 			createFlag = true
 		} else {
 			log.Fatalf("config.get: %v", err.Error())
@@ -148,7 +146,7 @@ func MustNewConfig() string {
 		mustCreateFile := false
 		_, err := os.Stat(jsonPath)
 		if err != nil {
-			if errors.Is(err, fileUtils.ErrNotExist) {
+			if errors.Is(err, os.ErrNotExist) {
 				mustCreateFile = true
 			}
 		}
