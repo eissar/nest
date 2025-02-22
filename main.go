@@ -30,7 +30,6 @@ import (
 
 // globals
 var debug = false
-var editor = "C:/Program Files/Neovim/bin/nvim.exe"
 
 func runServer() {
 	var err error
@@ -130,13 +129,12 @@ func trySearch() {
 
 func main() {
 	//#region parseFlags
-	d := flag.Bool("debug", true, "shows additional information in the console while running.")
+	d := flag.Bool("debug", true, "shows additional information in the console while running. (does nothing)")
 	flag.Parse()
 	debug = *d
 	//#endregion
-
 	if debug {
-		// pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'")
+		/* pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'") */
 	}
 
 	// trySearch()
