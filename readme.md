@@ -50,6 +50,7 @@ You can call endpoints in the eagle api using the same syntax as the default eag
  - [X] generalized wrapper fallback for //api... <br>
  - [ ] method Query across libraries <br>
  - [ ] dynamic key in config/libraries.json <br>
+ - [ ] use exe as server launcher (with cli flag) and also interface for CLI interaction with eagle.
 
 
 ### Configuration
