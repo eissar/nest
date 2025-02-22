@@ -1,19 +1,30 @@
-$GOOSList = "windows", "linux" # "darwin"
+$GOOSList = "windows","darwin" # "linux"
 $GOARCHList = "amd64", "arm64", "386"
 
-foreach ($os in $GOOSList) {
-    foreach ($arch in $GOARCHList) {
-        $outputName = "build/nest-$os-$arch"
-        if ($os -eq "windows") {
-            $outputName += ".exe"
-        }
-    
-        Write-Host "Building for $os/$arch..."
-        $env:GOOS = $os
-        $env:GOARCH = $arch
-        go build -o $outputName
-        Write-Host "Built $outputName"
-    }
+# windows
+foreach ($arch in $GOARCHList) {
+    $os = "windows"
+    $env:GOOS = $os
+    $env:GOARCH = $arch
+    Write-Host "Building for $os/$arch..."
+
+    $outputName = "build/nest-$os-$arch.exe"
+
+    go build -ldflags -H=windowsgui -o $outputName 
+    Write-Host "Built $outputName"
 }
 
-Write-Host "All builds completed."
+# darwin
+foreach ($arch in $GOARCHList) {
+    $os = "darwin"
+    $env:GOOS = $os
+    $env:GOARCH = $arch
+    Write-Host "Building for $os/$arch..."
+
+    $outputName = "build/nest-$os-$arch"
+
+    go build -o $outputName
+    Write-Host "Built $outputName"
+
+    Write-Host "All builds completed."
+}
