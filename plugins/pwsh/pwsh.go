@@ -3,10 +3,9 @@ package pwsh
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
-
-	"github.com/eissar/nest/fileUtils"
 )
 
 //type ExecErr error
@@ -22,7 +21,7 @@ func RunScript(script string) []interface{} {
 	if err != nil {
 		return []interface{}{err}
 	}
-	err = fileUtils.TestPath(pth)
+	_, err = os.Stat(pth)
 	if err != nil {
 		return []interface{}{err}
 	}
