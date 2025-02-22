@@ -4,7 +4,6 @@ import (
 	_ "bytes"
 	_ "encoding/csv"
 	"fmt"
-	_ "github.com/eissar/nest/types"
 	_ "io"
 	"os"
 	"os/exec"
