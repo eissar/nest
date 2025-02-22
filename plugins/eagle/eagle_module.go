@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/eissar/nest/config"
-	"github.com/eissar/nest/helpers"
+	"github.com/eissar/nest/plugins/launch"
 	"github.com/eissar/nest/plugins/pwsh"
 
 	"github.com/labstack/echo/v4"
@@ -53,7 +53,7 @@ func RegisterGroupRoutes(g *echo.Group) {
 	g.GET("/open/:id", func(c echo.Context) error {
 		id := c.Param("id")
 		uri := fmt.Sprintf("eagle://item/%s", id)
-		helpers.OpenURI(uri)
+		launch.OpenURI(uri)
 		return c.String(200, "OK")
 	})
 	g.GET("/api/recentEagleItems", pwsh.RecentEagleItems)
@@ -77,31 +77,8 @@ func RegisterRootRoutes(n config.NestConfig, server *echo.Echo) {
 	server.GET("/api/eagleOpen/:id", func(c echo.Context) error {
 		id := c.Param("id")
 		uri := fmt.Sprintf("eagle://item/%s", id)
-		helpers.OpenURI(uri)
+		launch.OpenURI(uri)
 		return c.String(200, "OK")
 	})
 
-	/*
-		server.GET("/:id", func(c echo.Context) error {
-			id := EagleItemId(c.Param("id"))
-			if !id.IsValid() {
-				res := fmt.Sprintf("get path=%s err=id of `%s` is not valid.", c.Path(), id)
-				return c.JSON(200, res)
-			}
-
-			thumbnail, err := nestCfg.GetEagleThumbnail(id)
-			if err != nil {
-				res := fmt.Sprintf("get path=%s err=%s", c.Path(), err.Error())
-				return c.String(200, res)
-			}
-			err = fileUtils.PathExists(thumbnail.ThumbnailPath)
-			if err != nil {
-				res := fmt.Sprintf("get path=%s err=%s", c.Path(), err.Error())
-				return c.String(200, res)
-			}
-			// filepath exists.
-			return c.File(thumbnail.ThumbnailPath)
-			//return c.JSON(200, thumb)
-		})
-	*/
 }

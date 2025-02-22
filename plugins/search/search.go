@@ -76,7 +76,7 @@ func New(e eagle.Eagle) *Search {
 func Initialize(e eagle.Eagle) bleve.Index {
 	newIndexFlag := false
 	blevePath := filepath.Join(config.GetPath(), "example.bleve")
-	err := fileUtils.PathExists(blevePath)
+	_, err := os.Stat(blevePath)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			newIndexFlag = true

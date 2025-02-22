@@ -37,7 +37,7 @@ func GetConfigPath() string {
 	configPath := filepath.Join(prf, ".config", "nest")
 
 	createFlag := false
-	err := fileUtils.PathExists(configPath)
+	_, err := os.Stat(configPath)
 	if err != nil {
 		if errors.Is(err, fileUtils.ErrNotExist) {
 			createFlag = true
@@ -62,7 +62,7 @@ func GetPath() string {
 	configPath := filepath.Join(prf, ".config", "nest")
 
 	createFlag := false
-	err := fileUtils.PathExists(configPath)
+	_, err := os.Stat(configPath)
 	if err != nil {
 		if errors.Is(err, fileUtils.ErrNotExist) {
 			createFlag = true
@@ -146,7 +146,7 @@ func MustNewConfig() string {
 	// CreateJson
 	func() {
 		mustCreateFile := false
-		err := fileUtils.PathExists(jsonPath)
+		_, err := os.Stat(jsonPath)
 		if err != nil {
 			if errors.Is(err, fileUtils.ErrNotExist) {
 				mustCreateFile = true

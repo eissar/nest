@@ -22,26 +22,12 @@ var ( // copied from os
 
 // returns absolute filepath
 // or log.Fatalf()
-func MustFilepathAbs(s string) string {
+func mustFilepathAbs(s string) string {
 	fp, err := filepath.Abs(s)
 	if err != nil {
 		log.Fatalf("pathexists: %w,", err)
 	}
 	return fp
-}
-
-// returns an error if Path does not
-// exist, nil if it does exist, and
-// panics if another error occurs.
-func PathExists(p string) error {
-	fp := MustFilepathAbs(p)
-	_, err := os.Stat(fp)
-	if err != nil {
-		if errors.Is(err, ErrNotExist) {
-			return fmt.Errorf("path exists: %w,", err)
-		}
-	}
-	return nil
 }
 
 func TestPath(pth string) error {
