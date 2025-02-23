@@ -77,6 +77,7 @@ Just make sure it isn't being used by any other service on your computer.
 
 # TODO:
 - [X] generalized wrapper fallback for //api...
+- [ ] create watcher for mtime.json
 - [ ] method Query across libraries
 - [ ] dynamic key in config/libraries.json
 - [ ] use exe as server launcher (with cli flag) and also interface for CLI interaction with eagle.
