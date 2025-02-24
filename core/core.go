@@ -137,25 +137,9 @@ func Shutdown(s *echo.Echo) error {
 	return nil
 }
 
-type uploadTabsBody struct {
-	Body string `json:"body"`
-}
-
-func UploadTabs(c echo.Context) error {
-	a := c.Request().Body
-	b := []byte{}
-	_, err := a.Read(b)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("[SUCCESS]", c)
-	return c.String(200, "OK")
-}
-
 // registers routes on the server root (/)
 func RegisterRootRoutes(server *echo.Echo) {
 	//server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
 	server.GET("/api/server/close", ServerShutdown)
 	server.GET("/api/ping", Ping)
-	server.POST("/api/uploadTabs", UploadTabs)
 }
