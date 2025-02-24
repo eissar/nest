@@ -139,8 +139,13 @@ func ListV1(baseURL string, limit int) (EagleApiResponse, error) {
 	return result, nil
 }
 
+type ListData struct {
+	EagleData
+	Data []interface{} `json:"data"`
+}
+
 // creates an *http.Request and sends to InvokeEagleAPIV1
-func ListV2(baseUrl string, limit int) (*EagleData, error) {
+func ListV2(baseUrl string, limit int) (*ListData, error) {
 	/*
 		PARAMS
 			limit
@@ -179,5 +184,47 @@ func ListV2(baseUrl string, limit int) (*EagleData, error) {
 	req.URL.RawQuery = query.Encode()
 	// fmt.Println("query here:", req.URL.Query().Encode())
 
-	return InvokeEagleAPIV1(req)
+	var a *ListData
+	err = InvokeEagleAPIV2(req, &a)
+	if err != nil {
+		return nil, err
+	}
+	return a, nil
+}
+
+type ThumbnailData struct {
+	Status        string `json:"status"`
+	ThumbnailPath string `json:"data"`
+}
+
+// creates an *http.Request and sends to InvokeEagleAPIV1
+func Thumbnail(baseUrl string, itemId string) (s string, err error) {
+	ep, ok := endpoints.Item["thumbnail"]
+	if !ok {
+		return s, fmt.Errorf("could not find endpoint `list` in endpoints.")
+	}
+
+	uri := baseUrl + ep.Path
+
+	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
+	if err != nil {
+		return s, fmt.Errorf("list: error creating request err=%w", err)
+	}
+
+	// add query params
+	query := req.URL.Query()
+
+	if !IsValidItemID(itemId) {
+		return s, fmt.Errorf("list: error creating request err= itemId parameter malformed or empty.")
+	}
+	query.Add("id", itemId)
+	req.URL.RawQuery = query.Encode()
+
+	var a ThumbnailData
+	err = InvokeEagleAPIV2(req, &a)
+	if err != nil {
+		return s, err
+	}
+
+	return a.ThumbnailPath, nil
 }

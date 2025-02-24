@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 
 	"github.com/eissar/nest/eagle/api/endpoints"
 	"github.com/labstack/echo/v4"
@@ -22,8 +23,11 @@ type EagleApiResponse struct {
 //		Data   []Item // optional
 //	}
 type EagleData struct {
+	Status string `json:"status"`
+}
+type EagleMessage struct {
 	Status string
-	Data   []interface{} // optional
+	Data   any
 }
 
 type EagleApiErr struct {
@@ -133,6 +137,36 @@ func InvokeEagleAPIV1(req *http.Request) (result *EagleData, e error) {
 	return result, nil
 }
 
+type Ptr[T any] interface{ *T }
+
+// all responses have a status
+// (excl. /api/library/icon)
+// populates pointer with response from req
+func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
+	if v == nil {
+		return fmt.Errorf("v cannot be nil.")
+	}
+	err := addTokenAndEncodeQueryParams(req)
+	if err != nil {
+		return err
+	}
+
+	// make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("error making request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	// parse the response
+	err = json.NewDecoder(resp.Body).Decode(&v)
+	if err != nil {
+		return fmt.Errorf("error decoding response: %v", err)
+	}
+	return nil
+}
+
 func wrapperHandler(c echo.Context) error {
 	if c.Request().Method == "GET" {
 
@@ -151,6 +185,21 @@ func RegisterEagleWrapper(g *echo.Group) {
 		}
 	}
 	//for _, ep := range endpoints.Library {
+}
+
+const (
+	MaxEagleItemIDLength = 15
+	eagleItemIDPattern   = `^[a-zA-Z0-9]+$` // Pre-compiled regular expression
+)
+
+var eagleItemIDRegex = regexp.MustCompile(eagleItemIDPattern)
+
+// todo remove regex
+func IsValidItemID(id string) bool {
+	if len(id) >= MaxEagleItemIDLength {
+		return false
+	}
+	return eagleItemIDRegex.MatchString(string(id))
 }
 
 // docs: https://api.eagle.cool/item/add-from-url

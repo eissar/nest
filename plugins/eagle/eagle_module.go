@@ -11,6 +11,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// maybe
+type Data interface {
+	GetData() []interface{}
+}
+
 type Library struct {
 	Name  string
 	Path  string
@@ -19,6 +24,21 @@ type Library struct {
 type Eagle struct {
 	//Db        *sql.DB
 	Libraries []*Library
+}
+
+// for endpoints that return an array of data.
+type EagleData struct {
+	Status string
+	Data   []interface{} // optional
+}
+
+// maybe
+func (data EagleData) GetData() {}
+
+// for endpoints that return a string.
+type EagleDataMessage struct {
+	Status string `json:"status"`
+	Data   string `json:"data"`
 }
 
 func RegisterGroupRoutes(g *echo.Group) {
@@ -74,11 +94,25 @@ func RegisterGroupRoutes(g *echo.Group) {
 func RegisterRootRoutes(n config.NestConfig, server *echo.Echo) {
 	server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
 	server.GET("/:itemId", ServeThumbnailHandler(&n))
-	server.GET("/api/eagleOpen/:id", func(c echo.Context) error {
+
+	// show the item in eagle
+	server.GET("/eagle/show/:id", func(c echo.Context) error {
 		id := c.Param("id")
 		uri := fmt.Sprintf("eagle://item/%s", id)
 		launch.OpenURI(uri)
 		return c.String(200, "OK")
 	})
+
+	// todo make better
+	server.GET("/eagle/item/path", func(c echo.Context) error {
+		id := EagleItemId(c.QueryParam("id"))
+		if !id.IsValid() {
+			return c.String(404, "invalid or missing query param `id`")
+		}
+
+		return c.String(200, "OK")
+	})
+
+	//$ext = (irm "http://localhost:41595/api/item/info?id=M6VK3GF6845SQ").data.ext
 
 }
