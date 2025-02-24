@@ -3,7 +3,6 @@ package eaglemodule
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/eissar/nest/config"
 	"io"
 	"log"
 	"net/http"
@@ -12,6 +11,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/eissar/nest/config"
+	"github.com/eissar/nest/eagle/api/endpoints"
 )
 
 type nestCfg config.NestConfig
@@ -119,8 +121,9 @@ func GetEagleThumbnailFromId(cfg *config.NestConfig, id string) (map[string]inte
 	client := &http.Client{
 		Timeout: 5 * time.Second, // Add a timeout to prevent indefinite hangs
 	}
+	ep := endpoints.Item["thumbnail"]
 
-	builder := Uri(cfg, cfg.GetThumbnail)
+	builder := Uri(cfg, ep.Path)
 	builder.Query.Add("id", id)
 
 	req, err := http.NewRequest("GET", builder.String(), nil)
@@ -161,11 +164,12 @@ func GetEagleThumbnail(cfg *config.NestConfig, itemId EagleItemId) (ThumbnailDat
 		Timeout: 5 * time.Second, // Add a timeout to prevent indefinite hangs
 	}
 	var out ThumbnailData
+	ep := endpoints.Item["thumbnail"]
 
-	builder := Uri(cfg, cfg.GetThumbnail)
+	builder := Uri(cfg, ep.Path)
 	builder.Query.Add("id", string(itemId))
 
-	req, err := http.NewRequest("GET", builder.String(), nil)
+	req, err := http.NewRequest(ep.Method, builder.String(), nil)
 	if err != nil {
 		return out, fmt.Errorf("geteagleThumbnailFromId: error while creating new request err=%w", err)
 	}
@@ -188,7 +192,7 @@ func GetEagleThumbnail(cfg *config.NestConfig, itemId EagleItemId) (ThumbnailDat
 	if err != nil {
 		return out, fmt.Errorf("getEagleThumbnailFromId: error while unmarshalling data."+
 			"has schema changed? check docs for endpoint=`%s` "+
-			"<https://api.eagle.cool/item/thumbnail> err=%w ", cfg.GetThumbnail, err)
+			"<https://api.eagle.cool/item/thumbnail> err=%w ", ep.Path, err)
 	}
 
 	out.ThumbnailPath, err = url.PathUnescape(out.ThumbnailPath)
@@ -200,7 +204,7 @@ func GetEagleThumbnail(cfg *config.NestConfig, itemId EagleItemId) (ThumbnailDat
 	if out.Status != "success" {
 		return out, fmt.Errorf("getEagleThumbnailFromId: error while recieving data: "+
 			"docs for endpoint=`%s` <https://api.eagle.cool/item/thumbnail> err= "+
-			"resp.Status is `%s` and not `success`.", cfg.GetThumbnail, out.Status)
+			"resp.Status is `%s` and not `success`.", ep.Path, out.Status)
 	}
 
 	return out, nil

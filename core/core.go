@@ -90,6 +90,13 @@ func Start() {
 	}
 }
 
+func PrintSiteMap(server *echo.Echo) {
+	fmt.Println("server available routes:")
+	for _, x := range server.Routes() {
+		fmt.Println(x.Name, x.Path)
+	}
+}
+
 func Ping(c echo.Context) error {
 	return c.String(http.StatusOK, "OK")
 }
