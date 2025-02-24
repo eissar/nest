@@ -61,6 +61,7 @@ You can call endpoints in the eagle api using the same syntax as the default eag
 
 ### (PLANNED) Re-Implementation/ Extensions to the eagle API
 - [ ] autogen docs
+- [ ] get library filepath
 - [ ] improved error messages
 - [ ] Search
     - [ ] glob fts search
