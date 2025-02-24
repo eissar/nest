@@ -22,9 +22,15 @@ type EagleApiResponse struct {
 //		Status string
 //		Data   []Item // optional
 //	}
+
+// for endpoints that return an array of data.
 type EagleData struct {
 	Status string `json:"status"`
 }
+
+// maybe
+func (data EagleData) GetData() {}
+
 type EagleMessage struct {
 	Status string
 	Data   any

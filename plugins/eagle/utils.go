@@ -1,4 +1,4 @@
-package eaglemodule
+package nest
 
 import (
 	"encoding/json"

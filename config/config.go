@@ -9,24 +9,31 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 )
 
-type LibrariesConfig struct {
+type Libraries struct {
 	AutoLoad bool     `json:"autoLoad"`
 	Paths    []string `json:"paths"`
 }
+type Eagle struct {
+	Libraries Libraries `json:"libraries"`
+}
+type Nest struct {
+	Port int `json:"port"`
+}
 
+// todo use eagle instead of flat autoload/paths
 type NestConfig struct {
-	Libraries   LibrariesConfig `json:"libraries"`
-	Directories []string        `json:"directories"`
-	Port        int             `json:"port"`
-	Host        string          `json:"host"`
-	ApiKey      string          `json:"apiKey,omitempty"`
+	Libraries   Libraries `json:"libraries"`
+	Directories []string  `json:"directories"`
+	Port        int       `json:"port"`
+	Host        string    `json:"host"`
+	ApiKey      string    `json:"apiKey,omitempty"`
+	Nest        Nest      `json:"nest"`
 }
 
 func (n NestConfig) FmtURL() string {
-	return "http://" + n.Host + ":" + strconv.Itoa(n.Port)
+	return fmt.Sprintf("http://%s:%d", n.Host, n.Port)
 }
 
 // gets config path,
@@ -88,9 +95,12 @@ func initialConfig(libraryPaths []string) NestConfig {
 	return NestConfig{
 		Port: 41595,
 		Host: "127.0.0.1",
-		Libraries: LibrariesConfig{
+		Libraries: Libraries{
 			AutoLoad: true,
 			Paths:    libraryPaths,
+		},
+		Nest: Nest{
+			Port: 1323,
 		},
 		Directories: []string{},
 	}

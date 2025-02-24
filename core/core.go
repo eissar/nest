@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
+	"net"
 	"net/http"
 	"time"
 
@@ -11,7 +13,7 @@ import (
 	trayicon "github.com/eissar/nest/core/tray-icon"
 	"github.com/eissar/nest/eagle/api"
 	"github.com/eissar/nest/handlers"
-	eagle_module "github.com/eissar/nest/plugins/eagle"
+	nest "github.com/eissar/nest/plugins/eagle"
 	"github.com/eissar/nest/render"
 	"github.com/eissar/nest/templates"
 	"github.com/labstack/echo/v4"
@@ -22,6 +24,10 @@ func Start() {
 	var err error
 
 	nestConfig := config.GetConfig()
+
+	if isPortOccupied(nestConfig.Nest.Port) {
+		log.Fatalf("error starting server: port %d occupied. is the server already running?", nestConfig.Nest.Port)
+	}
 
 	server := echo.New()
 
@@ -54,7 +60,7 @@ func Start() {
 
 	// SCOPED ROUTES
 	eagle_group := server.Group("/eagle")
-	eagle_module.RegisterGroupRoutes(eagle_group)
+	nest.RegisterGroupRoutes(eagle_group)
 
 	eagleapi_group := server.Group("/api")
 	api.RegisterGroupRoutes(eagleapi_group)
@@ -63,7 +69,7 @@ func Start() {
 	templates.RegisterTemplateRoutes(template_group)
 
 	// ROOT ROUTES
-	eagle_module.RegisterRootRoutes(nestConfig, server)
+	nest.RegisterRootRoutes(nestConfig, server)
 	api.RegisterRootRoutes(server)
 	RegisterRootRoutes(server)
 
@@ -78,7 +84,7 @@ func Start() {
 
 	server.HideBanner = true
 
-	err = server.Start(":1323")
+	err = server.Start(fmt.Sprintf(":%d", nestConfig.Nest.Port))
 	if err != nil {
 		if errors.Is(err, http.ErrServerClosed) {
 			// shutdown was requested
@@ -99,6 +105,15 @@ func PrintSiteMap(server *echo.Echo) {
 
 func Ping(c echo.Context) error {
 	return c.String(http.StatusOK, "OK")
+}
+
+func isPortOccupied(port int) bool {
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
+	if err != nil {
+		return true // Port is likely occupied
+	}
+	defer listener.Close()
+	return false // Port is free
 }
 
 // func PopulateQueryFrontmatter() {}

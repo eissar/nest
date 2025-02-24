@@ -1,10 +1,11 @@
-package eaglemodule
+package nest
 
 import (
 	"fmt"
 	"sync"
 
 	"github.com/eissar/nest/config"
+	"github.com/eissar/nest/eagle/api"
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/eissar/nest/plugins/pwsh"
 
@@ -21,19 +22,12 @@ type Library struct {
 	Path  string
 	Mutex sync.Mutex
 }
+
+// rename to nest?
 type Eagle struct {
 	//Db        *sql.DB
 	Libraries []*Library
 }
-
-// for endpoints that return an array of data.
-type EagleData struct {
-	Status string
-	Data   []interface{} // optional
-}
-
-// maybe
-func (data EagleData) GetData() {}
 
 // for endpoints that return a string.
 type EagleDataMessage struct {
@@ -54,13 +48,13 @@ func RegisterGroupRoutes(g *echo.Group) {
 			config.GetConfig(),
 		)
 	})
-	// TODO: MAKE WORK
 	g.GET("/isValid/:id", func(c echo.Context) error {
 		id := c.Param("id")
-		if id == "" {
-			return c.JSON(200, `{"valid":false}`)
+
+		if api.IsValidItemID(id) {
+			return c.JSON(200, `{"valid":true}`)
 		}
-		return c.JSON(200, `{"valid":true}`)
+		return c.JSON(200, `{"valid":false}`)
 	})
 	g.GET("/test", func(c echo.Context) error {
 		a, err := validateIsEagleServerRunning("http://localhost:41595/api/application/info")
@@ -114,5 +108,4 @@ func RegisterRootRoutes(n config.NestConfig, server *echo.Echo) {
 	})
 
 	//$ext = (irm "http://localhost:41595/api/item/info?id=M6VK3GF6845SQ").data.ext
-
 }
