@@ -36,6 +36,9 @@ type NestConfig struct {
 func (n NestConfig) FmtURL() string {
 	return fmt.Sprintf("http://%s:%d", n.Host, n.Port)
 }
+func (n NestConfig) BaseURL() string {
+	return n.FmtURL()
+}
 
 // gets config path,
 // creating paths if they don't exist

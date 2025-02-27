@@ -3,13 +3,11 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/core"
-	"github.com/eissar/nest/eagle/api"
-	commandline "github.com/eissar/nest/plugins/command-line"
+	cmd "github.com/eissar/nest/core/command-line"
 )
 
 // globals
@@ -18,6 +16,9 @@ var debug = false
 func main() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	addPath := addCmd.String("file", "", "filepath that will be added to eagle.")
+
+	listCmd := flag.NewFlagSet("list", flag.ExitOnError)
+	listLimit := listCmd.Int("limit", 5, "number of items to retrieve")
 
 	help := flag.Bool("help", false, "print help information")
 	serve := flag.Bool("serve", false, "run the utility server")
@@ -35,7 +36,13 @@ func main() {
 		cfg := config.GetConfig()
 
 		addCmd.Parse(os.Args[2:])
-		commandline.Add(cfg, addPath)
+		cmd.Add(cfg, addPath)
+	case "list":
+		cfg := config.GetConfig()
+
+		listCmd.Parse(os.Args[2:])
+		cmd.List(cfg, listLimit)
+
 	}
 
 	//if *debug { } /* pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'") */
