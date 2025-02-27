@@ -165,6 +165,15 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode > 299 || resp.StatusCode < 200 {
+		var error_message any
+		err = json.NewDecoder(resp.Body).Decode(&error_message)
+		if err != nil {
+			return fmt.Errorf("error decoding response: %w", err)
+		}
+		return fmt.Errorf("response code from eagle was not 2XX: response: %v", error_message)
+	}
+
 	// parse the response
 	err = json.NewDecoder(resp.Body).Decode(&v)
 	if err != nil {
@@ -219,7 +228,6 @@ func RegisterRootRoutes(server *echo.Echo) {
 	server.GET("/http\\:*", func(c echo.Context) error {
 		return c.String(200, c.Request().URL.Path)
 	})
-
 }
 
 /*

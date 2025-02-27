@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	_ "net/url"
 	"strconv"
@@ -190,6 +191,47 @@ func ListV2(baseUrl string, limit int) (*ListData, error) {
 		return nil, err
 	}
 	return a, nil
+}
+func setRequestBody(req *http.Request, body []byte) {
+	req.Body = io.NopCloser(bytes.NewBuffer(body))
+	req.ContentLength = int64(len(body))
+}
+
+// returns status only.
+func AddItemFromPath(baseURL string, file_path string) error {
+	ep, ok := endpoints.Item["addFromPath"]
+	if !ok {
+		return fmt.Errorf("could not find endpoint `addFromPath` in endpoints.")
+	}
+	uri := baseURL + ep.Path
+	body := []byte(
+		fmt.Sprintf(`{"path": "%s"}`, file_path),
+	)
+	req, err := http.NewRequest(ep.Method, uri, bytes.NewReader(body)) // method, url, body
+	if err != nil {
+		return fmt.Errorf("list: error creating request err=%w", err)
+	}
+
+	// add query params
+	// query := req.URL.Query()
+
+	//query.Add("path", file_path)
+	//query.Add("name", "test")
+	//req.URL.RawQuery = query.Encode()
+	//fmt.Printf("req.URL.RawQuery: %v\n", req.URL.RawQuery)
+	var a *EagleMessage
+	err = InvokeEagleAPIV2(req, &a)
+	if err != nil {
+		return err
+	}
+
+	if a.Status != "success" {
+		return fmt.Errorf("response status recieved from eagle was not `success` message=%v", a)
+	}
+
+	fmt.Println(a)
+
+	return nil
 }
 
 type ThumbnailData struct {

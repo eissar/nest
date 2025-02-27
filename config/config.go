@@ -32,6 +32,7 @@ type NestConfig struct {
 	Nest        Nest      `json:"nest"`
 }
 
+// "http://<host>:<port>"
 func (n NestConfig) FmtURL() string {
 	return fmt.Sprintf("http://%s:%d", n.Host, n.Port)
 }

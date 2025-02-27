@@ -99,3 +99,11 @@ func TestListInvoke(t *testing.T) {
 		fmt.Println(result)
 	}
 }
+
+func TestAddItemFromPath(t *testing.T) {
+	baseUrl := cfg.FmtURL()
+	err := AddItemFromPath(baseUrl, `C:/Users/eshaa/Downloads/download.jpg`)
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
