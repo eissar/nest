@@ -8,6 +8,7 @@ import (
 
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/eagle/api"
+	"github.com/eissar/nest/plugins/launch"
 )
 
 func Add(cfg config.NestConfig, pth *string) {
@@ -35,4 +36,18 @@ func List(cfg config.NestConfig, limit *int) {
 	}
 
 	fmt.Fprintf(os.Stdout, "%v", string(output))
+}
+
+// param t string: target filepath or item id to reveal
+func Reveal(cfg config.NestConfig, t *string) {
+	if len(*t) == 0 {
+		log.Fatalf("[ERROR] add: flag `-target` is required.")
+	}
+	//fmt.Println("path:", *t)
+
+	err := launch.Reveal(*t)
+	if err != nil {
+		log.Fatalf("[ERROR] while adding eagle item: err=%s", err.Error())
+	}
+	os.Exit(0)
 }

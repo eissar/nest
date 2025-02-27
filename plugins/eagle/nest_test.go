@@ -9,7 +9,7 @@ import (
 
 func TestThumb(t *testing.T) {
 	cfg := config.GetConfig()
-	i, err := GetEagleThumbnailV2(&cfg, "LVKFORWVA0O4O")
+	i, err := GetEagleThumbnailFullRes(&cfg, "LVKFORWVA0O4O")
 	if err != nil {
 		t.Fatal(err)
 	}

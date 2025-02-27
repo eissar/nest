@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -155,45 +156,6 @@ func GetEagleThumbnailFromId(cfg *config.NestConfig, id string) (map[string]inte
 	return a, nil
 }
 
-var allowed_filetypes = []string{"JPEG", "PNG", "GIF", "SVG", "WebP", "AVIF"}
-
-func GetEaglePathFromId(cfg *config.NestConfig, id string) (string, error) {
-	client := &http.Client{
-		Timeout: 5 * time.Second, // Add a timeout to prevent indefinite hangs
-	}
-	ep := endpoints.Item["thumbnail"]
-
-	builder := Uri(cfg, ep.Path)
-	builder.Query.Add("id", id)
-
-	req, err := http.NewRequest(ep.Method, builder.String(), nil)
-	if err != nil {
-		return "", fmt.Errorf("getEagleThumbnailFromId: error while creating new request err=%s", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("getEagleThumbnailFromId: error making request: %w", err)
-	}
-	defer resp.Body.Close() // Ensure the response body is closed
-
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("eagle API request failed with status %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("error reading response body: %w", err)
-	}
-	var responseData EagleDataMessage
-	err = json.Unmarshal(body, &responseData)
-	//fmt.Printf("body: %v\n", a["body"])
-	if err != nil {
-		log.Fatalf("getEagleThumbnailFromId: %s", err.Error())
-	}
-	return responseData.Data, nil
-}
-
 type ThumbnailData struct {
 	Status        string `json:"status"`
 	ThumbnailPath string `json:"data"`
@@ -250,14 +212,39 @@ func GetEagleThumbnail(cfg *config.NestConfig, itemId EagleItemId) (ThumbnailDat
 	return out, nil
 }
 
-// on my device thumbnail ONLY end with _thumbnail.png or they do not exist.
-// this returns the full file path if there is no thumbnail.
 func GetEagleThumbnailV2(cfg *config.NestConfig, itemId string) (string, error) {
-	baseUrl := "http://" + cfg.Host + ":" + strconv.Itoa(cfg.Port)
-	thumbnail, err := api.Thumbnail(baseUrl, itemId)
+	thumbnail, err := api.Thumbnail(cfg.BaseURL(), itemId)
 	if err != nil {
 		return "", fmt.Errorf("getEagleThumbnail: err=%w", err)
 	}
+	return thumbnail, nil
+}
+
+var allowed_filetypes = []string{".jpeg", ".jpg", ".png", ".gif", ".svg", ".webp", ".avif"}
+
+// on my device thumbnail ONLY end with _thumbnail.png or they do not exist.
+// this returns the full file path if there is no thumbnail.
+func GetEagleThumbnailFullRes(cfg *config.NestConfig, itemId string) (string, error) {
+	thumbnail, err := api.Thumbnail(cfg.BaseURL(), itemId)
+	if err != nil {
+		return "", fmt.Errorf("getEagleThumbnail: err=%w", err)
+	}
+
+	if !strings.HasSuffix(thumbnail, "_thumbnail.png") {
+		// eagle resized thumbnail
+		return thumbnail, nil
+	}
+	thumbnail = strings.TrimSuffix(thumbnail, "_thumbnail.png")
+
+	for _, typ := range allowed_filetypes {
+		thumb := thumbnail + typ
+		if _, err := os.Stat(thumb); err == nil {
+			// if any exists
+			return thumb, nil
+		}
+	}
+	// fallback todo: list all files other than metadata.json & _thumbnail.png?
+
 	return thumbnail, nil
 }
 

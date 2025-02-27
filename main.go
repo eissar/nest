@@ -15,10 +15,13 @@ var debug = false
 
 func main() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
-	addPath := addCmd.String("file", "", "filepath that will be added to eagle.")
+	addPath := addCmd.String("file", "", "filepath that will be added to eagle")
 
 	listCmd := flag.NewFlagSet("list", flag.ExitOnError)
 	listLimit := listCmd.Int("limit", 5, "number of items to retrieve")
+
+	revealCmd := flag.NewFlagSet("reveal", flag.ExitOnError)
+	revealPath := revealCmd.String("target", "", "filepath or item id to reveal")
 
 	help := flag.Bool("help", false, "print help information")
 	serve := flag.Bool("serve", false, "run the utility server")
@@ -42,6 +45,11 @@ func main() {
 
 		listCmd.Parse(os.Args[2:])
 		cmd.List(cfg, listLimit)
+	case "reveal":
+		cfg := config.GetConfig()
+
+		revealCmd.Parse(os.Args[2:])
+		cmd.Reveal(cfg, revealPath)
 
 	}
 
@@ -50,7 +58,6 @@ func main() {
 	if *serve {
 		core.Start() //blocking
 	}
-
 }
 
 // TODO:?
