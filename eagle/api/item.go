@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	_ "net/url"
+	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/eissar/nest/eagle/api/endpoints"
@@ -199,6 +202,20 @@ func setRequestBody(req *http.Request, body []byte) {
 
 // returns status only.
 func AddItemFromPath(baseURL string, file_path string) error {
+	resolveFilePath := func() string {
+		file_path, err := filepath.Abs(file_path)
+		if err != nil {
+			log.Fatalf("[ERROR] could not resolve %s err=%s\n", file_path, err.Error())
+		}
+		file_path = filepath.ToSlash(file_path)
+
+		_, err = os.Stat(file_path)
+		if err != nil {
+			log.Fatalf("[ERROR] could not resolve %s err=%s\n", file_path, err.Error())
+		}
+		return file_path
+	}
+	file_path = resolveFilePath()
 	ep, ok := endpoints.Item["addFromPath"]
 	if !ok {
 		return fmt.Errorf("could not find endpoint `addFromPath` in endpoints.")
