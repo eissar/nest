@@ -9,6 +9,7 @@ import (
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/core"
 	"github.com/eissar/nest/eagle/api"
+	commandline "github.com/eissar/nest/plugins/command-line"
 )
 
 // globals
@@ -31,19 +32,10 @@ func main() {
 
 	switch os.Args[1] {
 	case "add":
-		addCmd.Parse(os.Args[2:])
-		fmt.Println("path:", *addPath)
-		// resolve *addPath
-		if len(*addPath) == 0 {
-			log.Fatalf("[ERROR] add: flag `-file` is required.")
-		}
 		cfg := config.GetConfig()
 
-		err := api.AddItemFromPath(cfg.FmtURL(), *addPath)
-		if err != nil {
-			log.Fatalf("[ERROR] while adding eagle item: err=%s", err.Error())
-		}
-		os.Exit(0)
+		addCmd.Parse(os.Args[2:])
+		commandline.Add(cfg, addPath)
 	}
 
 	//if *debug { } /* pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'") */
