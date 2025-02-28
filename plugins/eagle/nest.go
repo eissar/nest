@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// maybe
 type Data interface {
 	GetData() []interface{}
 }

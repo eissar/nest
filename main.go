@@ -50,7 +50,6 @@ func main() {
 
 		revealCmd.Parse(os.Args[2:])
 		cmd.Reveal(cfg, revealPath)
-
 	}
 
 	//if *debug { } /* pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'") */
