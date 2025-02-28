@@ -222,27 +222,66 @@ func GetEagleThumbnailV2(cfg *config.NestConfig, itemId string) (string, error) 
 
 var allowed_filetypes = []string{".jpeg", ".jpg", ".png", ".gif", ".svg", ".webp", ".avif"}
 
-// on my device thumbnail ONLY end with _thumbnail.png or they do not exist.
-// this returns the full file path if there is no thumbnail.
-func GetEagleThumbnailFullRes(cfg *config.NestConfig, itemId string) (string, error) {
-	thumbnail, err := api.Thumbnail(cfg.BaseURL(), itemId)
-	if err != nil {
-		return "", fmt.Errorf("getEagleThumbnail: err=%w", err)
-	}
 
-	if !strings.HasSuffix(thumbnail, "_thumbnail.png") {
-		// eagle resized thumbnail
-		return thumbnail, nil
-	}
-	thumbnail = strings.TrimSuffix(thumbnail, "_thumbnail.png")
+// tries to find the actual from the response
+// of request api/item/thumbnail. checks if there are 
+// any files matching `allowed_filetypes`.
+func resolveThumbnailPath(t string) (string, error){
+	var thumbnail string // output
 
-	for _, typ := range allowed_filetypes {
-		thumb := thumbnail + typ
-		if _, err := os.Stat(thumb); err == nil {
-			// if any exists
-			return thumb, nil
+	if !strings.HasSuffix(t, "_thumbnail.png"){
+		// should already the full-resolution file.
+		thumbnail = t
+	} else {
+		thumbnailRoot := strings.TrimSuffix(thumbnail, "_thumbnail.png")
+
+		for _, typ := range allowed_filetypes {
+			joinedPath := thumbnailRoot + typ
+			if _, err := os.Stat(joinedPath); err == nil {
+				thumbnail = joinedPath // if any exists
+				break;
+			}
 		}
 	}
+
+	thumbnail, err = url.PathUnescape(t)
+	if err != nil {
+		return thumbnail, fmt.Errorf("resolvethumb: error cleaning thumbnail path: %s:", err.Error())
+	}
+	return thumbnail, nil
+}
+
+// on my device thumbnail ONLY end with _thumbnail.png or they do not exist.
+// this returns the full file path
+func GetEagleThumbnailFullRes(cfg *config.NestConfig, itemId string) (string, error) {
+	resolved := false 
+
+	urlDecodeThumbnail := func(t string) (string, error){
+		err, decoded := url.PathUnescape(t)
+		if err != nil {
+			return t, fmt.Errorf("getthumbnailfullres: error decoding thumbnail path: %s, err=%s", string, err.Error())
+		}
+		return d
+	}
+
+	thumbnail, err := GetEagleThumbnailV2(cfg.BaseURL(), itemId)
+	if err != nil {
+		return thumbnail, fmt.Errorf("getEagleThumbnail: err=%w", err)
+	}
+
+	thumbnail, err := resolveThumbnailPath(thumbnail)
+	if err != nil {
+		return thumbnail, fmt.Errorf("getEagleThumbnail: err=%w", err)
+	}
+
+
+
+	thumbnail, err = url.PathUnescape(thumbnail)
+	if err != nil {
+		log.Fatalf("error cleaning thumbnail path: %s", err.Error())
+	}
+
+
 	// fallback todo: list all files other than metadata.json & _thumbnail.png?
 
 	return thumbnail, nil
@@ -257,6 +296,10 @@ func GetListV0(cfg *config.NestConfig) (any, error) {
 
 	return nil, nil
 }
+
+func
+
+
 
 /*
 func getEagleThumbnailsFromIds() {

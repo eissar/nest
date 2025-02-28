@@ -4,10 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
+	"path/filepath"
 
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/eagle/api"
+	nest "github.com/eissar/nest/plugins/eagle"
 	"github.com/eissar/nest/plugins/launch"
 )
 
@@ -45,7 +48,25 @@ func Reveal(cfg config.NestConfig, t *string) {
 	}
 	//fmt.Println("path:", *t)
 
-	err := launch.Reveal(*t)
+	resolveOrGetFilepath := func() (resolvedPath string) {
+		resolvedPath, _ = filepath.Abs(*t)
+		if _, err := os.Stat(resolvedPath); err != nil {
+			resolvedPath, err := nest.GetEagleThumbnailFullRes(&cfg, *t)
+			if err != nil {
+				log.Fatalf("error getting thumbnail: %s", err.Error())
+			}
+			resolvedPath, err = url.PathUnescape(resolvedPath)
+			if err != nil {
+				log.Fatalf("error cleaning thumbnail path: %s", err.Error())
+			}
+			fmt.Printf("resolvedPath: %v\n", resolvedPath)
+			return resolvedPath
+		}
+
+		return resolvedPath
+	}
+
+	err := launch.Reveal(resolveOrGetFilepath())
 	if err != nil {
 		log.Fatalf("[ERROR] while adding eagle item: err=%s", err.Error())
 	}
