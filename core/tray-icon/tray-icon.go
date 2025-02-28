@@ -1,11 +1,15 @@
 package trayicon
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"fyne.io/systray"
 	"fyne.io/systray/example/icon"
+	"github.com/eissar/nest/config"
+	"github.com/eissar/nest/plugins/launch"
 	"github.com/labstack/echo/v4"
 )
 
@@ -27,17 +31,28 @@ func onReady() {
 	//systray.SetTooltip("Nest @" + VERSION)
 	systray.SetTooltip("Nest")
 	mQuit := systray.AddMenuItem("Quit", "close nest background tasks and exit")
+	mConfig := systray.AddMenuItem("Config", "open nest config")
 	// Sets the icon of a menu item.
 	mQuit.SetIcon(icon.Data)
 
 	// event listeners for menu items
 	go func() {
-		for range mQuit.ClickedCh {
-			// just close the systray.
-			//the registered onExit func will handle closing logic.
-			systray.Quit()
+		for {
+			select {
+			case <-mQuit.ClickedCh:
+				systray.Quit()
+				return
+			case <-mConfig.ClickedCh:
+				cfgPath := filepath.Join(config.GetConfigPath(), "config.json")
+				launch.Open(cfgPath)
+				return
+			}
 		}
 	}()
+}
+func test() {
+	launch.OpenURI(config.GetConfigPath())
+
 }
 
 //func onExit() { // clean up here }

@@ -27,6 +27,22 @@ func OpenURI(uri string) error {
 	return cmd.Run()
 }
 
+func Open(file string) error {
+	var cmd *exec.Cmd
+
+	switch runtime.GOOS {
+	case "windows":
+		cmd = exec.Command("explorer", file)
+	case "darwin":
+		cmd = exec.Command("open", file)
+	default: // Linux and other Unix-like systems
+		cmd = exec.Command("xdg-open", file)
+	}
+
+	cmd.Run()
+	return nil
+}
+
 // param v string: filepath or item id
 // TODO: reveal fails if filepath has spaces.
 // TODO: fix logic to make itemID case retrieve filepath and reveal in explorer
