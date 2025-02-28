@@ -61,12 +61,12 @@ You can call endpoints in the eagle api using the same syntax as the default eag
 
 ### (PLANNED) Re-Implementation/ Extensions to the eagle API
 - [ ] autogen docs
-- [ ] get library filepath
+- [X] get library filepath
 - [ ] improved error messages
 - [ ] Search
     - [ ] glob fts search
     - [ ] Filter items by Tag Count
-- [ ] api/item/reveal
+- [X] api/item/reveal
 - [ ] synchronous api/library/switch
 
 - [ ] open config files from tray icon
