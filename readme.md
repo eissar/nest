@@ -68,8 +68,8 @@ You can call endpoints in the eagle api using the same syntax as the default eag
     - [ ] Filter items by Tag Count
 - [X] api/item/reveal
 - [ ] synchronous api/library/switch
-
-- [ ] open config files from tray icon
+- [ ] Config
+    - [ ] open config files from tray icon
 
 ### Configuration
 config is set in %USERPROFILE%/.config/nest directory.

@@ -1,9 +1,11 @@
 package trayicon
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"fyne.io/systray"
 	"fyne.io/systray/example/icon"
@@ -20,17 +22,28 @@ func handleQuit() {
 	//_, err := cmd.CombinedOutput()
 }
 
-func onReady() {
+func setIcon() {
 	iconBytes, err := os.ReadFile("./assets/img/twig.ico")
 	if err != nil {
 		panic(err)
 	}
 	systray.SetIcon(iconBytes)
+}
+func setTitle() {
 	systray.SetTitle("Nest")
 	//systray.SetTooltip("Nest @" + VERSION)
 	systray.SetTooltip("Nest")
+}
+
+// use this to dynamically reload menu items.
+// possible impl.:?
+// type func MenuItemPopulateFunc() (title string, tooltip string, func())
+// func setMenuItems(...MenuItemPopulateFunc) {}
+func setMenuItems() {
 	mQuit := systray.AddMenuItem("Quit", "close nest background tasks and exit")
 	mConfig := systray.AddMenuItem("Config", "open nest config")
+
+	mRefresh := systray.AddMenuItem("Try Refresh?"+time.Now().String(), "test")
 	// Sets the icon of a menu item.
 	mQuit.SetIcon(icon.Data)
 
@@ -45,16 +58,23 @@ func onReady() {
 				cfgPath := filepath.Join(config.GetConfigPath(), "config.json")
 				launch.Open(cfgPath)
 				return
+			case <-mRefresh.ClickedCh:
+				systray.ResetMenu()
+				fmt.Println("refreshing...")
+				time.Sleep(100 * time.Millisecond)
+				defer setMenuItems()
+				return
 			}
 		}
+		//set:
+		//	setMenuItems()
 	}()
 }
-func test() {
-	launch.OpenURI(config.GetConfigPath())
-
+func onReady() {
+	setIcon()
+	setTitle()
+	setMenuItems()
 }
-
-//func onExit() { // clean up here }
 
 func Quit() {
 	systray.Quit()
@@ -69,5 +89,4 @@ func RunOld(onExit func()) {
 // param s echo server.
 func Run(s *echo.Echo, onExit func()) {
 	go systray.Run(onReady, onExit)
-
 }

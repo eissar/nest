@@ -10,8 +10,8 @@ import (
 
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/eagle/api"
-	nest "github.com/eissar/nest/plugins/eagle"
 	"github.com/eissar/nest/plugins/launch"
+	"github.com/eissar/nest/plugins/nest"
 )
 
 func Add(cfg config.NestConfig, pth *string) {

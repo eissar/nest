@@ -11,12 +11,12 @@ import (
 	"path/filepath"
 )
 
+// TODO:
+// - [ ] don't write libraries to cfg if `AutoLoad` is true.
+
 type Libraries struct {
 	AutoLoad bool     `json:"autoLoad"`
 	Paths    []string `json:"paths"`
-}
-type Eagle struct {
-	Libraries Libraries `json:"libraries"`
 }
 type Nest struct {
 	Port int `json:"port"`

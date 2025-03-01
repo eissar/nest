@@ -13,7 +13,7 @@ import (
 	trayicon "github.com/eissar/nest/core/tray-icon"
 	"github.com/eissar/nest/eagle/api"
 	"github.com/eissar/nest/handlers"
-	nest "github.com/eissar/nest/plugins/eagle"
+	"github.com/eissar/nest/plugins/nest"
 	"github.com/eissar/nest/render"
 	"github.com/eissar/nest/templates"
 	"github.com/labstack/echo/v4"
