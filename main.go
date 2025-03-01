@@ -40,16 +40,19 @@ func main() {
 
 		addCmd.Parse(os.Args[2:])
 		cmd.Add(cfg, addPath)
+		os.Exit(0)
 	case "list":
 		cfg := config.GetConfig()
 
 		listCmd.Parse(os.Args[2:])
 		cmd.List(cfg, listLimit)
+		os.Exit(0)
 	case "reveal":
 		cfg := config.GetConfig()
 
 		revealCmd.Parse(os.Args[2:])
 		cmd.Reveal(cfg, revealPath)
+		os.Exit(0)
 	}
 
 	//if *debug { } /* pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'") */

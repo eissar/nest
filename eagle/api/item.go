@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
-	"log"
 	"net/http"
 	_ "net/url"
 	"os"
@@ -14,6 +12,10 @@ import (
 
 	"github.com/eissar/nest/eagle/api/endpoints"
 )
+
+// site, annotation, tags, folderid
+type ItemProto struct {
+}
 
 type Item struct {
 	URL              string   `json:"url"`
@@ -25,6 +27,9 @@ type Item struct {
 	ModificationTime int64    `json:"modificationTime"`
 	FolderID         string   `json:"folderId"`
 	//Headers          map[string]string `json:"headers,omitempty"`
+}
+
+type ItemUrl struct {
 }
 
 // no folder Id
@@ -74,78 +79,13 @@ func AddItemFromURL(baseURL string, item Item) (map[string]interface{}, error) {
 	return result, nil
 }
 
-func List(baseURL string, limit int) (EagleApiResponse, error) {
-	var result EagleApiResponse
-
-	req, err := http.NewRequest(http.MethodGet, baseURL+"/api/item/list", http.NoBody)
-	if err != nil {
-		return result, fmt.Errorf("error initializing request: %v", err)
-	}
-	query := req.URL.Query()
-
-	query.Add("limit", strconv.Itoa(limit))
-	req.URL.RawQuery = query.Encode()
-	//fmt.Printf("url: %v\n", req.URL.RequestURI())
-
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return result, fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return result, fmt.Errorf("error decoding response: %v", err)
-	}
-
-	if result.Status != "success" {
-		return result, fmt.Errorf("error decoding response: result object's response was not `success`, but instead, %s ", result.Status)
-	}
-
-	resp.Body.Close()
-	return result, nil
-}
-
-func ListV1(baseURL string, limit int) (EagleApiResponse, error) {
-	var result EagleApiResponse
-
-	req, err := http.NewRequest(http.MethodGet, baseURL+"/api/item/list", http.NoBody)
-	if err != nil {
-		return result, fmt.Errorf("error initializing request: %v", err)
-	}
-	query := req.URL.Query()
-	query.Add("limit", strconv.Itoa(limit))
-	//fmt.Printf("url: %v\n", req.URL.RequestURI())
-	req.Header.Set("Content-Type", "application/json")
-
-	InvokeEagleAPIV1(req)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return result, fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return result, fmt.Errorf("error decoding response: %v", err)
-	}
-
-	if result.Status != "success" {
-		return result, fmt.Errorf("error decoding response: result object's response was not `success`, but instead, %s ", result.Status)
-	}
-
-	resp.Body.Close()
-	return result, nil
-}
-
 type ListData struct {
 	EagleData
 	Data []interface{} `json:"data"`
+}
+
+type Options struct {
+	Limit int `json:"limit,omitempty"`
 }
 
 // creates an *http.Request and sends to InvokeEagleAPIV1
@@ -195,34 +135,48 @@ func ListV2(baseUrl string, limit int) (*ListData, error) {
 	}
 	return a, nil
 }
-func setRequestBody(req *http.Request, body []byte) {
-	req.Body = io.NopCloser(bytes.NewBuffer(body))
-	req.ContentLength = int64(len(body))
+
+type itemFromPath struct {
+	Path       string   `json:"path"`                 // Required, the path of the local file.
+	Name       string   `json:"name,omitempty"`       // Required, the name of the image to be added. (not really req)
+	Website    string   `json:"website,omitempty"`    // The Address of the source of the image.
+	Annotation string   `json:"annotation,omitempty"` // The annotation for the image.
+	Tags       []string `json:"tags,omitempty"`       // Tags for the image.
+	FolderId   string   `json:"folderId,omitempty"`   // If this parameter is defined, the image will be added to the corresponding folder.
+}
+
+// resolves p string and sets path.
+func (i *itemFromPath) setPath(p string) error {
+	file_path, err := filepath.Abs(p)
+	if err != nil {
+		return fmt.Errorf("[ERROR] could not resolve %s err=%w\n", p, err)
+	}
+	file_path = filepath.ToSlash(file_path)
+
+	_, err = os.Stat(file_path)
+	if err != nil {
+		return fmt.Errorf("[ERROR] could not resolve %s err=%w\n", p, err)
+	}
+
+	i.Path = file_path
+	return nil
+}
+
+func ConstructItemFromPath(filePath string) (obj itemFromPath, err error) {
+	err = obj.setPath(filePath)
+	return obj, err
 }
 
 // returns status only.
-func AddItemFromPath(baseURL string, file_path string) error {
-	resolveFilePath := func() string {
-		file_path, err := filepath.Abs(file_path)
-		if err != nil {
-			log.Fatalf("[ERROR] could not resolve %s err=%s\n", file_path, err.Error())
-		}
-		file_path = filepath.ToSlash(file_path)
-
-		_, err = os.Stat(file_path)
-		if err != nil {
-			log.Fatalf("[ERROR] could not resolve %s err=%s\n", file_path, err.Error())
-		}
-		return file_path
-	}
-	file_path = resolveFilePath()
+// use ConstructItemFromPath to build args
+func AddItemFromPath(baseURL string, item itemFromPath) error {
 	ep, ok := endpoints.Item["addFromPath"]
 	if !ok {
 		return fmt.Errorf("could not find endpoint `addFromPath` in endpoints.")
 	}
 	uri := baseURL + ep.Path
 	body := []byte(
-		fmt.Sprintf(`{"path": "%s"}`, file_path),
+		fmt.Sprintf(`{"path": "%s"}`, item.Path),
 	)
 	req, err := http.NewRequest(ep.Method, uri, bytes.NewReader(body)) // method, url, body
 	if err != nil {

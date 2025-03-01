@@ -20,11 +20,18 @@ func Add(cfg config.NestConfig, pth *string) {
 	}
 	fmt.Println("path:", *pth)
 
-	err := api.AddItemFromPath(cfg.BaseURL(), *pth)
+	obj, err := api.ConstructItemFromPath(
+		*pth,
+	)
+	fmt.Println("path:", obj.Path)
+	if err != nil {
+		log.Fatalf("[ERROR] while constructing request: err=%s", err.Error())
+	}
+
+	err = api.AddItemFromPath(cfg.BaseURL(), obj)
 	if err != nil {
 		log.Fatalf("[ERROR] while adding eagle item: err=%s", err.Error())
 	}
-	os.Exit(0)
 }
 
 func List(cfg config.NestConfig, limit *int) {
@@ -70,5 +77,4 @@ func Reveal(cfg config.NestConfig, t *string) {
 	if err != nil {
 		log.Fatalf("[ERROR] while adding eagle item: err=%s", err.Error())
 	}
-	os.Exit(0)
 }
