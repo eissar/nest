@@ -1,11 +1,9 @@
 package trayicon
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"fyne.io/systray"
 	"fyne.io/systray/example/icon"
@@ -43,9 +41,16 @@ func setMenuItems() {
 	mQuit := systray.AddMenuItem("Quit", "close nest background tasks and exit")
 	mConfig := systray.AddMenuItem("Config", "open nest config")
 
-	mRefresh := systray.AddMenuItem("Try Refresh?"+time.Now().String(), "test")
+	//mRefresh := systray.AddMenuItem("Try Refresh?"+time.Now().String(), "test")
 	// Sets the icon of a menu item.
 	mQuit.SetIcon(icon.Data)
+
+	mLibraries := systray.AddMenuItem("Libraries", "Libraries")
+
+	cfg := config.GetConfig()
+	for _, l := range cfg.Libraries.Paths {
+		mLibraries.AddSubMenuItem(l, "")
+	}
 
 	// event listeners for menu items
 	go func() {
@@ -58,12 +63,12 @@ func setMenuItems() {
 				cfgPath := filepath.Join(config.GetConfigPath(), "config.json")
 				launch.Open(cfgPath)
 				return
-			case <-mRefresh.ClickedCh:
-				systray.ResetMenu()
-				fmt.Println("refreshing...")
-				time.Sleep(100 * time.Millisecond)
-				defer setMenuItems()
-				return
+				//case <-mRefresh.ClickedCh:
+				//	systray.ResetMenu()
+				//	fmt.Println("refreshing...")
+				//	time.Sleep(100 * time.Millisecond)
+				//	defer setMenuItems()
+				//	return
 			}
 		}
 		//set:
