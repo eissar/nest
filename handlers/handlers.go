@@ -26,9 +26,9 @@ func StaticTemplateHandler(templateName string) echo.HandlerFunc {
 	}
 }
 
-// StaticAppHandler :=
-// special handler for user-facing static files
-// so file endings are not shown in the URI
+// StaticAppHandler godoc
+//
+// @Summary	  special handler for user-facing static files so file endings are not shown in the URI
 func StaticAppHandler(c echo.Context) error {
 	// Serve static files with fallback for /app/index
 	requestPath := c.Param("*") // Get the requested path after "/app/"

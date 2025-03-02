@@ -9,7 +9,7 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/eissar/nest/eagle/api/endpoints"
+	"github.com/eissar/nest/api/endpoints"
 	"github.com/labstack/echo/v4"
 )
 

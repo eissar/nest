@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/eissar/nest/api"
 	"github.com/eissar/nest/config"
-	"github.com/eissar/nest/eagle/api"
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/eissar/nest/plugins/nest"
 )

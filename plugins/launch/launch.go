@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/eissar/nest/eagle/api"
+	"github.com/eissar/nest/api"
 )
 
 func OpenURI(uri string) error {

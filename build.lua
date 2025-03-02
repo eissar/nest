@@ -1,3 +1,5 @@
+-- docs: swag init -d .\core\,.\handlers\,.\plugins\nest\ -g .\core.go --parseInternal --parseFuncBody --parseDependency && go build && .\nest.exe -serve
+
 function string.join(separator, list)
 	local result = ""
 	for i, v in ipairs(list) do

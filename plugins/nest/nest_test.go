@@ -17,7 +17,7 @@ func TestThumb(t *testing.T) {
 }
 func TestList(t *testing.T) {
 	cfg := config.GetConfig()
-	i, err := GetListV0(&cfg)
+	i, err := GetList(&cfg)
 	if err != nil {
 		t.Fatal(err)
 	}

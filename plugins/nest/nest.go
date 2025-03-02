@@ -4,16 +4,17 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/eissar/nest/api"
 	"github.com/eissar/nest/config"
-	"github.com/eissar/nest/eagle/api"
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/eissar/nest/plugins/pwsh"
 
 	"github.com/labstack/echo/v4"
 )
 
+// maybe
 type Data interface {
-	GetData() []interface{}
+	GetData() []any
 }
 
 type Library struct {
@@ -34,35 +35,58 @@ type EagleDataMessage struct {
 	Data   string `json:"data"`
 }
 
+type validResponse struct {
+	Valid bool `json:"valid,omitempty"`
+}
+
 func RegisterGroupRoutes(g *echo.Group) {
 	//nestCfg := GetConfig()
 
+	// @Summary      refresh config
+	// @Description  refresh config
+	// @Router       /{group}/testcfg [get]
 	g.GET("/testcfg", func(c echo.Context) error {
 		config.MustNewConfig()
 		return c.JSON(200, "OK")
 	})
+	// @Summary      get config
+	// @Router       /getcfg [get]
+	// @Produce		application/json
+	// @Success 200	{object} config.NestConfig
 	g.GET("/getcfg", func(c echo.Context) error {
 		return c.JSON(
 			200,
 			config.GetConfig(),
 		)
 	})
+	// @Summary     is valid
+	// @Param				id	path	string	true	"id to check"
+	// @Produce			application/json
+	// @Success			200	{object} validResponse
+	// @Router      /isValid/{id} [get]
 	g.GET("/isValid/:id", func(c echo.Context) error {
 		id := c.Param("id")
 
 		if api.IsValidItemID(id) {
-			return c.JSON(200, `{"valid":true}`)
+			return c.JSON(200, validResponse{Valid: true})
 		}
-		return c.JSON(200, `{"valid":false}`)
+		return c.JSON(200, validResponse{Valid: false})
 	})
+	// @Summary     is eagle server running
+	// @Router      /test [get]
+	// @Success			200 {string} string
 	g.GET("/test", func(c echo.Context) error {
 		a, err := validateIsEagleServerRunning("http://localhost:41595/api/application/info")
 		if err != nil {
-			return c.String(400, "NO")
+			return c.String(200, "false")
 		}
-		return c.JSON(200, a)
+		return c.String(200, fmt.Sprintf("%v", a))
 	})
 
+	// @Summary     reveal Id in eagle.
+	// @Router      /open/:id [get]
+	// @Param				id	path	string	true	"id to reveal"
+	// @Success			200 {string} OK
 	g.GET("/open/:id", func(c echo.Context) error {
 		id := c.Param("id")
 		uri := fmt.Sprintf("eagle://item/%s", id)
@@ -85,7 +109,18 @@ func RegisterGroupRoutes(g *echo.Group) {
 
 // registers routes on the server root (/)
 func RegisterRootRoutes(n config.NestConfig, server *echo.Echo) {
+
+	// @Summary     serve image
+	// @Router      /eagle://item/:id [get]
+	// @Param				id	path	string	true	"id to serve image"
+	// @Produce  		image/png
+	// @Success			200 {file} thumbnail
 	server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
+	// @Summary     serve image
+	// @Router      /:id [get]
+	// @Param				id	path	string	true	"id to serve image"
+	// @Produce  		image/png
+	// @Success			200 {file} thumbnail
 	server.GET("/:itemId", ServeThumbnailHandler(&n))
 
 	// show the item in eagle

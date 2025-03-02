@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strconv"
 
-	"github.com/eissar/nest/eagle/api/endpoints"
+	"github.com/eissar/nest/api/endpoints"
 )
 
 // site, annotation, tags, folderid

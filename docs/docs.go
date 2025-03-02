@@ -9,22 +9,223 @@ const docTemplate = `{
     "info": {
         "description": "{{escape .Description}}",
         "title": "{{.Title}}",
-        "contact": {},
+        "termsOfService": "http://swagger.io/terms/",
+        "contact": {
+            "name": "API Support",
+            "url": "http://www.swagger.io/support",
+            "email": "support@swagger.io"
+        },
+        "license": {
+            "name": "Apache 2.0",
+            "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+        },
         "version": "{{.Version}}"
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/:id": {
+            "get": {
+                "produces": [
+                    "image/png"
+                ],
+                "summary": "serve image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "id to serve image",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/eagle://item/:id": {
+            "get": {
+                "produces": [
+                    "image/png"
+                ],
+                "summary": "serve image",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "id to serve image",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/getcfg": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "get config",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/config.NestConfig"
+                        }
+                    }
+                }
+            }
+        },
+        "/isValid/{id}": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "summary": "is valid",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "id to check",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/nest.validResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/open/:id": {
+            "get": {
+                "summary": "reveal Id in eagle.",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "id to reveal",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/test": {
+            "get": {
+                "summary": "is eagle server running",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/{group}/testcfg": {
+            "get": {
+                "description": "refresh config",
+                "summary": "refresh config",
+                "responses": {}
+            }
+        }
+    },
+    "definitions": {
+        "config.Libraries": {
+            "type": "object",
+            "properties": {
+                "autoLoad": {
+                    "type": "boolean"
+                },
+                "paths": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "config.Nest": {
+            "type": "object",
+            "properties": {
+                "port": {
+                    "type": "integer"
+                }
+            }
+        },
+        "config.NestConfig": {
+            "type": "object",
+            "properties": {
+                "apiKey": {
+                    "type": "string"
+                },
+                "directories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "host": {
+                    "type": "string"
+                },
+                "libraries": {
+                    "$ref": "#/definitions/config.Libraries"
+                },
+                "nest": {
+                    "$ref": "#/definitions/config.Nest"
+                },
+                "port": {
+                    "type": "integer"
+                }
+            }
+        },
+        "nest.validResponse": {
+            "type": "object",
+            "properties": {
+                "valid": {
+                    "type": "boolean"
+                }
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
-	Version:          "",
-	Host:             "",
-	BasePath:         "",
+	Version:          "1.0",
+	Host:             "petstore.swagger.io",
+	BasePath:         "/v2",
 	Schemes:          []string{},
-	Title:            "",
-	Description:      "",
+	Title:            "Swagger Example API",
+	Description:      "special handler for user-facing static files",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

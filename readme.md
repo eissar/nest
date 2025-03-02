@@ -82,8 +82,8 @@ Just make sure it isn't being used by any other service on your computer.
 - [ ] method Query across libraries
 - [ ] dynamic key in config/libraries.json
 - [ ] use exe as server launcher (with cli flag) and also interface for CLI interaction with eagle.
-- [ ] On starting the server, libraries are loaded from libraries.json.
-    dynamic library reading from eagle.
+- [X] On starting the server, libraries are loaded from libraries.json.
+- [ ] create events channel for dynamic library reading from eagle.
 
 > Disclaimer: <br>
 > at the moment, this is experimental software. I will be making breaking changes and changing apis.

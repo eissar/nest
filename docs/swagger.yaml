@@ -1,4 +1,138 @@
+basePath: /v2
+definitions:
+  config.Libraries:
+    properties:
+      autoLoad:
+        type: boolean
+      paths:
+        items:
+          type: string
+        type: array
+    type: object
+  config.Nest:
+    properties:
+      port:
+        type: integer
+    type: object
+  config.NestConfig:
+    properties:
+      apiKey:
+        type: string
+      directories:
+        items:
+          type: string
+        type: array
+      host:
+        type: string
+      libraries:
+        $ref: '#/definitions/config.Libraries'
+      nest:
+        $ref: '#/definitions/config.Nest'
+      port:
+        type: integer
+    type: object
+  nest.validResponse:
+    properties:
+      valid:
+        type: boolean
+    type: object
+host: petstore.swagger.io
 info:
-  contact: {}
-paths: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: special handler for user-facing static files
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Swagger Example API
+  version: "1.0"
+paths:
+  /:id:
+    get:
+      parameters:
+      - description: id to serve image
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - image/png
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: serve image
+  /{group}/testcfg:
+    get:
+      description: refresh config
+      responses: {}
+      summary: refresh config
+  /eagle://item/:id:
+    get:
+      parameters:
+      - description: id to serve image
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - image/png
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: file
+      summary: serve image
+  /getcfg:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/config.NestConfig'
+      summary: get config
+  /isValid/{id}:
+    get:
+      parameters:
+      - description: id to check
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/nest.validResponse'
+      summary: is valid
+  /open/:id:
+    get:
+      parameters:
+      - description: id to reveal
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: reveal Id in eagle.
+  /test:
+    get:
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+      summary: is eagle server running
 swagger: "2.0"
