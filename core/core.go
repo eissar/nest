@@ -46,6 +46,11 @@ func Start() {
 
 	server := echo.New()
 
+	fmt.Println("test")
+	//#region testing
+	// go nest.WatchMtime(nestConfig)
+	// nest.TryIngestMtime(nestConfig)
+	//#endregion
 	// TRAY ICON
 	trayicon.Run(server, func() {
 		Shutdown(server) // onExit trayicon function

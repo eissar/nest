@@ -1,13 +1,18 @@
 package nest
 
 import (
+	"encoding/json"
 	"fmt"
+	"log"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/eissar/nest/api"
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/eissar/nest/plugins/pwsh"
+	"github.com/fsnotify/fsnotify"
 
 	"github.com/labstack/echo/v4"
 )
@@ -109,19 +114,14 @@ func RegisterGroupRoutes(g *echo.Group) {
 
 // registers routes on the server root (/)
 func RegisterRootRoutes(n config.NestConfig, server *echo.Echo) {
-
 	// @Summary     serve image
 	// @Router      /eagle://item/{id} [get]
+	// @Router      /{id} [get]
 	// @Param				id	path	string	true	"id to serve image"
 	// @Param				fq	query	string	false	"flag for full-quality response"
 	// @Produce  		image/png
 	// @Success			200 {file} thumbnail
 	server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
-	// @Summary     serve image
-	// @Router      /:id [get]
-	// @Param				id	path	string	true	"id to serve image"
-	// @Produce  		image/png
-	// @Success			200 {file} thumbnail
 	server.GET("/:itemId", ServeThumbnailHandler(&n))
 
 	// show the item in eagle
@@ -144,3 +144,77 @@ func RegisterRootRoutes(n config.NestConfig, server *echo.Echo) {
 
 	//$ext = (irm "http://localhost:41595/api/item/info?id=M6VK3GF6845SQ").data.ext
 }
+
+//#region monitor mtime
+
+type Mtime map[string]int
+
+func TryIngestMtime(n config.NestConfig) *Mtime {
+	mtime := filepath.Join(n.Libraries.Paths[0], "mtime.json")
+	if _, err := os.Stat(mtime); err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+
+	out := &Mtime{}
+
+	bytes, err := os.ReadFile(mtime)
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+
+	err = json.Unmarshal(bytes, out)
+	if err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+
+	return out
+}
+
+var state = &Mtime{}
+
+func WatchMtime(n config.NestConfig) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer watcher.Close()
+
+	mtime := filepath.Join(n.Libraries.Paths[0], "mtime.json")
+	if _, err = os.Stat(mtime); err != nil {
+		log.Fatalf("%s", err.Error())
+	}
+
+	watcher.Add(mtime)
+
+	// WARN: from my understanding mtime.json can get quite large.
+
+	// TODO: optimize pointer use.
+	done := make(chan bool)
+	for {
+		select {
+		case event, ok := <-watcher.Events:
+			if !ok {
+				return
+			}
+			fmt.Println("event:", event)
+			newState := *TryIngestMtime(n)
+			lastState := *state
+			for id, _time := range newState {
+				if lastState[id] != newState[id] {
+					// this is the item that has changed.
+					fmt.Println(id, _time)
+				}
+			}
+			state = &newState
+
+		case err, ok := <-watcher.Errors:
+			if !ok {
+				return
+			}
+			log.Println("error:", err)
+		}
+	}
+	<-done
+}
+
+//#endregion

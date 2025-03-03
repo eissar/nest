@@ -10,8 +10,8 @@ import (
 	cmd "github.com/eissar/nest/core/command-line"
 )
 
-// globals
-var debug = false
+// TODO:
+// - [ ] ? replace flag with github.com/spf13/cobra
 
 func main() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
@@ -24,7 +24,7 @@ func main() {
 	revealPath := revealCmd.String("target", "", "filepath or item id to reveal")
 
 	help := flag.Bool("help", false, "print help information")
-	serve := flag.Bool("serve", false, "run the utility server")
+	start := flag.Bool("start", false, "run the utility server")
 	//debug := flag.Bool("debug", true, "shows additional information in the console while running. (does nothing)")
 	stop := flag.Bool("stop", false, "stop the utility server")
 	flag.Parse()
@@ -58,7 +58,7 @@ func main() {
 
 	//if *debug { } /* pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'") */
 
-	if *serve {
+	if *start {
 		core.Start() //blocking
 	}
 
@@ -70,9 +70,3 @@ func main() {
 		os.Exit(0)
 	}
 }
-
-// TODO:?
-// replace runServer()
-// with:
-// server = echo.New()
-// core.RegisterRoutes(server)

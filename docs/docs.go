@@ -49,7 +49,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/eagle://item/:id": {
+        "/eagle://item/{id}": {
             "get": {
                 "produces": [
                     "image/png"
@@ -62,6 +62,12 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "flag for full-quality response",
+                        "name": "fq",
+                        "in": "query"
                     }
                 ],
                 "responses": {

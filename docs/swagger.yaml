@@ -71,13 +71,17 @@ paths:
       description: refresh config
       responses: {}
       summary: refresh config
-  /eagle://item/:id:
+  /eagle://item/{id}:
     get:
       parameters:
       - description: id to serve image
         in: path
         name: id
         required: true
+        type: string
+      - description: flag for full-quality response
+        in: query
+        name: fq
         type: string
       produces:
       - image/png

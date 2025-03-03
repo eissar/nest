@@ -60,7 +60,8 @@ You can call endpoints in the eagle api using the same syntax as the default eag
 /api/item/list?...
 
 ### (PLANNED) Re-Implementation/ Extensions to the eagle API
-- [ ] autogen docs
+- [X] autogen docs
+    - [ ] document each endpoint
 - [X] get library filepath
 - [ ] improved error messages
 - [ ] Search
@@ -78,7 +79,8 @@ Just make sure it isn't being used by any other service on your computer.
 
 # TODO:
 - [X] generalized wrapper fallback for //api...
-- [ ] create watcher for mtime.json
+- [X] create watcher for mtime.json
+    basic impl. nest.WatchMtime
 - [ ] method Query across libraries
 - [ ] dynamic key in config/libraries.json
 - [ ] use exe as server launcher (with cli flag) and also interface for CLI interaction with eagle.
