@@ -63,7 +63,10 @@ func main() {
 	}
 
 	if *stop {
-		cmd.Shutdown(config.GetConfig())
+		err := cmd.Shutdown(config.GetConfig())
+		if err != nil {
+			fmt.Printf("stop: %s", err.Error())
+		}
 		os.Exit(0)
 	}
 }

@@ -105,12 +105,12 @@ func isServerRunning(url string) bool {
 }
 
 // returns resp or calls log.fatal
-func Shutdown(cfg config.NestConfig) {
+func Shutdown(cfg config.NestConfig) error {
 	closeEndpoint := fmt.Sprintf("http://localhost:%v/api/server/close", cfg.Nest.Port)
 	pingEndpoint := fmt.Sprintf("http://localhost:%v/api/ping", cfg.Nest.Port)
 	if !isServerRunning(pingEndpoint) {
 		//not running
-		log.Fatalf("shutdown: request to %s failed. The server is not running.", pingEndpoint)
+		return fmt.Errorf("shutdown: request to %s failed. The server is not running.\n", pingEndpoint)
 	}
 
 	client := &http.Client{
@@ -131,4 +131,5 @@ func Shutdown(cfg config.NestConfig) {
 		log.Fatalf("received code other than 200: %v", resp.StatusCode)
 	}
 
+	return nil
 }
