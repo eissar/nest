@@ -5,6 +5,8 @@ import (
 	"sync"
 
 	"github.com/eissar/browser-query"
+	"github.com/eissar/nest/config"
+	"github.com/labstack/echo/v4"
 )
 
 /*
@@ -29,11 +31,11 @@ import (
 // TODO: ? merge from github.com/eissar/browser-query
 // WARN: browserquery has state, bad library; reformat before using here.
 
-var (
-	clientsMu sync.RWMutex
-	clients   = make(map[*browserQuery.Client]bool)
-)
+// var (
+// 	clientsMu sync.RWMutex
+// 	clients   = make(map[*browserQuery.Client]bool)
+// )
 
-func t() {
-	//main.HandleSSE
+func RegisterRootRoutes(n config.NestConfig, server *echo.Echo) {
+	// server.GET("/eagleApp/sse", browserQuery.HandleSSE)
 }

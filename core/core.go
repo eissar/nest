@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"time"
 
+	browserQuery "github.com/eissar/browser-query"
 	"github.com/eissar/nest/api"
 	"github.com/eissar/nest/config"
 	trayicon "github.com/eissar/nest/core/tray-icon"
@@ -92,6 +93,11 @@ func Start() {
 	nest.RegisterRootRoutes(nestConfig, server)
 	api.RegisterRootRoutes(server)
 	RegisterRootRoutes(server)
+
+	// TEST
+	server.GET("/eagleApp/sse", browserQuery.HandleSSE)
+	server.POST("/api/uploadTabs", browserQuery.UploadTabs)
+	// TEST
 
 	// STATIC ROUTES (route prefix, directory)
 	server.Static("css", "./assets/css")

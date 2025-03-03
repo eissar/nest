@@ -5,7 +5,7 @@ go 1.24.0
 require (
 	fyne.io/systray v1.11.0
 	github.com/blevesearch/bleve/v2 v2.4.4
-	github.com/eissar/browser-query v0.0.0-20250303043507-f6149b6fd81f
+	github.com/eissar/browser-query v0.0.0-20250303213623-f3c1f92ab532
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/swaggo/echo-swagger v1.4.1
