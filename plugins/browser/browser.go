@@ -2,31 +2,13 @@ package browser
 
 // go get -u github.com/eissar/browser-query@master
 import (
+	"fmt"
 	"sync"
 
 	"github.com/eissar/browser-query"
 	"github.com/eissar/nest/config"
 	"github.com/labstack/echo/v4"
 )
-
-/*
-	type uploadTabsBody struct {
-		Body string `json:"body"`
-	}
-
-	func UploadTabs(c echo.Context) error {
-		body := c.Request().Body
-
-		var bytes []byte
-		if _, err := body.Read(bytes); err != nil {
-			msg := fmt.Sprintf("uploadtabs: could not read request body err=%s", err.Error())
-			return c.String(400, msg)
-		}
-
-		//fmt.Println("[SUCCESS]", c)
-		return c.String(200, "OK")
-	}
-*/
 
 // TODO: ? merge from github.com/eissar/browser-query
 // WARN: browserquery has state, bad library; reformat before using here.
@@ -38,4 +20,22 @@ import (
 
 func RegisterRootRoutes(n config.NestConfig, server *echo.Echo) {
 	// server.GET("/eagleApp/sse", browserQuery.HandleSSE)
+	// server.GET("/api/uploadTabs", browserQuery.HandleSSE)
+
+	// TEST
+	// if nestConfig.Nest.Plugins.browser == true {
+	//
+	server.GET("/eagleApp/sse", browserQuery.HandleSSE)
+	//server.POST("/api/uploadTabs", browserQuery.UploadTabs)
+
+	server.POST(
+		"/api/uploadTabs",
+		browserQuery.UploadTabsHandler(func(c echo.Context, t []browserQuery.TabInfo) {
+			fmt.Println("tabs count:", len(t)) // works
+		}),
+	)
+	// }
+
+	// TEST
+
 }

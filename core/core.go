@@ -94,11 +94,6 @@ func Start() {
 	api.RegisterRootRoutes(server)
 	RegisterRootRoutes(server)
 
-	// TEST
-	server.GET("/eagleApp/sse", browserQuery.HandleSSE)
-	server.POST("/api/uploadTabs", browserQuery.UploadTabs)
-	// TEST
-
 	// STATIC ROUTES (route prefix, directory)
 	server.Static("css", "./assets/css")
 	server.Static("js", "./assets/js")
