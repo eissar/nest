@@ -5,7 +5,6 @@ go 1.24.0
 require (
 	fyne.io/systray v1.11.0
 	github.com/blevesearch/bleve/v2 v2.4.4
-	github.com/eissar/browser-query v0.0.0-20250303213623-f3c1f92ab532
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/labstack/echo/v4 v4.13.3
 	github.com/swaggo/echo-swagger v1.4.1
@@ -33,6 +32,7 @@ require (
 	github.com/blevesearch/zapx/v14 v14.3.10 // indirect
 	github.com/blevesearch/zapx/v15 v15.3.16 // indirect
 	github.com/blevesearch/zapx/v16 v16.1.9-0.20241217210638-a0519e7caf3b // indirect
+	github.com/eissar/browser-query v0.0.0-20250303215539-888b2202bf41 // indirect
 	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/jsonreference v0.21.0 // indirect

@@ -49,6 +49,8 @@ github.com/eissar/browser-query v0.0.0-20250303043507-f6149b6fd81f h1:W9FcVNiCjF
 github.com/eissar/browser-query v0.0.0-20250303043507-f6149b6fd81f/go.mod h1:FB8/uLFaAZ7bUDFF5X7NkaARZGqJXHaxsAj3fOH99HE=
 github.com/eissar/browser-query v0.0.0-20250303213623-f3c1f92ab532 h1:esKpPbe8e6cj+YGzgCSdw1/BPIJdHnDzj+fEYz1yD6g=
 github.com/eissar/browser-query v0.0.0-20250303213623-f3c1f92ab532/go.mod h1:FB8/uLFaAZ7bUDFF5X7NkaARZGqJXHaxsAj3fOH99HE=
+github.com/eissar/browser-query v0.0.0-20250303215539-888b2202bf41 h1:9PfmcgiZZuyaGr/KIwWXRwADze8A8+sN0GfaZRS/Thw=
+github.com/eissar/browser-query v0.0.0-20250303215539-888b2202bf41/go.mod h1:FB8/uLFaAZ7bUDFF5X7NkaARZGqJXHaxsAj3fOH99HE=
 github.com/fsnotify/fsnotify v1.8.0 h1:dAwr6QBTBZIkG8roQaJjGof0pp0EeF+tNV7YBP3F/8M=
 github.com/fsnotify/fsnotify v1.8.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 github.com/ghodss/yaml v1.0.0 h1:wQHKEahhL6wmXdzwWG11gIVCkOv05bNOh+Rxn0yngAk=
