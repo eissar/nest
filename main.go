@@ -26,6 +26,7 @@ func main() {
 	help := flag.Bool("help", false, "print help information")
 	serve := flag.Bool("serve", false, "run the utility server")
 	//debug := flag.Bool("debug", true, "shows additional information in the console while running. (does nothing)")
+	stop := flag.Bool("stop", false, "stop the utility server")
 	flag.Parse()
 
 	if *help || len(os.Args) < 2 {
@@ -59,6 +60,11 @@ func main() {
 
 	if *serve {
 		core.Start() //blocking
+	}
+
+	if *stop {
+		cmd.Shutdown(config.GetConfig())
+		os.Exit(0)
 	}
 }
 

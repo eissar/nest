@@ -4,9 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/eissar/nest/api"
 	"github.com/eissar/nest/config"
@@ -77,4 +79,56 @@ func Reveal(cfg config.NestConfig, t *string) {
 	if err != nil {
 		log.Fatalf("[ERROR] while adding eagle item: err=%s", err.Error())
 	}
+}
+
+// validateIsEagleServerRunning checks if the Eagle server is running at the specified URL.
+func isServerRunning(url string) bool {
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return false //, fmt.Errorf("error creating request: %w", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return false //, fmt.Errorf("error making request: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return false //, fmt.Errorf("received code other than 200: %v", resp.StatusCode)
+	}
+
+	return true //, nil
+}
+
+// returns resp or calls log.fatal
+func Shutdown(cfg config.NestConfig) {
+	closeEndpoint := fmt.Sprintf("http://localhost:%v/api/server/close", cfg.Nest.Port)
+	pingEndpoint := fmt.Sprintf("http://localhost:%v/api/ping", cfg.Nest.Port)
+	if !isServerRunning(pingEndpoint) {
+		//not running
+		log.Fatalf("shutdown: request to %s failed. The server is not running.", pingEndpoint)
+	}
+
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	req, err := http.NewRequest("GET", closeEndpoint, nil)
+	if err != nil {
+		log.Fatalf("error creating request: %w", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Fatalf("error making request: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		log.Fatalf("received code other than 200: %v", resp.StatusCode)
+	}
+
 }
