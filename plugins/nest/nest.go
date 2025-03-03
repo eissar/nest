@@ -111,8 +111,9 @@ func RegisterGroupRoutes(g *echo.Group) {
 func RegisterRootRoutes(n config.NestConfig, server *echo.Echo) {
 
 	// @Summary     serve image
-	// @Router      /eagle://item/:id [get]
+	// @Router      /eagle://item/{id} [get]
 	// @Param				id	path	string	true	"id to serve image"
+	// @Param				fq	query	string	false	"flag for full-quality response"
 	// @Produce  		image/png
 	// @Success			200 {file} thumbnail
 	server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
