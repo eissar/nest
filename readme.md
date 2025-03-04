@@ -68,7 +68,7 @@ You can call endpoints in the eagle api using the same syntax as the default eag
     - [ ] glob fts search
     - [ ] Filter items by Tag Count
 - [X] api/item/reveal
-- [ ] synchronous api/library/switch
+- [X] synchronous api/library/switch
 - [ ] Config
     - [ ] open config files from tray icon
 
