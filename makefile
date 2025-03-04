@@ -2,7 +2,7 @@ PWSH := pwsh.exe -NoProfile -Command
 
 
 test:
-	write-host 'test'
+	go test
 
 .PHONY: build
 build:

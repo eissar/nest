@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	_ "net/url"
 	"os"
 	"path/filepath"
@@ -27,6 +28,16 @@ type Item struct {
 	ModificationTime int64    `json:"modificationTime"`
 	FolderID         string   `json:"folderId"`
 	//Headers          map[string]string `json:"headers,omitempty"`
+}
+type ListItem struct {
+	Id               string   `json:"id"`
+	URL              string   `json:"url"`
+	Name             string   `json:"name"`
+	Website          string   `json:"website"`
+	Tags             []string `json:"tags"`
+	Annotation       string   `json:"annotation"`
+	ModificationTime int64    `json:"modificationTime"`
+	//FolderID         string   `json:"folderId"`
 }
 
 type ItemUrl struct {
@@ -81,7 +92,7 @@ func AddItemFromURL(baseURL string, item Item) (map[string]interface{}, error) {
 
 type ListData struct {
 	EagleData
-	Data []interface{} `json:"data"`
+	Data []any `json:"data"`
 }
 
 type Options struct {
@@ -129,6 +140,59 @@ func ListV2(baseUrl string, limit int) (*ListData, error) {
 	// fmt.Println("query here:", req.URL.Query().Encode())
 
 	var a *ListData
+	err = InvokeEagleAPIV2(req, &a)
+	if err != nil {
+		return nil, err
+	}
+	return a, nil
+}
+
+type ListDataV3 struct {
+	EagleData
+	Data []ListItem
+}
+
+// creates an *http.Request and sends to InvokeEagleAPIV1
+func ListV3(baseUrl string, limit int) (*ListDataV3, error) {
+	/*
+		PARAMS
+			limit
+			The number of items to be displayed. the default number is 200
+			offset
+			Offset a collection of results from the api. Start with 0.
+			orderBy
+			The sorting order.CREATEDATE , FILESIZE , NAME , RESOLUTION , add a minus sign for descending order: -FILESIZE
+			keyword
+			Filter by the keyword
+			ext
+			Filter by the extension type, e.g.: jpg ,  png
+			tags
+			Filter by tags. Use , to divide different tags. E.g.: Design, Poster
+			folders
+			Filter by Folders.  Use , to divide folder IDs. E.g.: KAY6NTU6UYI5Q,KBJ8Z60O88VMG
+	*/
+	ep, ok := endpoints.Item["list"]
+	if !ok {
+		return nil, fmt.Errorf("could not find endpoint `list` in endpoints.")
+	}
+	// TODO: validate parameters?
+
+	uri := baseUrl + ep.Path
+
+	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
+	if err != nil {
+		return nil, fmt.Errorf("list: error creating request err=%w", err)
+	}
+
+	// add query params
+	query := req.URL.Query()
+	if limit > 0 {
+		query.Add("limit", strconv.Itoa(limit))
+	}
+	req.URL.RawQuery = query.Encode()
+	// fmt.Println("query here:", req.URL.Query().Encode())
+
+	var a *ListDataV3
 	err = InvokeEagleAPIV2(req, &a)
 	if err != nil {
 		return nil, err
@@ -239,5 +303,9 @@ func Thumbnail(baseUrl string, itemId string) (s string, err error) {
 		return s, err
 	}
 
-	return a.ThumbnailPath, nil
+	if escapedPath, err := url.PathUnescape(a.ThumbnailPath); err != nil {
+		return a.ThumbnailPath, fmt.Errorf("could not url decode path response from eagle server err=%w", err)
+	} else {
+		return escapedPath, nil
+	}
 }

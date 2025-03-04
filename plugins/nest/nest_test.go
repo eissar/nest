@@ -23,3 +23,18 @@ func TestList(t *testing.T) {
 	}
 	fmt.Println(i)
 }
+func TestCurrentLibrary(t *testing.T) {
+	//cfg := config.GetConfig()
+	libPath, err := CurrentLibrary()
+	if err != nil {
+		t.Fatalf("%s", err.Error())
+	}
+	fmt.Println(libPath)
+}
+func TestSwitchLibrary(t *testing.T) {
+	cfg := config.GetConfig()
+	err := LibrarySwitchSync(cfg.BaseURL(), cfg.Libraries.Paths[1])
+	if err != nil {
+		t.Fatalf("%s", err.Error())
+	}
+}

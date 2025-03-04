@@ -4,15 +4,19 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	//"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
+	"time"
 
 	"github.com/eissar/nest/api"
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/eissar/nest/plugins/pwsh"
 	"github.com/fsnotify/fsnotify"
+	"golang.org/x/net/context"
 
 	"github.com/labstack/echo/v4"
 )
@@ -218,3 +222,100 @@ func WatchMtime(n config.NestConfig) {
 }
 
 //#endregion
+
+// wait until library is switched
+func pollForSwitch(c context.Context, pollingCh chan bool, targetLib string) {
+	t := time.NewTicker(500 * time.Millisecond)
+
+	for {
+		select {
+		case <-t.C:
+			currLib, err := CurrentLibrary()
+			if err != nil {
+				log.Printf("warning err=%v\n", err)
+				continue
+			}
+			if currLib == targetLib {
+				// library has switched
+				pollingCh <- true
+			} else {
+				fmt.Printf("currLib: %v\n", currLib)
+				fmt.Printf("targetLib: %v\n", targetLib)
+			}
+
+		case <-c.Done():
+			return
+		}
+	}
+}
+
+func LibrarySwitchSync(baseUrl string, libraryPath string) error {
+	currLibraryPath, err := CurrentLibrary()
+	if err != nil {
+		return fmt.Errorf("libraryswitchsync: error getting lib info err=%v", err)
+	}
+
+	fmt.Printf("libraryPath: %v\n", libraryPath)
+	fmt.Printf("currLibraryPath: %v\n", currLibraryPath)
+
+	if currLibraryPath == libraryPath {
+		// do nothing.
+		return nil
+	}
+
+	// switch library
+	timeoutCh := time.After(10 * time.Second)
+
+	err = api.SwitchLibrary(baseUrl, libraryPath)
+	if err != nil {
+		return fmt.Errorf("couldn't switch to lib=%s err=%v", libraryPath, err)
+	}
+
+	ctx, cancelPolling := context.WithCancel(context.Background())
+	pollingCh := make(chan bool)
+	go pollForSwitch(ctx, pollingCh, libraryPath)
+	defer cancelPolling()
+
+	for {
+		select {
+		case <-pollingCh:
+			fmt.Println("SWITCHED")
+			return nil
+		case <-timeoutCh:
+			return fmt.Errorf("timeout elapsed")
+		}
+	}
+}
+
+func CurrentLibrary() (string, error) {
+	cfg := config.GetConfig()
+
+	// 1. get first item id
+
+	resp, err := api.ListV3(cfg.BaseURL(), 1)
+	if err != nil {
+		return "", fmt.Errorf("currentlibrary: could not retrieve any library items.")
+	}
+
+	firstItemId := resp.Data[0].Id
+	if firstItemId == "" {
+		return "", fmt.Errorf("currentlibrary: could not retrieve any library items.")
+	}
+
+	// 2. get thumbnail
+
+	thumb, err := api.Thumbnail(cfg.BaseURL(), firstItemId)
+	if err != nil {
+		return "", fmt.Errorf("could not find thumbnail for first eagle item err=%v", err)
+	}
+
+	//fmt.Println("thumb:", thumb)
+	parts := strings.SplitAfterN(thumb, `.library/`, 2)
+	if len(parts) == 1 {
+		return "", fmt.Errorf("currentlibrary: could not segment the first retrieved eagle item path by .library does the eagle library have some other name?")
+	}
+	currLib := filepath.Clean(parts[0])
+
+	// optionally check for metadata.json?
+	return currLib, nil
+}

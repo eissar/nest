@@ -80,12 +80,20 @@ Just make sure it isn't being used by any other service on your computer.
 # TODO:
 - [X] generalized wrapper fallback for //api...
 - [X] create watcher for mtime.json
-    basic impl. nest.WatchMtime
+    - [X] basic impl. nest.WatchMtime
+
 - [ ] method Query across libraries
 - [ ] dynamic key in config/libraries.json
 - [ ] use exe as server launcher (with cli flag) and also interface for CLI interaction with eagle.
 - [X] On starting the server, libraries are loaded from libraries.json.
 - [ ] create events channel for dynamic library reading from eagle.
+
+
+https://github.com/eissar/nest/browser-query -> has to define event loop. this should be opt-in.
+how to opt in via: config flag? cli flag?
+
+> "I've learned a few things from the contributions of Wox, one in particular is not to put resources in a non-Github location, as they will become invalid and outdated over time as they migrate. All future Wox resources will be hosted on Github, including the plugin store, theme store, documentation, discussions and more!" <https://github.com/Wox-launcher/Wox/discussions/3937>
+
 
 > Disclaimer: <br>
 > at the moment, this is experimental software. I will be making breaking changes and changing apis.

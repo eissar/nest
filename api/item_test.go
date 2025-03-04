@@ -102,7 +102,7 @@ func TestListInvoke(t *testing.T) {
 
 func TestAddItemFromPath(t *testing.T) {
 	baseUrl := cfg.FmtURL()
-	err := AddItemFromPath(baseUrl, `C:/Users/eshaa/Downloads/download.jpg`)
+	err := AddItemFromPath(baseUrl, itemFromPath{Path: `C:/Users/eshaa/Downloads/download.jpg`})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
