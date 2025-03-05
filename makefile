@@ -1,10 +1,10 @@
 PWSH := pwsh.exe -NoProfile -Command
 
+.PHONY: test build stop open docs dev windows darwin
 
 test:
 	go test
 
-.PHONY: build
 build:
 	go build
 
@@ -23,5 +23,24 @@ dev: stop build open
 
 
 # TODO: rewrite build-pub in this;
+# BUILD-PUB
+
+GOARCHList := amd64 arm64
+
+
+windows:
+	@echo "Building for Windows..."
+	$(PWSH) "'amd64', 'arm64' | ForEach-Object { $$arch = $$_; $$env:GOOS='windows'; $$env:GOARCH=$$arch; go build -ldflags -H=windowsgui -o build/nest-windows-$$arch.exe; Write-Host \"Built build/nest-windows-$$arch.exe\"; }"
+
+darwin:
+	@echo "Building for Darwin..."
+	@for arch in $(GOARCHList); do \
+		GOOS=darwin GOARCH=$$arch go build -o build/nest-darwin-$$arch; \
+		echo "Built build/nest-darwin-$$arch"; \
+		done
+
+clean:
+	rm -rf build/*
+
 
 
