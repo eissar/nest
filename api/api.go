@@ -23,7 +23,7 @@ type EagleApiResponse struct {
 //		Data   []Item // optional
 //	}
 
-// for endpoints that return an array of data.
+// for endpoints that return an array of data
 type EagleData struct {
 	Status string `json:"status"`
 }
@@ -32,8 +32,14 @@ type EagleData struct {
 func (data EagleData) GetData() {}
 
 type EagleMessage struct {
-	Status string
-	Data   any
+	EagleData
+	Data any
+}
+
+// for endpoints that return an array of strings.
+type EagleArray struct {
+	EagleData
+	Data []string
 }
 
 type EagleApiErr struct {

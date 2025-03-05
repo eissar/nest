@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/eissar/nest/api"
@@ -119,12 +120,12 @@ func Shutdown(cfg config.NestConfig) error {
 
 	req, err := http.NewRequest("GET", closeEndpoint, nil)
 	if err != nil {
-		log.Fatalf("error creating request: %w", err)
+		log.Fatalf("error creating request: %v", err)
 	}
 
 	resp, err := client.Do(req)
 	if err != nil {
-		log.Fatalf("error making request: %w", err)
+		log.Fatalf("error making request: %v", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -132,4 +133,48 @@ func Shutdown(cfg config.NestConfig) error {
 	}
 
 	return nil
+}
+
+func Switch(cfg config.NestConfig, libraryName string) {
+	if libraryName == "" {
+		log.Fatalf("library name cannot be empty")
+	}
+	switchTo := func(libraryPath string) {
+		err := nest.LibrarySwitchSync(cfg.BaseURL(), libraryPath)
+		// err := api.SwitchLibrary(cfg.BaseURL(), libraryPath)
+		if err != nil {
+			log.Fatalf("could not switch library err=%s", err.Error())
+		}
+	}
+
+	currLib, err := nest.CurrentLibrary()
+	if err != nil {
+		log.Fatalf("error getting current library err=%s", err.Error())
+	}
+
+	if currLib.Name == libraryName {
+		log.Fatalf("library is already %s", libraryName)
+	}
+
+	recentLibraries, err := api.Recent(cfg.BaseURL())
+	if err != nil {
+		log.Fatalf("could not retrieve recent libaries err=%s", err.Error())
+	}
+
+	libraryName = strings.ToUpper(libraryName)
+	for i, lib := range recentLibraries {
+		lib = strings.ToUpper(lib)
+
+		_, lib = filepath.Split(lib)
+		if libraryName == lib {
+			switchTo(recentLibraries[i])
+			return
+		}
+		lib = strings.TrimSuffix(lib, ".LIBRARY")
+		if libraryName == lib {
+			switchTo(recentLibraries[i])
+			return
+		}
+	}
+
 }

@@ -226,6 +226,7 @@ func WatchMtime(n config.NestConfig) {
 // wait until library is switched
 func pollForSwitch(c context.Context, pollingCh chan bool, targetLib string) {
 	t := time.NewTicker(500 * time.Millisecond)
+	targetLib = strings.TrimSuffix(targetLib, `\`) // https://github.com/golang/go/issues/27791
 
 	for {
 		select {
@@ -239,8 +240,8 @@ func pollForSwitch(c context.Context, pollingCh chan bool, targetLib string) {
 				// library has switched
 				pollingCh <- true
 			} else {
-				fmt.Printf("currLib: %v\n", currLib)
-				fmt.Printf("targetLib: %v\n", targetLib)
+				// fmt.Printf("currLib: %v\n", currLib)
+				// fmt.Printf("targetLib: %v\n", targetLib)
 			}
 
 		case <-c.Done(): // exit
@@ -255,12 +256,11 @@ func LibrarySwitchSync(baseUrl string, libraryPath string) error {
 		return fmt.Errorf("libraryswitchsync: error getting lib info err=%v", err)
 	}
 
-	fmt.Printf("libraryPath: %v\n", libraryPath)
-	fmt.Printf("currLibraryPath: %v\n", currLibraryPath)
+	libraryPath = strings.TrimSuffix(filepath.Clean(libraryPath), `\`)
 
 	if currLibraryPath == libraryPath {
 		// do nothing.
-		return nil
+		return fmt.Errorf("current library %s is already %s", currLibraryPath, libraryPath)
 	}
 
 	// switch library
@@ -279,7 +279,6 @@ func LibrarySwitchSync(baseUrl string, libraryPath string) error {
 	for {
 		select {
 		case <-pollingCh:
-			fmt.Println("SWITCHED")
 			return nil
 		case <-timeoutCh:
 			return fmt.Errorf("timeout elapsed")
@@ -337,7 +336,8 @@ func CurrentLibraryPath() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error getting library info err=%w", err)
 	}
-	return currLib.Path, nil
+
+	return strings.TrimSuffix(filepath.Clean(currLib.Path), `\`), nil
 }
 
 func CurrentLibraryName() (string, error) {

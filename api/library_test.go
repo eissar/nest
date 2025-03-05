@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/eissar/nest/config"
@@ -51,4 +52,15 @@ func TestGetLibraryInfo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("couldn't get lib info err=%v", err)
 	}
+}
+
+func TestGetRecent(t *testing.T) {
+	cfg := config.GetConfig()
+
+	libs, err := Recent(cfg.BaseURL())
+	if err != nil {
+		t.Fatalf("couldn't get recent libraries err=%v", err)
+	}
+
+	fmt.Println(libs)
 }

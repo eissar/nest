@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/eissar/nest/config"
@@ -12,6 +13,7 @@ import (
 
 // TODO:
 // - [ ] ? replace flag with github.com/spf13/cobra
+// split into start.exe / nest.exe
 
 func main() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
@@ -23,6 +25,8 @@ func main() {
 	revealCmd := flag.NewFlagSet("reveal", flag.ExitOnError)
 	revealPath := revealCmd.String("target", "", "filepath or item id to reveal")
 
+	switchCmd := flag.NewFlagSet("switch", flag.ExitOnError)
+	switchName := switchCmd.String("name", "", "name of library to switch to.")
 	//revealCmd := flag.NewFlagSet("reveal", flag.ExitOnError)
 
 	help := flag.Bool("help", false, "print help information")
@@ -55,6 +59,19 @@ func main() {
 
 		revealCmd.Parse(os.Args[2:])
 		cmd.Reveal(cfg, revealPath)
+		os.Exit(0)
+	case "switch":
+		cfg := config.GetConfig()
+		switchCmd.Parse(os.Args[2:])
+		if *switchName != "" {
+			cmd.Switch(cfg, *switchName)
+		}
+		if len(os.Args) < 3 {
+			log.Fatalf("must pass flag -name")
+			flag.PrintDefaults()
+			os.Exit(1)
+		}
+		cmd.Switch(cfg, os.Args[2])
 		os.Exit(0)
 	}
 

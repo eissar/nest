@@ -16,6 +16,11 @@ func TestList(t *testing.T) {
 	List(config.GetConfig(), &localLimit)
 }
 
+func TestSwitch(t *testing.T) {
+	cfg := config.GetConfig()
+	Switch(cfg, "inspo")
+}
+
 // no real point in testing this one right now...
 // func TestReveal(t *testing.T) {
 // 	var localFile = "./command-line.go"

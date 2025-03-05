@@ -58,10 +58,10 @@ type Condition struct {
 }
 
 type Rule struct {
-	HashKey  string      `json:"$$hashKey,omitempty"`
-	Method   string      `json:"method"`
-	Property string      `json:"property"`
-	Value    interface{} `json:"value"` // Can be []int or string or []string
+	HashKey  string `json:"$$hashKey,omitempty"`
+	Method   string `json:"method"`
+	Property string `json:"property"`
+	Value    any    `json:"value"` // Can be []int or string or []string
 }
 
 type QuickAccess struct {
@@ -102,7 +102,7 @@ func SwitchLibrary(baseURL string, libraryPath string) error {
 		return fmt.Errorf("response status recieved from eagle was not `success` message=%v", a)
 	}
 
-	fmt.Println(a)
+	//fmt.Println(a)
 
 	return nil
 }
@@ -166,4 +166,36 @@ func GetIcon(baseURL string) (string, error) {
 	}
 
 	return currentLibraryPath, nil
+}
+
+type RecentLibraries struct {
+	EagleData
+	Libraries []string `json:"data"`
+}
+
+type libs []string
+
+// returns []string paths to libraries
+// from /api/library/history
+func Recent(baseURL string) ([]string, error) {
+	ep, ok := endpoints.Library["history"]
+	if !ok {
+		return []string{}, fmt.Errorf("could not find endpoint `icon` in endpoints.")
+	}
+
+	uri := baseURL + ep.Path
+
+	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
+	if err != nil {
+		return []string{}, fmt.Errorf("recent: error creating request err=%w", err)
+	}
+
+	// FIX
+	var resp *EagleArray
+	err = InvokeEagleAPIV2(req, &resp)
+	if err != nil {
+		return []string{}, fmt.Errorf("recent: error invoking request err=%w", err)
+	}
+
+	return resp.Data, nil
 }
