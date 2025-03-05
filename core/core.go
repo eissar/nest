@@ -140,12 +140,6 @@ func isPortOccupied(port int) bool {
 	return false // Port is free
 }
 
-// func PopulateQueryFrontmatter() {}
-// func PopulateGetRecentNotes()   {}
-
-// ServerShutdown godoc
-//
-//	@Summary close the server?
 func ServerShutdown(c echo.Context) error {
 	var err error
 
@@ -183,6 +177,9 @@ func Shutdown(s *echo.Echo) error {
 func RegisterRootRoutes(server *echo.Echo) {
 	//server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
 
+	// ServerShutdown godoc
+	//
+	//	@Summary close the server?
 	server.GET("/api/server/close", ServerShutdown)
 	server.GET("/api/ping", Ping)
 }

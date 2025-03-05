@@ -23,6 +23,8 @@ func main() {
 	revealCmd := flag.NewFlagSet("reveal", flag.ExitOnError)
 	revealPath := revealCmd.String("target", "", "filepath or item id to reveal")
 
+	//revealCmd := flag.NewFlagSet("reveal", flag.ExitOnError)
+
 	help := flag.Bool("help", false, "print help information")
 	start := flag.Bool("start", false, "run the utility server")
 	//debug := flag.Bool("debug", true, "shows additional information in the console while running. (does nothing)")

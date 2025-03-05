@@ -88,6 +88,16 @@ Just make sure it isn't being used by any other service on your computer.
 - [X] On starting the server, libraries are loaded from libraries.json.
 - [ ] create events channel for dynamic library reading from eagle.
 
+* Command Line Interface
+- [X] Start server -start
+- [X] stop server -stop
+* Subcommands
+- [ ] nest add
+- [ ] nest list
+- [ ] nest reveal
+- [ ] nest info
+
+
 
 https://github.com/eissar/nest/browser-query -> has to define event loop. this should be opt-in.
 how to opt in via: config flag? cli flag?
