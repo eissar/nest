@@ -38,12 +38,17 @@ type SmartFolder struct {
 }
 
 type Library struct {
+	Path string `json:"path"`
+	Name string `json:"name"`
+}
+type LibraryData struct {
 	Folders            []Folder      `json:"folders"`
 	SmartFolders       []SmartFolder `json:"smartFolders"`
 	QuickAccess        []QuickAccess `json:"quickAccess"`
 	TagsGroups         []TagsGroup   `json:"tagsGroups"`
 	ModificationTime   int64         `json:"modificationTime"`
 	ApplicationVersion string        `json:"applicationVersion"`
+	Library            Library       `json:"library"`
 }
 
 type Condition struct {
@@ -103,8 +108,8 @@ func SwitchLibrary(baseURL string, libraryPath string) error {
 }
 
 type LibraryInfoResponse struct {
-	Data   Library `json:"data"`
-	Status string  `json:"status"`
+	Data   LibraryData `json:"data"`
+	Status string      `json:"status"`
 }
 
 func GetLibraryInfo(baseURL string) (*LibraryInfoResponse, error) {

@@ -287,7 +287,8 @@ func LibrarySwitchSync(baseUrl string, libraryPath string) error {
 	}
 }
 
-func CurrentLibrary() (string, error) {
+// lol idiot
+func CurrentLibrary0() (string, error) {
 	cfg := config.GetConfig()
 
 	// 1. get first item id
@@ -318,4 +319,26 @@ func CurrentLibrary() (string, error) {
 
 	// optionally check for metadata.json?
 	return currLib, nil
+}
+
+// get path to current library
+func CurrentLibrary() (string, error) {
+	cfg := config.GetConfig()
+	libInfo, err := api.GetLibraryInfo(cfg.BaseURL())
+	if err != nil {
+		return "", fmt.Errorf("error getting library info err=%w", err)
+	}
+	fmt.Println(libInfo.Data.Library)
+	return libInfo.Data.Library.Path, nil
+}
+
+func CurrentLibraryName() (string, error) {
+	cfg := config.GetConfig()
+	libInfo, err := api.GetLibraryInfo(cfg.BaseURL())
+	if err != nil {
+		return "", fmt.Errorf("error getting library info err=%w", err)
+	}
+
+	return libInfo.Status, nil
+	//return libInfo.Data.Library
 }
