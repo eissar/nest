@@ -229,8 +229,8 @@ func pollForSwitch(c context.Context, pollingCh chan bool, targetLib string) {
 
 	for {
 		select {
-		case <-t.C:
-			currLib, err := CurrentLibrary()
+		case <-t.C: // tick
+			currLib, err := CurrentLibraryPath()
 			if err != nil {
 				log.Printf("warning err=%v\n", err)
 				continue
@@ -243,14 +243,14 @@ func pollForSwitch(c context.Context, pollingCh chan bool, targetLib string) {
 				fmt.Printf("targetLib: %v\n", targetLib)
 			}
 
-		case <-c.Done():
+		case <-c.Done(): // exit
 			return
 		}
 	}
 }
 
 func LibrarySwitchSync(baseUrl string, libraryPath string) error {
-	currLibraryPath, err := CurrentLibrary()
+	currLibraryPath, err := CurrentLibraryPath()
 	if err != nil {
 		return fmt.Errorf("libraryswitchsync: error getting lib info err=%v", err)
 	}
@@ -321,15 +321,23 @@ func CurrentLibrary0() (string, error) {
 	return currLib, nil
 }
 
-// get path to current library
-func CurrentLibrary() (string, error) {
+func CurrentLibrary() (*api.Library, error) {
 	cfg := config.GetConfig()
 	libInfo, err := api.GetLibraryInfo(cfg.BaseURL())
 	if err != nil {
+		return nil, fmt.Errorf("error getting library info err=%w", err)
+	}
+	//fmt.Println(libInfo.Data.Library)
+	return &libInfo.Data.Library, nil
+}
+
+// get path to current library
+func CurrentLibraryPath() (string, error) {
+	currLib, err := CurrentLibrary()
+	if err != nil {
 		return "", fmt.Errorf("error getting library info err=%w", err)
 	}
-	fmt.Println(libInfo.Data.Library)
-	return libInfo.Data.Library.Path, nil
+	return currLib.Path, nil
 }
 
 func CurrentLibraryName() (string, error) {

@@ -25,7 +25,7 @@ func TestList(t *testing.T) {
 }
 func TestCurrentLibrary(t *testing.T) {
 	//cfg := config.GetConfig()
-	libPath, err := CurrentLibrary()
+	libPath, err := CurrentLibraryPath()
 	if err != nil {
 		t.Fatalf("%s", err.Error())
 	}
