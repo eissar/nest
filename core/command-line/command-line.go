@@ -125,10 +125,6 @@ func Add(cfg config.NestConfig, pth *string) {
 	}
 }
 
-func AddV1(cfg config.NestConfig, pth *string) {
-
-}
-
 func List(cfg config.NestConfig, limit *int) {
 	data, err := api.ListV2(cfg.BaseURL(), *limit)
 	if err != nil {
