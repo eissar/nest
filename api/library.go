@@ -78,10 +78,8 @@ type TagsGroup struct {
 
 // /api/library/switch
 func SwitchLibrary(baseURL string, libraryPath string) error {
-	ep, ok := endpoints.Library["switch"]
-	if !ok {
-		return fmt.Errorf("could not find endpoint `switch` in endpoints.")
-	}
+	ep := endpoints.LibrarySwitch
+
 	uri := baseURL + ep.Path
 
 	libraryPath = filepath.ToSlash(libraryPath)
@@ -115,10 +113,7 @@ type LibraryInfoResponse struct {
 func GetLibraryInfo(baseURL string) (*LibraryInfoResponse, error) {
 	var l *LibraryInfoResponse
 
-	ep, ok := endpoints.Library["info"]
-	if !ok {
-		return l, fmt.Errorf("could not find endpoint `switch` in endpoints.")
-	}
+	ep := endpoints.LibraryInfo
 	uri := baseURL + ep.Path
 
 	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
@@ -139,10 +134,8 @@ func GetLibraryInfo(baseURL string) (*LibraryInfoResponse, error) {
 }
 func GetIcon(baseURL string) (string, error) {
 	var currentLibraryPath string
-	ep, ok := endpoints.Library["icon"]
-	if !ok {
-		return currentLibraryPath, fmt.Errorf("could not find endpoint `icon` in endpoints.")
-	}
+
+	ep := endpoints.LibraryIcon
 
 	uri := baseURL + ep.Path
 
@@ -178,10 +171,7 @@ type libs []string
 // returns []string paths to libraries
 // from /api/library/history
 func Recent(baseURL string) ([]string, error) {
-	ep, ok := endpoints.Library["history"]
-	if !ok {
-		return []string{}, fmt.Errorf("could not find endpoint `icon` in endpoints.")
-	}
+	ep := endpoints.LibraryHistory
 
 	uri := baseURL + ep.Path
 

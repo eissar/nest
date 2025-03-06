@@ -49,8 +49,7 @@ type BulkItem struct {
 	//FolderId string `json:"omitempty`
 }
 
-//FolderID         string   `json:"folderId,omitempty"`
-
+// FolderID         string   `json:"folderId,omitempty"`
 func AddItemFromURL(baseURL string, item Item) (map[string]interface{}, error) {
 	itemJSON, err := json.Marshal(item)
 	if err != nil {
@@ -90,17 +89,12 @@ func AddItemFromURL(baseURL string, item Item) (map[string]interface{}, error) {
 	return result, nil
 }
 
-type ListData struct {
-	EagleData
-	Data []any `json:"data"`
-}
-
 type Options struct {
 	Limit int `json:"limit,omitempty"`
 }
 
 // creates an *http.Request and sends to InvokeEagleAPIV1
-func ListV2(baseUrl string, limit int) (*ListData, error) {
+func ItemList(baseUrl string, limit int) ([]ListItem, error) {
 	/*
 		PARAMS
 			limit
@@ -118,10 +112,7 @@ func ListV2(baseUrl string, limit int) (*ListData, error) {
 			folders
 			Filter by Folders.  Use , to divide folder IDs. E.g.: KAY6NTU6UYI5Q,KBJ8Z60O88VMG
 	*/
-	ep, ok := endpoints.Item["list"]
-	if !ok {
-		return nil, fmt.Errorf("could not find endpoint `list` in endpoints.")
-	}
+	ep := endpoints.ItemList
 	// TODO: validate parameters?
 
 	uri := baseUrl + ep.Path
@@ -139,65 +130,18 @@ func ListV2(baseUrl string, limit int) (*ListData, error) {
 	req.URL.RawQuery = query.Encode()
 	// fmt.Println("query here:", req.URL.Query().Encode())
 
-	var a *ListData
+	var a struct {
+		EagleData
+		Data []ListItem `json:"data"`
+	}
 	err = InvokeEagleAPIV2(req, &a)
 	if err != nil {
 		return nil, err
 	}
-	return a, nil
-}
 
-type ListDataV3 struct {
-	EagleData
-	Data []ListItem
-}
+	// if a.Status != "success" ...
 
-// creates an *http.Request and sends to InvokeEagleAPIV1
-func ListV3(baseUrl string, limit int) (*ListDataV3, error) {
-	/*
-		PARAMS
-			limit
-			The number of items to be displayed. the default number is 200
-			offset
-			Offset a collection of results from the api. Start with 0.
-			orderBy
-			The sorting order.CREATEDATE , FILESIZE , NAME , RESOLUTION , add a minus sign for descending order: -FILESIZE
-			keyword
-			Filter by the keyword
-			ext
-			Filter by the extension type, e.g.: jpg ,  png
-			tags
-			Filter by tags. Use , to divide different tags. E.g.: Design, Poster
-			folders
-			Filter by Folders.  Use , to divide folder IDs. E.g.: KAY6NTU6UYI5Q,KBJ8Z60O88VMG
-	*/
-	ep, ok := endpoints.Item["list"]
-	if !ok {
-		return nil, fmt.Errorf("could not find endpoint `list` in endpoints.")
-	}
-	// TODO: validate parameters?
-
-	uri := baseUrl + ep.Path
-
-	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
-	if err != nil {
-		return nil, fmt.Errorf("list: error creating request err=%w", err)
-	}
-
-	// add query params
-	query := req.URL.Query()
-	if limit > 0 {
-		query.Add("limit", strconv.Itoa(limit))
-	}
-	req.URL.RawQuery = query.Encode()
-	// fmt.Println("query here:", req.URL.Query().Encode())
-
-	var a *ListDataV3
-	err = InvokeEagleAPIV2(req, &a)
-	if err != nil {
-		return nil, err
-	}
-	return a, nil
+	return a.Data, nil
 }
 
 type itemFromPath struct {
@@ -234,10 +178,8 @@ func NewItemFromPath(filePath string) (obj itemFromPath, err error) {
 // returns status only.
 // use ConstructItemFromPath to build args
 func AddItemFromPath(baseURL string, item itemFromPath) error {
-	ep, ok := endpoints.Item["addFromPath"]
-	if !ok {
-		return fmt.Errorf("could not find endpoint `addFromPath` in endpoints.")
-	}
+	ep := endpoints.ItemAddFromPath
+
 	uri := baseURL + ep.Path
 	body := fmt.Appendf(nil, `{"path": "%s"}`, item.Path)
 
@@ -268,10 +210,7 @@ type ThumbnailData struct {
 
 // creates an *http.Request and sends to InvokeEagleAPIV1
 func Thumbnail(baseUrl string, itemId string) (s string, err error) {
-	ep, ok := endpoints.Item["thumbnail"]
-	if !ok {
-		return s, fmt.Errorf("could not find endpoint `list` in endpoints.")
-	}
+	ep := endpoints.ItemThumbnail
 
 	uri := baseUrl + ep.Path
 

@@ -28,7 +28,7 @@ var host = cfg.Host + ":" + strconv.Itoa(cfg.Port)
 func TestList(t *testing.T) {
 	baseUrl := "http://" + cfg.Host + ":" + strconv.Itoa(cfg.Port)
 
-	result, err := ListV2(baseUrl, 0)
+	result, err := List(baseUrl, 0)
 	if err != nil {
 		t.Error(err)
 	}
@@ -44,11 +44,11 @@ func TestListLengths(t *testing.T) {
 	lens := []int{1, 5, 20, 200}
 
 	for _, limit := range lens {
-		result, err := ListV2(baseUrl, limit)
+		result, err := List(baseUrl, limit)
 		if err != nil {
 			t.Fatalf("%s", err.Error())
 		}
-		l := len(result.Data)
+		l := len(result)
 		if limit != l {
 			t.Fatalf("expected data of len %v, but got %v", limit, l)
 		}

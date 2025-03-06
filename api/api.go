@@ -18,18 +18,22 @@ type EagleApiResponse struct {
 	Data   []interface{} // optional
 }
 
-//	type EagleResponse struct {
-//		Status string
-//		Data   []Item // optional
-//	}
-
 // for endpoints that return an array of data
 type EagleData struct {
 	Status string `json:"status"`
 }
 
+// cleaned up way to do this
+type EagleResponse struct {
+	Status string `json:"status"`
+}
+
 // maybe
 func (data EagleData) GetData() {}
+
+var (
+	ErrStatusErr = fmt.Errorf("response key 'status' was not 'success'")
+)
 
 type EagleMessage struct {
 	EagleData
@@ -195,18 +199,20 @@ func wrapperHandler(c echo.Context) error {
 	return c.String(200, c.Request().URL.Path)
 }
 
-func RegisterEagleWrapper(g *echo.Group) {
-	//for _, ep := range endpoints.Application {
-	//for _, ep := range endpoints.Folder {
-	for _, ep := range endpoints.Item {
-		if ep.Method == "GET" {
-			g.GET(ep.Path, wrapperHandler)
-		} else if ep.Method == "POST" {
-			g.POST(ep.Path, wrapperHandler)
+/*
+	func RegisterEagleWrapper(g *echo.Group) {
+		//for _, ep := range endpoints.Application {
+		//for _, ep := range endpoints.Folder {
+		for _, ep := range endpoints.Item {
+			if ep.Method == "GET" {
+				g.GET(ep.Path, wrapperHandler)
+			} else if ep.Method == "POST" {
+				g.POST(ep.Path, wrapperHandler)
+			}
 		}
+		//for _, ep := range endpoints.Library {
 	}
-	//for _, ep := range endpoints.Library {
-}
+*/
 
 const (
 	MaxEagleItemIDLength = 15

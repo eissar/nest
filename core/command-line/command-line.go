@@ -111,7 +111,7 @@ func Add(cfg config.NestConfig, pth *string) {
 	}
 	fmt.Println("path:", *pth)
 
-	obj, err := api.ConstructItemFromPath(
+	obj, err := api.NewItemFromPath(
 		*pth,
 	)
 	fmt.Println("path:", obj.Path)
