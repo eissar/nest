@@ -246,13 +246,6 @@ func AddItemFromPath(baseURL string, item itemFromPath) error {
 		return fmt.Errorf("list: error creating request err=%w", err)
 	}
 
-	// add query params
-	// query := req.URL.Query()
-
-	//query.Add("path", file_path)
-	//query.Add("name", "test")
-	//req.URL.RawQuery = query.Encode()
-	//fmt.Printf("req.URL.RawQuery: %v\n", req.URL.RawQuery)
 	var a *EagleMessage
 	err = InvokeEagleAPIV2(req, &a)
 	if err != nil {
