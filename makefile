@@ -43,4 +43,5 @@ clean:
 	rm -rf build/*
 
 
+# gh release create v1.0.0 yourfile.zip -t "Release 1.0.0" -n "Release notes"
 
