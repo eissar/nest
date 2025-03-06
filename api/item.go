@@ -226,7 +226,7 @@ func (i *itemFromPath) setPath(p string) error {
 	return nil
 }
 
-func ConstructItemFromPath(filePath string) (obj itemFromPath, err error) {
+func NewItemFromPath(filePath string) (obj itemFromPath, err error) {
 	err = obj.setPath(filePath)
 	return obj, err
 }
@@ -239,9 +239,8 @@ func AddItemFromPath(baseURL string, item itemFromPath) error {
 		return fmt.Errorf("could not find endpoint `addFromPath` in endpoints.")
 	}
 	uri := baseURL + ep.Path
-	body := []byte(
-		fmt.Sprintf(`{"path": "%s"}`, item.Path),
-	)
+	body := fmt.Appendf(nil, `{"path": "%s"}`, item.Path)
+
 	req, err := http.NewRequest(ep.Method, uri, bytes.NewReader(body)) // method, url, body
 	if err != nil {
 		return fmt.Errorf("list: error creating request err=%w", err)
