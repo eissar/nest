@@ -28,12 +28,15 @@ var host = cfg.Host + ":" + strconv.Itoa(cfg.Port)
 func TestList(t *testing.T) {
 	baseUrl := "http://" + cfg.Host + ":" + strconv.Itoa(cfg.Port)
 
-	result, err := List(baseUrl, 0)
+	result, err := ItemList(baseUrl, ItemListOptions{Limit: 0})
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err.Error())
 	}
 
-	fmt.Println(result)
+	if len(result) != 1 {
+		t.Fatalf("expected len 1 with parameter limit 0, instead got %v", len(result))
+	}
+	// fmt.Println(result)
 }
 
 // get count of all items in library
@@ -44,7 +47,7 @@ func TestListLengths(t *testing.T) {
 	lens := []int{1, 5, 20, 200}
 
 	for _, limit := range lens {
-		result, err := List(baseUrl, limit)
+		result, err := ItemList(baseUrl, ItemListOptions{Limit: limit})
 		if err != nil {
 			t.Fatalf("%s", err.Error())
 		}
@@ -106,4 +109,12 @@ func TestAddItemFromPath(t *testing.T) {
 	if err != nil {
 		t.Fatal(err.Error())
 	}
+}
+
+func TestItemInfo(t *testing.T) {
+	x, err := ItemInfo(cfg.BaseURL(), "M7YCMVLJ090PF")
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+	fmt.Println(x)
 }

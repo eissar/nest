@@ -1,11 +1,21 @@
 package api
 
 // wrapper for every path in the eagle library.
+// [X] - application
+//		[X] - tests
+// [ ] - folder
+// [ ] - item
+//		[ ] - tests
+//		[ ] - parameters
+// [X] - library
+//		[X] - tests
 
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"net/url"
 	"os"
 	"regexp"
 
@@ -18,7 +28,6 @@ type EagleApiResponse struct {
 	Data   []interface{} // optional
 }
 
-// for endpoints that return an array of data
 type EagleData struct {
 	Status string `json:"status"`
 }
@@ -154,6 +163,25 @@ func InvokeEagleAPIV1(req *http.Request) (result *EagleData, e error) {
 }
 
 type Ptr[T any] interface{ *T }
+
+// populates v with response from req
+func Request[T any](method string, url string, body io.Reader, urlParam *url.Values, v *T) error {
+
+	req, err := http.NewRequest(method, url, body)
+	if err != nil {
+		return fmt.Errorf("list: error creating request err=%w", err)
+	}
+
+	if urlParam != nil {
+		req.URL.RawQuery = urlParam.Encode()
+	}
+	err = InvokeEagleAPIV2(req, &v)
+	if err != nil {
+		return fmt.Errorf("api.Request error making request err=%w", err)
+	}
+
+	return nil
+}
 
 // all responses have a status
 // (excl. /api/library/icon)

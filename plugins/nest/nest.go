@@ -266,7 +266,7 @@ func LibrarySwitchSync(baseUrl string, libraryPath string) error {
 	// switch library
 	timeoutCh := time.After(10 * time.Second)
 
-	err = api.SwitchLibrary(baseUrl, libraryPath)
+	err = api.LibrarySwitch(baseUrl, libraryPath)
 	if err != nil {
 		return fmt.Errorf("couldn't switch to lib=%s err=%v", libraryPath, err)
 	}
@@ -286,43 +286,10 @@ func LibrarySwitchSync(baseUrl string, libraryPath string) error {
 	}
 }
 
-// lol idiot
-func CurrentLibrary0() (string, error) {
-	cfg := config.GetConfig()
-
-	// 1. get first item id
-
-	resp, err := api.ListV3(cfg.BaseURL(), 1)
-	if err != nil {
-		return "", fmt.Errorf("currentlibrary: could not retrieve any library items.")
-	}
-
-	firstItemId := resp.Data[0].Id
-	if firstItemId == "" {
-		return "", fmt.Errorf("currentlibrary: could not retrieve any library items.")
-	}
-
-	// 2. get thumbnail
-
-	thumb, err := api.Thumbnail(cfg.BaseURL(), firstItemId)
-	if err != nil {
-		return "", fmt.Errorf("could not find thumbnail for first eagle item err=%v", err)
-	}
-
-	//fmt.Println("thumb:", thumb)
-	parts := strings.SplitAfterN(thumb, `.library/`, 2)
-	if len(parts) == 1 {
-		return "", fmt.Errorf("currentlibrary: could not segment the first retrieved eagle item path by .library does the eagle library have some other name?")
-	}
-	currLib := filepath.Clean(parts[0])
-
-	// optionally check for metadata.json?
-	return currLib, nil
-}
-
+// returns current library path and name
 func CurrentLibrary() (*api.Library, error) {
 	cfg := config.GetConfig()
-	libInfo, err := api.GetLibraryInfo(cfg.BaseURL())
+	libInfo, err := api.LibraryInfo(cfg.BaseURL())
 	if err != nil {
 		return nil, fmt.Errorf("error getting library info err=%w", err)
 	}
@@ -342,7 +309,7 @@ func CurrentLibraryPath() (string, error) {
 
 func CurrentLibraryName() (string, error) {
 	cfg := config.GetConfig()
-	libInfo, err := api.GetLibraryInfo(cfg.BaseURL())
+	libInfo, err := api.LibraryInfo(cfg.BaseURL())
 	if err != nil {
 		return "", fmt.Errorf("error getting library info err=%w", err)
 	}

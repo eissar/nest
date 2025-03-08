@@ -124,7 +124,7 @@ type ThumbnailData struct {
 }
 
 func GetEagleThumbnail(cfg *config.NestConfig, itemId string) (string, error) {
-	thumbnail, err := api.Thumbnail(cfg.BaseURL(), itemId)
+	thumbnail, err := api.ItemThumbnail(cfg.BaseURL(), itemId)
 	if err != nil {
 		return "", fmt.Errorf("getEagleThumbnail: err=%w", err)
 	}
@@ -199,7 +199,7 @@ func GetEagleThumbnailFullRes(cfg *config.NestConfig, itemId string) (string, er
 }
 
 func GetList(cfg *config.NestConfig) (any, error) {
-	_, err := api.ListV2(cfg.BaseURL(), 5)
+	_, err := api.ItemList(cfg.BaseURL(), api.ItemListOptions{Limit: 5})
 	if err != nil {
 		log.Fatal(err.Error())
 	}

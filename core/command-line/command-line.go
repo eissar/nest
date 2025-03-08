@@ -126,7 +126,11 @@ func Add(cfg config.NestConfig, pth *string) {
 }
 
 func List(cfg config.NestConfig, limit *int) {
-	data, err := api.ListV2(cfg.BaseURL(), *limit)
+	opts := api.ItemListOptions{
+		Limit: *limit,
+	}
+
+	data, err := api.ItemList(cfg.BaseURL(), opts)
 	if err != nil {
 		log.Fatalf("[ERROR] list: while retrieving items: err=%s", err.Error())
 	}
@@ -244,7 +248,7 @@ func Switch(cfg config.NestConfig, libraryName string) {
 		log.Fatalf("library is already %s", libraryName)
 	}
 
-	recentLibraries, err := api.Recent(cfg.BaseURL())
+	recentLibraries, err := api.LibraryHistory(cfg.BaseURL())
 	if err != nil {
 		log.Fatalf("could not retrieve recent libaries err=%s", err.Error())
 	}
