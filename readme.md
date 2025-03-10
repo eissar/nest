@@ -1,21 +1,67 @@
 <!--toc:start-->
 - [Overview of features](#overview-of-features)
+    - [Command line interface](#command-line-interface)
+      - [Add eagle item](#add-eagle-item)
+      - [List eagle item](#list-eagle-item)
+      - [Reveal item id in explorer](#reveal-item-id-in-explorer)
+      - [Switch library (synchronously)](#switch-library-synchronously)
     - [Host your eagle images](#host-your-eagle-images)
-      - [Host your eagle images in obsidian](#host-your-eagle-images-in-obsidian)
+      - [Render your eagle images in obsidian](#render-your-eagle-images-in-obsidian)
     - [Tray icon](#tray-icon)
-    - [(WIP) Wrapper around the eagle api](#wip-wrapper-around-the-eagle-api)
-    - [(PLANNED) Re-Implementation/ Extensions to the eagle API](#planned-re-implementation-extensions-to-the-eagle-api)
+    - [extensions to the eagle API](#extensions-to-the-eagle-api)
     - [Configuration](#configuration)
 - [TODO:](#todo)
 <!--toc:end-->
 
 # Overview of features
 
+### Command line interface
+
+#### Add eagle item
+```bash
+nest add ./image.png
+```
+
+#### List eagle item
+```bash
+nest list 200
+```
+
+```bash
+nest list 200 | jq
+```
+
+#### Reveal item id in explorer
+```bash
+nest reveal <itemId>
+```
+
+
+(wip pipe support)
+```ps1
+nest list | select -First 1 -ExpandProperty id | nest reveal
+```
+
+#### Switch library (synchronously)
+this will switch libraries synchronously. by default, the eagle api
+endpoint will return a status code as soon as possible, without waiting for
+the switching process to complete. This is inconvenient for scripting and automation
+as you cannot immediately perform next actions or retrieve the current library information
+without the risk of retrieving stale data. this endpoint will wait until the current library
+is in fact switched and ready for subsequent requests.
+
+```ps1
+nest switch inspo && nest list
+```
+
+
+
+
 ### Host your eagle images
 render your images from disk:
 using links like `localhost:port/M787F6GA16D3D` we can retrieve image data from eagle.
 You could use this to render your eagle images anywhere that takes an image url.
-#### Host your eagle images in obsidian
+#### Render your eagle images in obsidian
 By default, dragging an item from eagle into obsidian creates an inline preview. However, this copies the image into the obsidian vault, which
 creates unnecessary data duplication. instead, using this server, you can render obsidian images using a link like:
 `![][http://localhost:1323/M787F6GA16D3D]`.
@@ -55,11 +101,8 @@ manage the server (close)
 Planned:
 update configuration
 
-### (WIP) Wrapper around the eagle api
-You can call endpoints in the eagle api using the same syntax as the default eagle api.
-/api/item/list?...
 
-### (PLANNED) Re-Implementation/ Extensions to the eagle API
+### extensions to the eagle API
 - [X] autogen docs
     - [ ] document each endpoint
 - [X] get library filepath
