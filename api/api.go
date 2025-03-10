@@ -23,35 +23,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// errors
+// #region errors
+
 var (
 	ErrStatusErr = fmt.Errorf("response key 'status' was not 'success'")
 )
-
-// types
-type EagleApiResponse struct {
-	Status string
-	Data   []interface{} // optional
-}
-type EagleData struct {
-	Status string `json:"status"`
-}
-
-// maybe
-func (data EagleData) GetData() {}
-
-// cleaned up way to do this
-
-type EagleMessage struct {
-	EagleData
-	Data any
-}
-
-// for endpoints that return an array of strings.
-type EagleArray struct {
-	EagleData
-	Data []string
-}
 
 type EagleApiErr struct {
 	Message  string
@@ -70,6 +46,54 @@ type ApiKeyErr struct {
 func (e *ApiKeyErr) Error() string {
 	return fmt.Sprintf("eagleapi: api key invalid; err=%s", e.Message)
 }
+
+// #endregion errors
+
+// #region types
+
+type EagleApiResponse struct {
+	Status string
+	Data   []interface{} // optional
+}
+
+// maybe?
+// func (data EagleData) GetData() {}
+type EagleData struct {
+	Status string `json:"status"`
+}
+
+// cleaned up way to do this
+type EagleMessage struct {
+	EagleData
+	Data any
+}
+
+// for endpoints that return an array of strings.
+type EagleArray struct {
+	EagleData
+	Data []string
+}
+
+// #endregion types
+
+// #region eagleitem id
+
+const (
+	MaxEagleItemIDLength = 15
+	eagleItemIDPattern   = `^[a-zA-Z0-9]+$` // Pre-compiled regular expression
+)
+
+var eagleItemIDRegex = regexp.MustCompile(eagleItemIDPattern)
+
+// TODO: remove regex?
+func IsValidItemID(id string) bool {
+	if len(id) >= MaxEagleItemIDLength {
+		return false
+	}
+	return eagleItemIDRegex.MatchString(string(id))
+}
+
+// #endregion eagleitem id
 
 func getApiKey() (string, error) {
 	accessToken := os.Getenv("EAGLE_API_KEY") // Get token from environment variable
@@ -92,34 +116,6 @@ func addTokenAndEncodeQueryParams(r *http.Request) error {
 	query.Add("token", key)
 	r.URL.RawQuery = query.Encode()
 	return nil
-}
-
-// all responses have a `status` field (excl. /api/library/icon)
-func InvokeEagleAPIV1(req *http.Request) (result *EagleData, e error) {
-	err := addTokenAndEncodeQueryParams(req)
-	if err != nil {
-		return result, err
-	}
-
-	// make the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return result, fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	// parse the response
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return result, fmt.Errorf("error decoding response: %v", err)
-	}
-
-	if result.Status != "success" {
-		return result, fmt.Errorf("error decoding response: result object's response was not `success`, but instead, %s ", result.Status)
-	}
-
-	return result, nil
 }
 
 // populates v with response from req
@@ -181,22 +177,6 @@ func wrapperHandler(c echo.Context) error {
 
 	}
 	return c.String(200, c.Request().URL.Path)
-}
-
-// eagle item id
-const (
-	MaxEagleItemIDLength = 15
-	eagleItemIDPattern   = `^[a-zA-Z0-9]+$` // Pre-compiled regular expression
-)
-
-var eagleItemIDRegex = regexp.MustCompile(eagleItemIDPattern)
-
-// TODO: remove regex?
-func IsValidItemID(id string) bool {
-	if len(id) >= MaxEagleItemIDLength {
-		return false
-	}
-	return eagleItemIDRegex.MatchString(string(id))
 }
 
 func RegisterGroupRoutes(g *echo.Group) {
