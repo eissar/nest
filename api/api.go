@@ -1,14 +1,15 @@
 package api
 
-// wrapper for every path in the eagle library.
-// [X] - application
-//		[X] - tests
-// [ ] - folder
-// [ ] - item
-//		[ ] - tests
-//		[ ] - parameters
-// [X] - library
-//		[X] - tests
+/* wrapper for every path in the eagle library. endpoints:
+ [X] - application
+		[X] - tests
+ [ ] - folder
+ [ ] - item
+		[ ] - tests
+		[ ] - parameters
+ [X] - library
+		[X] - tests
+*/
 
 import (
 	"encoding/json"
