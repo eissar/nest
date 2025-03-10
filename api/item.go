@@ -71,15 +71,17 @@ type ListItem struct {
 }
 
 // give a better name
+// bulk (addFromUrls) does not include `star` or `folderId`
+// pointers represent optional keys and null represents unset
 type ItemAddFromUrlOptions struct {
 	URL              string            `json:"url"`
 	Name             string            `json:"name"`
 	Website          string            `json:"website,omitempty"`
 	Tags             []string          `json:"tags,omitempty"`
-	Star             int               `json:"star,omitempty"`
+	Star             *int              `json:"star,omitempty"`
 	Annotation       string            `json:"annotation,omitempty"`
 	ModificationTime int               `json:"modificationTime,omitempty"`
-	FolderID         string            `json:"folderId,omitempty"`
+	FolderID         *string           `json:"folderId,omitempty"`
 	Headers          map[string]string `json:"headers,omitempty"`
 }
 
@@ -133,19 +135,17 @@ type ThumbnailData struct {
 
 // start api endpoints
 
-// use cleaner abstraction `api.Request` like in ItemInfo
-
 //- [X] /api/item/addFromURL
-//- [ ] /api/item/addFromURLs
+//- [X] /api/item/addFromURLs
 //- [X] /api/item/addFromPath
-//- [ ] /api/item/addFromPaths
+//- [X] /api/item/addFromPaths
 //- [X] /api/item/addBookmark
 //- [X] /api/item/info
 //- [X] /api/item/thumbnail
 //- [X] /api/item/list
-//- [ ] /api/item/moveToTrash
-//- [ ] /api/item/refreshPalette
-//- [ ] /api/item/refreshThumbnail
+//- [X] /api/item/moveToTrash
+//- [X] /api/item/refreshPalette
+//- [X] /api/item/refreshThumbnail
 //- [X] /api/item/update
 
 // endpoint only returns `status`
@@ -154,6 +154,40 @@ func ItemAddFromUrl(baseUrl string, item ItemAddFromUrlOptions) error {
 	uri := baseUrl + ep.Path
 
 	body, err := json.Marshal(item)
+	if err != nil {
+		return fmt.Errorf("addfromurl: error converting request into json body err=%w", err)
+	}
+
+	var resp EagleResponse
+
+	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
+	if err != nil {
+		return fmt.Errorf("addFromUrl: err=%w", err)
+	}
+
+	if resp.Status != "success" {
+		return fmt.Errorf("addFromUrl: err=%w", ErrStatusErr)
+	}
+
+	return nil
+}
+
+// endpoint only returns `status`
+func ItemAddfromUrls(baseUrl string, items []ItemAddFromUrlOptions, folderId string) error {
+	ep := endpoints.ItemAddFromURLs
+	uri := baseUrl + ep.Path
+
+	requestBody := struct {
+		Items    []ItemAddFromUrlOptions `json:"items"`
+		FolderId string                  `json:"folderId,omitempty"`
+	}{
+		items,
+		folderId,
+	}
+	body, err := json.Marshal(requestBody)
+	if err != nil {
+		return fmt.Errorf("addfromurls: error converting request into json body err=%w", err)
+	}
 
 	var resp EagleResponse
 
@@ -171,11 +205,14 @@ func ItemAddFromUrl(baseUrl string, item ItemAddFromUrlOptions) error {
 
 // returns status only.
 // use NewItemFromPath to build args
-func ItemAddFromPath(baseURL string, item ItemAddFromPathOptions) error {
+func ItemAddFromPath(baseUrl string, item ItemAddFromPathOptions) error {
 	ep := endpoints.ItemAddFromPath
-	uri := baseURL + ep.Path
+	uri := baseUrl + ep.Path
 
 	body, err := json.Marshal(item)
+	if err != nil {
+		return fmt.Errorf("addfrompath: error converting request into json body err=%w", err)
+	}
 
 	var resp EagleResponse
 
@@ -191,6 +228,29 @@ func ItemAddFromPath(baseURL string, item ItemAddFromPathOptions) error {
 	return nil
 }
 
+func ItemAddFromPaths(baseUrl string, items []ItemAddFromPathOptions) error {
+	ep := endpoints.ItemAddFromPaths
+	uri := baseUrl + ep.Path
+
+	body, err := json.Marshal(items)
+	if err != nil {
+		return fmt.Errorf("addfrompaths: error converting request into json body err=%w", err)
+	}
+
+	var resp EagleResponse
+
+	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
+	if err != nil {
+		return fmt.Errorf("addFromPaths: err=%w", err)
+	}
+
+	if resp.Status != "success" {
+		return fmt.Errorf("addFromPaths: err=%w", ErrStatusErr)
+	}
+
+	return nil
+}
+
 // endpoint only returns `status`
 func ItemAddBookmark(baseUrl string, item ItemAddBookmarkOptions) error {
 	ep := endpoints.ItemAddBookmark
@@ -199,6 +259,9 @@ func ItemAddBookmark(baseUrl string, item ItemAddBookmarkOptions) error {
 	// add param checks
 
 	body, err := json.Marshal(item)
+	if err != nil {
+		return fmt.Errorf("addbookmark: error converting request into json body err=%w", err)
+	}
 
 	var resp EagleResponse
 
@@ -246,6 +309,61 @@ func ItemList(baseUrl string, opts ItemListOptions) ([]ListItem, error) {
 	return resp.Data, nil
 }
 
+func ItemMoveToTrash(baseUrl string, ids []string) error {
+	ep := endpoints.ItemMoveToTrash
+	uri := baseUrl + ep.Path
+
+	// validate itemIds
+
+	respBody := struct {
+		ItemIds []string `json:"itemIds"`
+	}{
+		ids,
+	}
+
+	body, err := json.Marshal(respBody)
+	if err != nil {
+		return fmt.Errorf("itemlist: error converting request into json body err=%w", err)
+	}
+
+	resp := EagleResponse{}
+
+	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
+	if err != nil {
+		return fmt.Errorf("movetotrash: err=%w", err)
+	}
+
+	if resp.Status != "success" {
+		return fmt.Errorf("movetotrash: err=%w", ErrStatusErr)
+	}
+
+	return nil
+}
+
+func ItemRefreshPalette(baseUrl string, id string) error {
+	ep := endpoints.ItemRefreshPalette
+	uri := baseUrl + ep.Path
+
+	resp := EagleResponse{}
+
+	body, err := json.Marshal(struct {
+		Id string `json:"id"`
+	}{id})
+	if err != nil {
+		return fmt.Errorf("itemrefreshpalette: error converting request into json body err=%w", err)
+	}
+
+	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
+	if err != nil {
+		return fmt.Errorf("itemrefreshpalette: err=%w", err)
+	}
+
+	if resp.Status != "success" {
+		return fmt.Errorf("itemrefreshpalette: err=%w", ErrStatusErr)
+	}
+
+	return nil
+}
 func ItemInfo(baseUrl string, id string) (respItem ApiItem, err error) {
 	//#region Validate
 	if !IsValidItemID(id) {
@@ -271,33 +389,29 @@ func ItemInfo(baseUrl string, id string) (respItem ApiItem, err error) {
 	return resp.Data, nil
 }
 
-func ItemUpdate(baseUrl string, item ItemUpdateOptions) (respItem ApiItem, err error) {
-	ep := endpoints.ItemUpdate
+func ItemRefreshThumbnail(baseUrl string, id string) error {
+	ep := endpoints.ItemRefreshPalette
 	uri := baseUrl + ep.Path
 
-	// validate id
-	if !IsValidItemID(item.ID) {
-		return respItem, fmt.Errorf("list: error creating request err= itemId parameter malformed or empty.")
-	}
-	//end validations
+	resp := EagleResponse{}
 
-	var resp struct {
-		EagleResponse
-		Data ApiItem `json:"data"`
+	body, err := json.Marshal(struct {
+		Id string `json:"id"`
+	}{id})
+	if err != nil {
+		return fmt.Errorf("itemrefreshthumbnail: error converting request into json body err=%w", err)
 	}
-
-	body, err := json.Marshal(item)
 
 	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
 	if err != nil {
-		return respItem, fmt.Errorf("update: err=%w", err)
+		return fmt.Errorf("itemrefreshthumbnail: err=%w", err)
 	}
 
 	if resp.Status != "success" {
-		return respItem, fmt.Errorf("update: err=%w", ErrStatusErr)
+		return fmt.Errorf("itemrefreshthumbnail: err=%w", ErrStatusErr)
 	}
 
-	return respItem, nil
+	return nil
 }
 
 // returns thumbnail path and error
@@ -331,4 +445,36 @@ func ItemThumbnail(baseUrl string, itemId string) (string, error) {
 	} else {
 		return escapedPath, nil
 	}
+}
+
+func ItemUpdate(baseUrl string, item ItemUpdateOptions) (respItem ApiItem, err error) {
+	ep := endpoints.ItemUpdate
+	uri := baseUrl + ep.Path
+
+	// validate id
+	if !IsValidItemID(item.ID) {
+		return respItem, fmt.Errorf("list: error creating request err= itemId parameter malformed or empty.")
+	}
+	//end validations
+
+	var resp struct {
+		EagleResponse
+		Data ApiItem `json:"data"`
+	}
+
+	body, err := json.Marshal(item)
+	if err != nil {
+		return respItem, fmt.Errorf("itemupdate: error converting request into json body err=%w", err)
+	}
+
+	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
+	if err != nil {
+		return respItem, fmt.Errorf("update: err=%w", err)
+	}
+
+	if resp.Status != "success" {
+		return respItem, fmt.Errorf("update: err=%w", ErrStatusErr)
+	}
+
+	return respItem, nil
 }
