@@ -5,10 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/eissar/nest/api/endpoints"
 )
+
+// #region types
 
 type Folder struct {
 	ID               string   `json:"id"`
@@ -25,7 +29,6 @@ type Folder struct {
 	SortIncrease     bool     `json:"sortIncrease,omitempty"`
 	Icon             string   `json:"icon,omitempty"`
 }
-
 type SmartFolder struct {
 	ID               string      `json:"id"`
 	Icon             string      `json:"icon"`
@@ -36,7 +39,6 @@ type SmartFolder struct {
 	OrderBy          string      `json:"orderBy,omitempty"`
 	SortIncrease     bool        `json:"sortIncrease,omitempty"`
 }
-
 type Library struct {
 	Path string `json:"path"`
 	Name string `json:"name"`
@@ -50,25 +52,21 @@ type LibraryData struct {
 	ApplicationVersion string        `json:"applicationVersion"`
 	Library            Library       `json:"library"`
 }
-
 type Condition struct {
 	HashKey string `json:"$$hashKey,omitempty"`
 	Match   string `json:"match"`
 	Rules   []Rule `json:"rules"`
 }
-
 type Rule struct {
 	HashKey  string `json:"$$hashKey,omitempty"`
 	Method   string `json:"method"`
 	Property string `json:"property"`
 	Value    any    `json:"value"` // Can be []int or string or []string
 }
-
 type QuickAccess struct {
 	Type string `json:"type"`
 	ID   string `json:"id"`
 }
-
 type TagsGroup struct {
 	ID    string   `json:"id"`
 	Name  string   `json:"name"`
@@ -80,90 +78,96 @@ type LibraryInfoResponse struct {
 	Status string      `json:"status"`
 }
 
+// #endregion types
+
 // start endpoints
 
 //- [X] /api/library/info
 //- [X] /api/library/history
 //- [X] /api/library/switch
-//- [X] /api/library/icon
+//- [-] /api/library/icon
 
 func LibraryInfo(baseURL string) (*LibraryInfoResponse, error) {
-	var l *LibraryInfoResponse
-
 	ep := endpoints.LibraryInfo
 	uri := baseURL + ep.Path
 
-	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
+	var resp struct {
+		EagleResponse                     // `json:"response"`
+		Data          LibraryInfoResponse `json:"data"`
+	}
+
+	err := Request(ep.Method, uri, nil, nil, &resp)
 	if err != nil {
-		return l, fmt.Errorf("list: error creating request err=%w", err)
+		return &resp.Data, fmt.Errorf("LibraryInfo: err=%w", err)
 	}
 
-	err = InvokeEagleAPIV2(req, &l)
-	if err != nil {
-		return l, fmt.Errorf("error invoking eagle api err=%v", err)
+	if resp.Status != "success" {
+		return &resp.Data, fmt.Errorf("LibraryInfo: err=%w", ErrStatusErr)
 	}
 
-	if l.Status != "success" {
-		return l, fmt.Errorf("response status recieved from eagle was not `success` message=%v", l.Status)
-	}
-
-	return l, nil
+	return &resp.Data, nil
 }
 
 // returns []string paths to libraries
 // /api/library/history
 func LibraryHistory(baseURL string) ([]string, error) {
 	ep := endpoints.LibraryHistory
-
 	uri := baseURL + ep.Path
 
-	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
-	if err != nil {
-		return []string{}, fmt.Errorf("recent: error creating request err=%w", err)
-	}
-
-	//var resp *EagleArray
 	var resp struct {
-		EagleData
+		EagleResponse
 		Data []string `json:"data"`
 	}
-	err = InvokeEagleAPIV2(req, &resp)
+
+	err := Request(ep.Method, uri, nil, nil, &resp)
 	if err != nil {
-		return []string{}, fmt.Errorf("recent: error invoking request err=%w", err)
+		return []string{}, fmt.Errorf("recent: err=%w", err)
+	}
+
+	if resp.Status != "success" {
+		return []string{}, fmt.Errorf("recent: err=%w", ErrStatusErr)
 	}
 
 	return resp.Data, nil
 }
 
+// cleans libraryPath and tries to switch.
 // /api/library/switch
+// endpoint only returns `status`
 func LibrarySwitch(baseURL string, libraryPath string) error {
 	ep := endpoints.LibrarySwitch
-
 	uri := baseURL + ep.Path
 
+	// validate params
+
+	if _, err := os.Stat(libraryPath); err != nil {
+		return fmt.Errorf("switch: err=%w", err)
+	}
+
+	libraryPath = filepath.Clean(libraryPath)
 	libraryPath = filepath.ToSlash(libraryPath)
+	libraryPath = strings.TrimSuffix(libraryPath, "/") // issue ...
+
+	// end validate params
+
+	var resp EagleResponse
+
 	body := fmt.Appendf(nil, `{"libraryPath": "%s"}`, libraryPath) // bytes
 
-	req, err := http.NewRequest(ep.Method, uri, bytes.NewReader(body)) // method, url, body
+	err := Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
 	if err != nil {
-		return fmt.Errorf("list: error creating request err=%w", err)
+		return fmt.Errorf("switch: err=%w", err)
 	}
 
-	var a *EagleMessage
-	err = InvokeEagleAPIV2(req, &a)
-	if err != nil {
-		return err
-	}
-
-	if a.Status != "success" {
-		return fmt.Errorf("response status recieved from eagle was not `success` message=%v", a)
+	if resp.Status != "success" {
+		return fmt.Errorf("switch: err=%w", ErrStatusErr)
 	}
 
 	return nil
 }
 
 // returns string iconpath (broken)
-func GetIcon(baseURL string) (string, error) {
+func LibraryIcon(baseURL string) (string, error) {
 	var currentLibraryPath string
 
 	ep := endpoints.LibraryIcon

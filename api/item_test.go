@@ -7,7 +7,6 @@ import (
 
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 
 	//"time"
 
@@ -78,9 +77,9 @@ func TestListWrapper(t *testing.T) {
 	}
 }
 
-func TestAddItemFromPath(t *testing.T) {
+func TestItemAddFromPath(t *testing.T) {
 	baseUrl := cfg.FmtURL()
-	err := AddItemFromPath(baseUrl, itemFromPath{Path: `C:/Users/eshaa/Downloads/download.jpg`})
+	err := ItemAddFromPath(baseUrl, ItemAddFromPathOptions{Path: `C:/Users/eshaa/Downloads/open-folder.png`})
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -92,4 +91,24 @@ func TestItemInfo(t *testing.T) {
 		t.Fatalf("%s", err)
 	}
 	fmt.Println(x)
+}
+
+func TestItemAddFromUrl(t *testing.T) {
+	baseUrl := cfg.FmtURL()
+	err := ItemAddFromUrl(baseUrl, ItemAddFromUrlOptions{
+		URL: "https://www.dropboxforum.com/t5/s/mxpez29397/images/dS0xODUwLTMzNTg3aTcyRjIyNTZERjk5NTI4NDk?image-dimensions=40x40",
+	})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
+
+func TestItemAddBookmark(t *testing.T) {
+	baseUrl := cfg.FmtURL()
+	err := ItemAddBookmark(baseUrl, ItemAddBookmarkOptions{
+		URL: "https://github.com/nvim-treesitter/nvim-treesitter/issues/2423",
+	})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 }

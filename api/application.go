@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/eissar/nest/api/endpoints"
 )
@@ -23,21 +22,19 @@ type ApplicationInfoData struct {
 // <https://api.eagle.cool/application/info>
 func ApplicationInfo(baseUrl string) (ApplicationInfoData, error) {
 	ep := endpoints.ApplicationInfo
-
 	uri := baseUrl + ep.Path
-
-	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
-	if err != nil {
-		return ApplicationInfoData{}, fmt.Errorf("list: error creating request err=%w", err)
-	}
 
 	var resp struct {
 		EagleResponse                     // Response string `json:"response"`
 		Data          ApplicationInfoData `json:"data"`
 	}
-	err = InvokeEagleAPIV2(req, &resp)
+	err := Request(ep.Method, uri, nil, nil, &resp)
 	if err != nil {
-		return ApplicationInfoData{}, err
+		return resp.Data, fmt.Errorf("ApplicationInfo: err=%w", err)
 	}
+	if resp.Status != "success" {
+		return resp.Data, fmt.Errorf("ApplicationInfo: err=%w", ErrStatusErr)
+	}
+
 	return resp.Data, nil
 }

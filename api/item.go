@@ -7,12 +7,12 @@ import (
 	"net/http"
 	"net/url"
 	_ "net/url"
-	"os"
-	"path/filepath"
 	"strconv"
 
 	"github.com/eissar/nest/api/endpoints"
 )
+
+// #region types
 
 // site, annotation, tags, folderid ?
 type BaseItem struct {
@@ -70,6 +70,38 @@ type ListItem struct {
 	//FolderID         string   `json:"folderId"`
 }
 
+// give a better name
+type ItemAddFromUrlOptions struct {
+	URL              string            `json:"url"`
+	Name             string            `json:"name"`
+	Website          string            `json:"website,omitempty"`
+	Tags             []string          `json:"tags,omitempty"`
+	Star             int               `json:"star,omitempty"`
+	Annotation       string            `json:"annotation,omitempty"`
+	ModificationTime int               `json:"modificationTime,omitempty"`
+	FolderID         string            `json:"folderId,omitempty"`
+	Headers          map[string]string `json:"headers,omitempty"`
+}
+
+// give better name
+type ItemAddBookmarkOptions struct {
+	URL              string   `json:"url"`
+	Name             string   `json:"name"`
+	Base64           string   `json:"base64,omitempty"`
+	Tags             []string `json:"tags,omitempty"`
+	ModificationTime string   `json:"modificationTime,omitempty"`
+	FolderID         string   `json:"folderId,omitempty"`
+}
+
+// pointers represent optional keys and null represents unset
+type ItemUpdateOptions struct {
+	ID         string    `json:"id"`
+	Tags       *[]string `json:"tags"`
+	Annotation *string   `json:"annotation"`
+	URL        *string   `json:"url"`
+	Star       *int      `json:"star"`
+}
+
 // no folder Id
 type BulkItem struct {
 	Item
@@ -84,7 +116,7 @@ type ItemListOptions struct {
 	Tags    string `json:"tags,omitempty"`    // Filter by tags. Use , to divide different tags. E.g.: Design, Poster
 	Folders string `json:"folders,omitempty"` // Filter by Folders.  Use , to divide folder IDs. E.g.: KAY6NTU6UYI5Q,KBJ8Z60O88VMG
 }
-type itemFromPath struct {
+type ItemAddFromPathOptions struct {
 	Path       string   `json:"path"`                 // Required, the path of the local file.
 	Name       string   `json:"name,omitempty"`       // Required, the name of the image to be added. (not really req)
 	Website    string   `json:"website,omitempty"`    // The Address of the source of the image.
@@ -97,28 +129,7 @@ type ThumbnailData struct {
 	ThumbnailPath string `json:"data"`
 }
 
-// resolves p string and sets path.
-func (i *itemFromPath) setPath(p string) error {
-	file_path, err := filepath.Abs(p)
-	if err != nil {
-		return fmt.Errorf("[ERROR] could not resolve %s err=%w\n", p, err)
-	}
-	file_path = filepath.ToSlash(file_path)
-
-	_, err = os.Stat(file_path)
-	if err != nil {
-		return fmt.Errorf("[ERROR] could not resolve %s err=%w\n", p, err)
-	}
-
-	i.Path = file_path
-	return nil
-}
-
-// construct private api.Item type from just filepath
-func NewItemFromPath(filePath string) (obj itemFromPath, err error) {
-	err = obj.setPath(filePath)
-	return obj, err
-}
+// #endregion types
 
 // start api endpoints
 
@@ -126,9 +137,9 @@ func NewItemFromPath(filePath string) (obj itemFromPath, err error) {
 
 //- [X] /api/item/addFromURL
 //- [ ] /api/item/addFromURLs
-//- [ ] /api/item/addFromPath
+//- [X] /api/item/addFromPath
 //- [ ] /api/item/addFromPaths
-//- [ ] /api/item/addBookmark
+//- [X] /api/item/addBookmark
 //- [X] /api/item/info
 //- [X] /api/item/thumbnail
 //- [X] /api/item/list
@@ -137,71 +148,68 @@ func NewItemFromPath(filePath string) (obj itemFromPath, err error) {
 //- [ ] /api/item/refreshThumbnail
 //- [X] /api/item/update
 
-// old; deprecated
-func AddItemFromURL(baseUrl string, item Item) (map[string]any, error) {
-	// convert to json
-	itemJSON, err := json.Marshal(item)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling item to JSON: %v", err)
-	}
-
-	req, err := http.NewRequest("POST", baseUrl+"/api/item/addFromURL", bytes.NewBuffer(itemJSON))
-	if err != nil {
-		return nil, fmt.Errorf("error creating request: %v", err)
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-
-	//if item.Headers != nil {
-	//	for k, v := range item.Headers {
-	//		req.Header.Set(k, v)
-	//	}
-	//}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	var result map[string]any
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding response: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK { // Check for non-200 status codes
-		return nil, fmt.Errorf("server returned non-200 status: %d, Response: %v", resp.StatusCode, result)
-	}
-
-	return result, nil
-}
-
-// only returns status
-func ItemAddFromUrl(baseUrl string) error {
+// endpoint only returns `status`
+func ItemAddFromUrl(baseUrl string, item ItemAddFromUrlOptions) error {
 	ep := endpoints.ItemAddFromURL
 	uri := baseUrl + ep.Path
 
-	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
-	if err != nil {
-		return fmt.Errorf("list: error creating request err=%w", err)
-	}
+	body, err := json.Marshal(item)
 
 	var resp EagleResponse
-	err = InvokeEagleAPIV2(req, &resp)
+
+	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
 	if err != nil {
-		return fmt.Errorf("error invoking eagle api err=%v", err)
+		return fmt.Errorf("addFromUrl: err=%w", err)
 	}
 
 	if resp.Status != "success" {
-		return fmt.Errorf("response status recieved from eagle was not `success` message=%v", resp.Status)
+		return fmt.Errorf("addFromUrl: err=%w", ErrStatusErr)
 	}
 
 	return nil
 }
 
-func ItemAddBookmark(baseUrl string) error {
+// returns status only.
+// use NewItemFromPath to build args
+func ItemAddFromPath(baseURL string, item ItemAddFromPathOptions) error {
+	ep := endpoints.ItemAddFromPath
+	uri := baseURL + ep.Path
+
+	body, err := json.Marshal(item)
+
+	var resp EagleResponse
+
+	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
+	if err != nil {
+		return fmt.Errorf("addFromPath: err=%w", err)
+	}
+
+	if resp.Status != "success" {
+		return fmt.Errorf("addFromPath: err=%w", ErrStatusErr)
+	}
+
+	return nil
+}
+
+// endpoint only returns `status`
+func ItemAddBookmark(baseUrl string, item ItemAddBookmarkOptions) error {
+	ep := endpoints.ItemAddBookmark
+	uri := baseUrl + ep.Path
+
+	// add param checks
+
+	body, err := json.Marshal(item)
+
+	var resp EagleResponse
+
+	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
+	if err != nil {
+		return fmt.Errorf("AddBookmark: err=%w", err)
+	}
+
+	if resp.Status != "success" {
+		return fmt.Errorf("AddBookmark: err=%w", ErrStatusErr)
+	}
 
 	return nil
 }
@@ -209,99 +217,33 @@ func ItemAddBookmark(baseUrl string) error {
 // creates an *http.Request and sends to InvokeEagleAPIV1
 func ItemList(baseUrl string, opts ItemListOptions) ([]ListItem, error) {
 	ep := endpoints.ItemList
-
 	uri := baseUrl + ep.Path
-
-	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
-	if err != nil {
-		return nil, fmt.Errorf("list: error creating request err=%w", err)
-	}
-
-	// add query params
-	query := req.URL.Query()
-	if opts.Limit > 0 {
-		query.Add("limit", strconv.Itoa(opts.Limit))
-	}
-	req.URL.RawQuery = query.Encode()
-	// fmt.Println("query here:", req.URL.Query().Encode())
 
 	// TODO: validate parameters
-
-	var resp struct {
-		EagleData
-		Data []ListItem `json:"data"`
-	}
-	err = InvokeEagleAPIV2(req, &resp)
-	if err != nil {
-		return nil, err
+	//
+	// param
+	param := url.Values{}
+	if opts.Limit > 0 {
+		param.Add("limit", strconv.Itoa(opts.Limit))
 	}
 
-	// if a.Status != "success" ...
-
-	return resp.Data, nil
-}
-
-// returns status only.
-// use NewItemFromPath to build args
-func AddItemFromPath(baseURL string, item itemFromPath) error {
-	ep := endpoints.ItemAddFromPath
-
-	uri := baseURL + ep.Path
-	body := fmt.Appendf(nil, `{"path": "%s"}`, item.Path)
-
-	req, err := http.NewRequest(ep.Method, uri, bytes.NewReader(body)) // method, url, body
-	if err != nil {
-		return fmt.Errorf("list: error creating request err=%w", err)
-	}
-
-	var a *EagleMessage
-	err = InvokeEagleAPIV2(req, &a)
-	if err != nil {
-		return err
-	}
-
-	if a.Status != "success" {
-		return fmt.Errorf("response status recieved from eagle was not `success` message=%v", a)
-	}
-
-	fmt.Println(a)
-
-	return nil
-}
-
-// deprecated
-func ItemInfoV0(baseUrl string, id string) (respItem ApiItem, err error) {
-	ep := endpoints.ItemList
-
-	uri := baseUrl + ep.Path
-
-	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
-	if err != nil {
-		return respItem, fmt.Errorf("list: error creating request err=%w", err)
-	}
-
-	// validate id
-	if !IsValidItemID(id) {
-		return respItem, fmt.Errorf("list: error creating request err= itemId parameter malformed or empty.")
-	}
-
-	// set query params
-	query := req.URL.Query()
-	query.Add("id", id)
-	req.URL.RawQuery = query.Encode()
+	// end param
 
 	var resp struct {
 		EagleResponse
-		Data ApiItem `json:"data"`
+		Data []ListItem `json:"data"`
 	}
-	err = InvokeEagleAPIV2(req, &resp)
+
+	err := Request(ep.Method, uri, nil, &param, &resp)
 	if err != nil {
-		return respItem, err
+		return nil, fmt.Errorf("list: err=%w", err)
 	}
 
-	// if a.Status != "success" ...
+	if resp.Status != "success" {
+		return nil, fmt.Errorf("list: err=%w", ErrStatusErr)
+	}
 
-	return respItem, nil
+	return resp.Data, nil
 }
 
 func ItemInfo(baseUrl string, id string) (respItem ApiItem, err error) {
@@ -329,39 +271,31 @@ func ItemInfo(baseUrl string, id string) (respItem ApiItem, err error) {
 	return resp.Data, nil
 }
 
-// * id Required, the ID of the item to be modified
-// * tags Optional, tags
-// * annotation Optional, annotations
-// * url Optional, the source url
-// * star Optional, ratings
-// pointers represent optional keys and null represents unset
-type ItemUpdateOptions struct {
-	ID         string    `json:"id"`
-	Tags       *[]string `json:"tags"`
-	Annotation *string   `json:"annotation"`
-	URL        *string   `json:"url"`
-	Star       *int      `json:"star"`
-}
-
-func ItemUpdate(baseUrl string, opts ItemUpdateOptions) (respItem ApiItem, err error) {
+func ItemUpdate(baseUrl string, item ItemUpdateOptions) (respItem ApiItem, err error) {
 	ep := endpoints.ItemUpdate
-
 	uri := baseUrl + ep.Path
 
-	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
-	if err != nil {
-		return respItem, fmt.Errorf("list: error creating request err=%w", err)
-	}
-
 	// validate id
-	if !IsValidItemID(opts.ID) {
+	if !IsValidItemID(item.ID) {
 		return respItem, fmt.Errorf("list: error creating request err= itemId parameter malformed or empty.")
 	}
+	//end validations
 
-	// set query params
-	query := req.URL.Query()
-	query.Add("id", opts.ID)
-	req.URL.RawQuery = query.Encode()
+	var resp struct {
+		EagleResponse
+		Data ApiItem `json:"data"`
+	}
+
+	body, err := json.Marshal(item)
+
+	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
+	if err != nil {
+		return respItem, fmt.Errorf("update: err=%w", err)
+	}
+
+	if resp.Status != "success" {
+		return respItem, fmt.Errorf("update: err=%w", ErrStatusErr)
+	}
 
 	return respItem, nil
 }
@@ -369,13 +303,7 @@ func ItemUpdate(baseUrl string, opts ItemUpdateOptions) (respItem ApiItem, err e
 // returns thumbnail path and error
 func ItemThumbnail(baseUrl string, itemId string) (string, error) {
 	ep := endpoints.ItemThumbnail
-
 	uri := baseUrl + ep.Path
-
-	req, err := http.NewRequest(ep.Method, uri, nil) // method, url, body
-	if err != nil {
-		return "", fmt.Errorf("list: error creating request err=%w", err)
-	}
 
 	// validate query params
 	if !IsValidItemID(itemId) {
@@ -383,19 +311,23 @@ func ItemThumbnail(baseUrl string, itemId string) (string, error) {
 	}
 
 	// add query params
-	query := req.URL.Query()
+	param := url.Values{}
+	param.Add("id", itemId)
 
-	query.Add("id", itemId)
-	req.URL.RawQuery = query.Encode()
+	// TODO: replace with struct
+	var resp ThumbnailData
 
-	var a ThumbnailData
-	err = InvokeEagleAPIV2(req, &a)
+	err := Request(ep.Method, uri, nil, &param, &resp)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("thumbnail: err=%w", err)
 	}
 
-	if escapedPath, err := url.PathUnescape(a.ThumbnailPath); err != nil {
-		return a.ThumbnailPath, fmt.Errorf("could not url decode path response from eagle server err=%w", err)
+	if resp.Status != "success" {
+		return "", fmt.Errorf("update: err=%w", ErrStatusErr)
+	}
+
+	if escapedPath, err := url.PathUnescape(resp.ThumbnailPath); err != nil {
+		return resp.ThumbnailPath, fmt.Errorf("could not url decode path response from eagle server err=%w", err)
 	} else {
 		return escapedPath, nil
 	}
