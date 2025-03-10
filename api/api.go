@@ -23,26 +23,24 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// errors
+var (
+	ErrStatusErr = fmt.Errorf("response key 'status' was not 'success'")
+)
+
+// types
 type EagleApiResponse struct {
 	Status string
 	Data   []interface{} // optional
 }
-
 type EagleData struct {
-	Status string `json:"status"`
-}
-
-// cleaned up way to do this
-type EagleResponse struct {
 	Status string `json:"status"`
 }
 
 // maybe
 func (data EagleData) GetData() {}
 
-var (
-	ErrStatusErr = fmt.Errorf("response key 'status' was not 'success'")
-)
+// cleaned up way to do this
 
 type EagleMessage struct {
 	EagleData
@@ -83,43 +81,6 @@ func getApiKey() (string, error) {
 	return accessToken, nil
 }
 
-// adds api key to request and
-// returns *EagleResponse.
-//
-// TODO: we check if status == success anyways, so
-// should we just return EagleResponse.Data?
-func InvokeEagleAPI(req *http.Request, body interface{}) (*EagleApiResponse, error) {
-	var result EagleApiResponse
-	key, err := getApiKey()
-	if err != nil {
-		return nil, err
-	}
-
-	query := req.URL.Query()
-	query.Add("key", key)
-
-	req.URL.RawQuery = query.Encode()
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return &result, fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	err = json.NewDecoder(resp.Body).Decode(&result)
-	if err != nil {
-		return &result, fmt.Errorf("error decoding response: %v", err)
-	}
-
-	// TODO: do all responses have a status key?
-	if result.Status != "success" {
-		return &result, fmt.Errorf("error decoding response: result object's response was not `success`, but instead, %s ", result.Status)
-	}
-
-	return &result, nil
-}
-
 // mutates r
 func addTokenAndEncodeQueryParams(r *http.Request) error {
 	key, err := getApiKey()
@@ -133,8 +94,7 @@ func addTokenAndEncodeQueryParams(r *http.Request) error {
 	return nil
 }
 
-// all responses have a status
-// (excl. /api/library/icon)
+// all responses have a `status` field (excl. /api/library/icon)
 func InvokeEagleAPIV1(req *http.Request) (result *EagleData, e error) {
 	err := addTokenAndEncodeQueryParams(req)
 	if err != nil {
@@ -162,11 +122,8 @@ func InvokeEagleAPIV1(req *http.Request) (result *EagleData, e error) {
 	return result, nil
 }
 
-type Ptr[T any] interface{ *T }
-
 // populates v with response from req
 func Request[T any](method string, url string, body io.Reader, urlParam *url.Values, v *T) error {
-
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return fmt.Errorf("list: error creating request err=%w", err)
@@ -183,9 +140,8 @@ func Request[T any](method string, url string, body io.Reader, urlParam *url.Val
 	return nil
 }
 
-// all responses have a status
-// (excl. /api/library/icon)
-// populates pointer with response from req
+// all responses have a `status` field (excl. /api/library/icon)
+// populates pointer v with response from req
 func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 	if v == nil {
 		return fmt.Errorf("v cannot be nil.")
@@ -227,21 +183,7 @@ func wrapperHandler(c echo.Context) error {
 	return c.String(200, c.Request().URL.Path)
 }
 
-/*
-	func RegisterEagleWrapper(g *echo.Group) {
-		//for _, ep := range endpoints.Application {
-		//for _, ep := range endpoints.Folder {
-		for _, ep := range endpoints.Item {
-			if ep.Method == "GET" {
-				g.GET(ep.Path, wrapperHandler)
-			} else if ep.Method == "POST" {
-				g.POST(ep.Path, wrapperHandler)
-			}
-		}
-		//for _, ep := range endpoints.Library {
-	}
-*/
-
+// eagle item id
 const (
 	MaxEagleItemIDLength = 15
 	eagleItemIDPattern   = `^[a-zA-Z0-9]+$` // Pre-compiled regular expression
@@ -249,15 +191,13 @@ const (
 
 var eagleItemIDRegex = regexp.MustCompile(eagleItemIDPattern)
 
-// todo remove regex
+// TODO: remove regex?
 func IsValidItemID(id string) bool {
 	if len(id) >= MaxEagleItemIDLength {
 		return false
 	}
 	return eagleItemIDRegex.MatchString(string(id))
 }
-
-// docs: https://api.eagle.cool/item/add-from-url
 
 func RegisterGroupRoutes(g *echo.Group) {
 	g.GET("*", wrapperHandler)
@@ -269,50 +209,3 @@ func RegisterRootRoutes(server *echo.Echo) {
 		return c.String(200, c.Request().URL.Path)
 	})
 }
-
-/*
-	headers := map[string]string{
-		"Authorization": "Bearer " + key,
-		"Content-Type":  "application/json",
-	}
-
-	var requestBody []byte
-	if body != nil {
-		if bodyStr, ok := body.(string); ok {
-			requestBody = []byte(bodyStr)
-		} else {
-			jsonBody, err := json.Marshal(body)
-			if err != nil {
-				return "", fmt.Errorf("error marshaling body to JSON: %v", err)
-			}
-			requestBody = jsonBody
-		}
-	}
-
-	req, err := http.NewRequest(method, endpoint, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return "", fmt.Errorf("error creating request: %v", err)
-	}
-
-	for k, v := range headers {
-		req.Header.Set(k, v)
-	}
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("error making request: %v", err)
-	}
-	defer resp.Body.Close()
-
-	responseBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("error reading response body: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return string(responseBody), fmt.Errorf("API Error: Status Code %d, Response: %s", resp.StatusCode, string(responseBody))
-	}
-
-	return string(responseBody), nil
-*/

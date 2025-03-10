@@ -78,31 +78,6 @@ func TestListWrapper(t *testing.T) {
 	}
 }
 
-func TestListInvoke(t *testing.T) {
-	ep := "http://" + host + "/api/item/list"
-
-	urls := []string{
-		ep + "?limit=10",
-	}
-
-	for _, u := range urls {
-		var err error
-		req := httptest.NewRequest(http.MethodGet, u, nil)
-		t.Fatalf("test")
-		req.URL, err = url.Parse(u)
-		//if err != nil {
-		//	t.Fatalf("%s", err.Error())
-		//}
-
-		result, err := InvokeEagleAPIV1(req)
-		if err != nil {
-			t.Fatalf("%s", err.Error())
-		}
-
-		fmt.Println(result)
-	}
-}
-
 func TestAddItemFromPath(t *testing.T) {
 	baseUrl := cfg.FmtURL()
 	err := AddItemFromPath(baseUrl, itemFromPath{Path: `C:/Users/eshaa/Downloads/download.jpg`})
