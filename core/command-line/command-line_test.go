@@ -6,23 +6,14 @@ import (
 	"github.com/eissar/nest/config"
 )
 
-func TestAdd(t *testing.T) {
-	var localFile = "./command-line.go"
-	Add(config.GetConfig(), &localFile)
-}
+var cfg = config.GetConfig()
 
-func TestList(t *testing.T) {
-	var localLimit = 5
-	List(config.GetConfig(), &localLimit)
-}
+func TestCommandLineSanityChecks(t *testing.T) {
+	str := `D:\Dropbox\Pictures\3617502772_a_beautiful_and_elaborate_drawing_of_a_pug_lying_in_the_grass_in_the_style_of_Michelangelo.png`
+	cnt := 10
+	id := "M83M1XMMQPT3R"
 
-func TestSwitch(t *testing.T) {
-	cfg := config.GetConfig()
-	Switch(cfg, "inspo")
+	Add(cfg, &str)
+	List(cfg, &cnt)
+	Reveal(cfg, &id)
 }
-
-// no real point in testing this one right now...
-// func TestReveal(t *testing.T) {
-// 	var localFile = "./command-line.go"
-// 	Reveal(config.GetConfig(), &localFile)
-// }

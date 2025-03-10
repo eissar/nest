@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	_ "net/url"
 	"strconv"
@@ -204,7 +203,6 @@ func ItemAddfromUrls(baseUrl string, items []ItemAddFromUrlOptions, folderId str
 }
 
 // returns status only.
-// use NewItemFromPath to build args
 func ItemAddFromPath(baseUrl string, item ItemAddFromPathOptions) error {
 	ep := endpoints.ItemAddFromPath
 	uri := baseUrl + ep.Path

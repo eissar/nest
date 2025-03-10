@@ -106,22 +106,15 @@ func Cmd() {
 }
 
 func Add(cfg config.NestConfig, pth *string) {
-	if len(*pth) == 0 {
+	if pth == nil || *pth == "" {
 		log.Fatalf("[ERROR] add: flag `-file` is required.")
 	}
-	fmt.Println("path:", *pth)
 
-	obj, err := api.NewItemFromPath(
-		*pth,
-	)
-	fmt.Println("path:", obj.Path)
-	if err != nil {
-		log.Fatalf("[ERROR] while constructing request: err=%s", err.Error())
-	}
+	opts := api.ItemAddFromPathOptions{Path: *pth}
 
-	err = api.AddItemFromPath(cfg.BaseURL(), obj)
+	err := api.ItemAddFromPath(cfg.BaseURL(), opts)
 	if err != nil {
-		log.Fatalf("[ERROR] while adding eagle item: err=%s", err.Error())
+		log.Fatalf("Error while adding eagle item: err=%s", err.Error())
 	}
 }
 
@@ -143,7 +136,7 @@ func List(cfg config.NestConfig, limit *int) {
 	fmt.Fprintf(os.Stdout, "%v", string(output))
 }
 
-// param t string: target filepath or item id to reveal
+// param t string: target filepath or item id to reveal (in explorer)
 func Reveal(cfg config.NestConfig, t *string) {
 	if len(*t) == 0 {
 		log.Fatalf("[ERROR] add: flag `-target` is required.")
