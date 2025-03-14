@@ -45,12 +45,6 @@ github.com/blevesearch/zapx/v16 v16.1.9-0.20241217210638-a0519e7caf3b/go.mod h1:
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/eissar/browser-query v0.0.0-20250303043507-f6149b6fd81f h1:W9FcVNiCjFoiz/n7zcu57Lw/1YoVZvLhUvJdClAZZzA=
-github.com/eissar/browser-query v0.0.0-20250303043507-f6149b6fd81f/go.mod h1:FB8/uLFaAZ7bUDFF5X7NkaARZGqJXHaxsAj3fOH99HE=
-github.com/eissar/browser-query v0.0.0-20250303213623-f3c1f92ab532 h1:esKpPbe8e6cj+YGzgCSdw1/BPIJdHnDzj+fEYz1yD6g=
-github.com/eissar/browser-query v0.0.0-20250303213623-f3c1f92ab532/go.mod h1:FB8/uLFaAZ7bUDFF5X7NkaARZGqJXHaxsAj3fOH99HE=
-github.com/eissar/browser-query v0.0.0-20250303215539-888b2202bf41 h1:9PfmcgiZZuyaGr/KIwWXRwADze8A8+sN0GfaZRS/Thw=
-github.com/eissar/browser-query v0.0.0-20250303215539-888b2202bf41/go.mod h1:FB8/uLFaAZ7bUDFF5X7NkaARZGqJXHaxsAj3fOH99HE=
 github.com/eissar/browser-query v0.0.0-20250303221245-3e4013460475 h1:mpJzJZ9twle2U+y0pujNDDBrn4+JXlkzOvyVuaEzpUU=
 github.com/eissar/browser-query v0.0.0-20250303221245-3e4013460475/go.mod h1:6LcfYoFxxri4wrve02v+gKCGeqX/jz0DNmbKdzbOLBs=
 github.com/fsnotify/fsnotify v1.8.0 h1:dAwr6QBTBZIkG8roQaJjGof0pp0EeF+tNV7YBP3F/8M=
