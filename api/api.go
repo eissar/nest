@@ -1,16 +1,5 @@
 package api
 
-/* wrapper for every path in the eagle library. endpoints:
- [X] - application
-		[X] - tests
- [ ] - folder
- [X] - item
-		[ ] - tests
-		[ ] - parameters
- [X] - library
-		[X] - tests
-*/
-
 import (
 	"encoding/json"
 	"fmt"
@@ -24,11 +13,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// #region errors
-
 var (
 	ErrStatusErr = fmt.Errorf("response key 'status' was not 'success'")
 )
+
+// #region types
 
 type EagleApiErr struct {
 	Message  string
@@ -47,10 +36,6 @@ type ApiKeyErr struct {
 func (e *ApiKeyErr) Error() string {
 	return fmt.Sprintf("eagleapi: api key invalid; err=%s", e.Message)
 }
-
-// #endregion errors
-
-// #region types
 
 type EagleApiResponse struct {
 	Status string
@@ -75,8 +60,6 @@ type EagleArray struct {
 
 // #endregion types
 
-// #region eagleitem id
-
 const (
 	MaxEagleItemIDLength = 15
 	eagleItemIDPattern   = `^[a-zA-Z0-9]+$` // Pre-compiled regular expression
@@ -91,8 +74,6 @@ func IsValidItemID(id string) bool {
 	}
 	return eagleItemIDRegex.MatchString(string(id))
 }
-
-// #endregion eagleitem id
 
 func getApiKey() (string, error) {
 	accessToken := os.Getenv("EAGLE_API_KEY") // Get token from environment variable
@@ -173,10 +154,11 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 
 func wrapperHandler(c echo.Context) error {
 	if c.Request().Method == "GET" {
-
 	}
 	return c.String(200, c.Request().URL.Path)
 }
+
+// #region routes
 
 func RegisterGroupRoutes(g *echo.Group) {
 	g.GET("*", wrapperHandler)
@@ -188,3 +170,5 @@ func RegisterRootRoutes(server *echo.Echo) {
 		return c.String(200, c.Request().URL.Path)
 	})
 }
+
+// #endregion routes
