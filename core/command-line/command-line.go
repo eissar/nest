@@ -2,6 +2,7 @@ package commandline
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -18,6 +19,16 @@ import (
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/eissar/nest/plugins/nest"
 )
+
+// show a simpler error if we know the error.
+// we can do some redundant over-checking here and
+// it shouldn't matter much.
+func catchKnownErrors(err error) {
+	if errors.Is(err, api.EagleNotOpenErr) {
+		fmt.Println(api.EagleNotOpenErr.Error())
+		os.Exit(1)
+	}
+}
 
 func Cmd() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
@@ -167,7 +178,7 @@ func Reveal(cfg config.NestConfig, t *string) {
 	}
 }
 
-// validateIsEagleServerRunning checks if the Eagle server is running at the specified URL.
+// validateIsEagleServerRunning checks if the nest server is running at the specified URL.
 func isServerRunning(url string) bool {
 	client := &http.Client{
 		Timeout: 10 * time.Second,
@@ -234,7 +245,8 @@ func Switch(cfg config.NestConfig, libraryName string) {
 
 	currLib, err := nest.CurrentLibrary()
 	if err != nil {
-		log.Fatalf("error getting current library err=%s", err.Error())
+		catchKnownErrors(err)
+		log.Fatalf("unknown error getting current library err=%s", err.Error())
 	}
 
 	if currLib.Name == libraryName {

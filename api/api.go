@@ -2,22 +2,26 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
 	"regexp"
+	"syscall"
 
 	"github.com/eissar/nest/api/endpoints"
 	"github.com/labstack/echo/v4"
+	"golang.org/x/sys/windows"
 )
 
 var (
 	ErrStatusErr = fmt.Errorf("response key 'status' was not 'success'")
 )
 
-// #region types
+// #region errors
 
 type EagleApiErr struct {
 	Message  string
@@ -28,6 +32,12 @@ type EagleApiErr struct {
 func (e *EagleApiErr) Error() string {
 	return fmt.Sprintf("eagle api error calling path=%s docurl=%s err=%v ", e.Endpoint.Path, e.Endpoint.HelpUri(), e.Err)
 }
+
+var EagleNotOpenErr = fmt.Errorf("Eagle is not open.")
+
+// #endregion errors
+
+// #region types
 
 type ApiKeyErr struct {
 	Message string
@@ -102,7 +112,7 @@ func addTokenAndEncodeQueryParams(r *http.Request) error {
 func Request[T any](method string, url string, body io.Reader, urlParam *url.Values, v *T) error {
 	req, err := http.NewRequest(method, url, body)
 	if err != nil {
-		return fmt.Errorf("list: error creating request err=%w", err)
+		return fmt.Errorf("Request: error creating request err=%w", err)
 	}
 
 	if urlParam != nil {
@@ -110,10 +120,26 @@ func Request[T any](method string, url string, body io.Reader, urlParam *url.Val
 	}
 	err = InvokeEagleAPIV2(req, &v)
 	if err != nil {
-		return fmt.Errorf("api.Request error making request err=%w", err)
+		return err
 	}
 
 	return nil
+}
+
+func IsEagleNotOpenErr(err error) bool {
+	// windows, linux
+	if errors.Is(err, windows.WSAECONNREFUSED) || errors.Is(err, syscall.ECONNREFUSED) {
+		return true
+	}
+	return false
+	// var sysErr *os.SyscallError
+	// if ok := errors.As(err, &sysErr); ok {
+	// 	if errno, ok := sysErr.Err.(syscall.Errno); ok && int(errno) == 10061 {
+	// 		// <https://github.com/ddev/ddev/blob/ec7870af3af6356cfe26282b6d64e551e1891544/pkg/netutil/netutil.go#L36>
+
+	// 		return true
+	// 	}
+	// }
 }
 
 // all responses have a `status` field (excl. /api/library/icon)
@@ -130,8 +156,21 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 	// make the request
 	client := &http.Client{}
 	resp, err := client.Do(req)
+
+	if IsEagleNotOpenErr(err) {
+		return EagleNotOpenErr
+	}
 	if err != nil {
-		return fmt.Errorf("error making request: %v", err)
+		oErr, ok := err.(*net.OpError)
+		if ok {
+			//if IsEagleNotOpenErr(oErr) {
+			//	fmt.Println("NOT OPEN")
+			//	return EagleNotOpenErr
+			//}
+
+			return fmt.Errorf("InvokeEagleAPI: unknown err=%v", oErr)
+		}
+		return fmt.Errorf("InvokeEagleAPI: unknown err=%v", err)
 	}
 	defer resp.Body.Close()
 
