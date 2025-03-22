@@ -54,9 +54,6 @@ is in fact switched and ready for subsequent requests.
 nest switch inspo && nest list
 ```
 
-
-
-
 ### Host your eagle images
 render your images from disk:
 using links like `localhost:port/M787F6GA16D3D` we can retrieve image data from eagle.
@@ -84,8 +81,6 @@ let innerHtml = imgs.map(id => {
 dv.paragraph(`<div style ="height:300px;">${innerHtml}</div>`)
 ```
 
-
-
 accepted links for this feature are as follows:
 1. `/<eagleItemId>`
 2. (WIP) `/http://localhost:41595/item?<eagleItemId>`
@@ -100,7 +95,6 @@ in eagle (i.e, http://localhost:41595/item?id=M787F6GA16D3D).
 manage the server (close)
 Planned:
 update configuration
-
 
 ### extensions to the eagle API
 - [X] autogen docs
@@ -135,12 +129,14 @@ Just make sure it isn't being used by any other service on your computer.
 - [X] Start server -start
 - [X] stop server -stop
 * Subcommands
-- [ ] nest add
-- [ ] nest list
-- [ ] nest reveal
-- [ ] nest info
+- [X] nest add
+- [X] nest list
+- [X] nest reveal
+- [X] nest info
 
+- [ ] query eagle via tags
 
+- [ ] embed c# object message converter/ convertFrom-json in output?
 
 https://github.com/eissar/nest/browser-query -> has to define event loop. this should be opt-in.
 how to opt in via: config flag? cli flag?
