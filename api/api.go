@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -148,6 +149,21 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 	if v == nil {
 		return fmt.Errorf("v cannot be nil.")
 	}
+
+	var requestBodyBytes []byte // Store the body here
+	var readErr error
+	requestBodyBytes, readErr = io.ReadAll(req.Body)
+	// It's crucial to close the original body after you've read it.
+	req.Body.Close()
+	if readErr != nil {
+		// If reading fails, you won't have the body for the error message.
+		// You could return an error here or log it and continue without the body string.
+		// For this minimal example, we'll proceed, and requestBodyBytes might be empty/nil.
+		// Consider returning: return fmt.Errorf("failed to read request body for error message: %w", readErr)
+	}
+	// IMPORTANT: Replace req.Body so client.Do can read it again.
+	req.Body = io.NopCloser(bytes.NewBuffer(requestBodyBytes))
+
 	err := addTokenAndEncodeQueryParams(req)
 	if err != nil {
 		return err
@@ -180,7 +196,8 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 		if err != nil {
 			return fmt.Errorf("error decoding response: %w", err)
 		}
-		return fmt.Errorf("response code from eagle was not 2XX: response: %v", error_message)
+
+		return fmt.Errorf("response code from eagle was not 2XX: response: %v; request body: %v", error_message, string(requestBodyBytes))
 	}
 
 	// parse the response
@@ -188,6 +205,7 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 	if err != nil {
 		return fmt.Errorf("error decoding response: %v", err)
 	}
+
 	return nil
 }
 

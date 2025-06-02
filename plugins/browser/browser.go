@@ -3,7 +3,6 @@ package browser
 // go get -u github.com/eissar/browser-query@master
 import (
 	"fmt"
-	"sync"
 
 	"github.com/eissar/browser-query"
 	"github.com/eissar/nest/config"

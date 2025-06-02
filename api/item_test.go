@@ -79,7 +79,20 @@ func TestListWrapper(t *testing.T) {
 
 func TestItemAddFromPath(t *testing.T) {
 	baseUrl := cfg.FmtURL()
-	err := ItemAddFromPath(baseUrl, ItemAddFromPathOptions{Path: `C:/Users/eshaa/Downloads/open-folder.png`})
+	err := ItemAddFromPath(baseUrl, ItemAddFromPathOptions{Path: `C:/Users/eshaa/Downloads/twig.png`})
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+}
+
+func TestItemAddFromPaths(t *testing.T) {
+	baseUrl := cfg.FmtURL()
+
+	paths := []ItemAddFromPathOptions{
+		{Path: `C:/Users/eshaa/Downloads/twig.png`},
+	}
+
+	err := ItemAddFromPaths(baseUrl, paths)
 	if err != nil {
 		t.Fatal(err.Error())
 	}

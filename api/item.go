@@ -172,7 +172,7 @@ func ItemAddFromUrl(baseUrl string, item ItemAddFromUrlOptions) error {
 }
 
 // endpoint only returns `status`
-func ItemAddfromUrls(baseUrl string, items []ItemAddFromUrlOptions, folderId string) error {
+func ItemAddFromUrls(baseUrl string, items []ItemAddFromUrlOptions, folderId string) error {
 	ep := endpoints.ItemAddFromURLs
 	uri := baseUrl + ep.Path
 
@@ -230,7 +230,15 @@ func ItemAddFromPaths(baseUrl string, items []ItemAddFromPathOptions) error {
 	ep := endpoints.ItemAddFromPaths
 	uri := baseUrl + ep.Path
 
-	body, err := json.Marshal(items)
+	requestBody := struct {
+		Items []ItemAddFromPathOptions `json:"items"`
+		// FolderId string `json:"folderId,omitempty"`
+	}{
+		items,
+		//folderId,
+	}
+
+	body, err := json.Marshal(requestBody)
 	if err != nil {
 		return fmt.Errorf("addfrompaths: error converting request into json body err=%w", err)
 	}

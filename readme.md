@@ -135,6 +135,8 @@ Just make sure it isn't being used by any other service on your computer.
 - [X] nest info
 
 - [ ] query eagle via tags
+- [ ] eaglepack generator (bulk url import solution?)
+    opt: include date as tag?
 
 - [ ] embed c# object message converter/ convertFrom-json in output?
 
