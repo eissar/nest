@@ -34,6 +34,8 @@ func Cmd() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	addPath := addCmd.String("file", "", "filepath that will be added to eagle")
 
+	addsCmd := flag.NewFlagSet("adds", flag.ExitOnError)
+
 	listCmd := flag.NewFlagSet("list", flag.ExitOnError)
 	listLimit := listCmd.Int("limit", 5, "number of items to retrieve")
 
@@ -72,6 +74,15 @@ func Cmd() {
 			Add(cfg, &os.Args[2])
 			os.Exit(0)
 		}
+
+	case "adds":
+		cfg := config.GetConfig()
+		addsCmd.Parse(os.Args[2:])
+		var filepaths []string
+		filepaths = addsCmd.Args()
+		Adds(cfg, filepaths)
+		os.Exit(0)
+
 	case "list":
 		cfg := config.GetConfig()
 
@@ -127,6 +138,26 @@ func Add(cfg config.NestConfig, pth *string) {
 	if err != nil {
 		log.Fatalf("Error while adding eagle item: err=%s", err.Error())
 	}
+}
+
+// TODO: merge this stupid with other add
+// TODO: Make processing continue after error; then report errors.
+func Adds(cfg config.NestConfig, pths []string) {
+	if len(pths) == 0 {
+		log.Fatalf("[ERROR] adds: flag `-files` is required.")
+	}
+
+	opts := []api.ItemAddFromPathOptions{}
+
+	for _, v := range pths {
+		opts = append(opts, api.ItemAddFromPathOptions{Path: v})
+
+	}
+	err := api.ItemAddFromPaths(cfg.BaseURL(), opts)
+	if err != nil {
+		log.Fatalf("Error while adding eagle item: err=%s", err.Error())
+	}
+
 }
 
 func List(cfg config.NestConfig, limit *int) {
