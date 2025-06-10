@@ -33,6 +33,11 @@ func catchKnownErrors(err error) {
 func Cmd() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 	addPath := addCmd.String("file", "", "filepath that will be added to eagle")
+	addName := addCmd.String("name", "", "name")
+	// addWebsite := addCmd.String("website", "", "website")
+	addAnnotation := addCmd.String("annotation", "", "annotation")
+	//addTags := addCmd.String("tags", "", "tags")
+	addFolderId := addCmd.String("folderid", "", "folderid")
 
 	addsCmd := flag.NewFlagSet("adds", flag.ExitOnError)
 
@@ -61,19 +66,12 @@ func Cmd() {
 	switch os.Args[1] {
 	case "add":
 		cfg := config.GetConfig()
+		addWebsite := addCmd.String("website", "", "website")
 		addCmd.Parse(os.Args[2:])
 
-		if *addPath != "" {
-			Add(cfg, addPath)
-			os.Exit(0)
-		} else if len(os.Args) < 3 {
-			log.Fatalf("must pass flag -file")
-			flag.PrintDefaults()
-			os.Exit(1)
-		} else {
-			Add(cfg, &os.Args[2])
-			os.Exit(0)
-		}
+		opts := api.ItemAddFromPathOptions{Path: *addPath, Name: *addName, Website: *addWebsite, Annotation: *addAnnotation, FolderId: *addFolderId}
+
+		Add1(cfg, opts)
 
 	case "adds":
 		cfg := config.GetConfig()
@@ -135,6 +133,13 @@ func Add(cfg config.NestConfig, pth *string) {
 	opts := api.ItemAddFromPathOptions{Path: *pth}
 
 	err := api.ItemAddFromPath(cfg.BaseURL(), opts)
+	if err != nil {
+		log.Fatalf("Error while adding eagle item: err=%s", err.Error())
+	}
+}
+
+func Add1(cfg config.NestConfig, item api.ItemAddFromPathOptions) {
+	err := api.ItemAddFromPath(cfg.BaseURL(), item)
 	if err != nil {
 		log.Fatalf("Error while adding eagle item: err=%s", err.Error())
 	}
