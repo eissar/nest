@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
-	cmd.Cmd()
+	// cmd.Cmd()
+	cmd.CmdCobra()
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	_ "net/url"
-	"strconv"
 
 	"github.com/eissar/nest/api/endpoints"
 )
@@ -284,26 +283,23 @@ func ItemAddBookmark(baseUrl string, item ItemAddBookmarkOptions) error {
 }
 
 // creates an *http.Request and sends to InvokeEagleAPIV1
-func ItemList(baseUrl string, opts ItemListOptions) ([]ListItem, error) {
+func ItemList(baseUrl string, opts ItemListOptions) ([]*ListItem, error) {
 	ep := endpoints.ItemList
 	uri := baseUrl + ep.Path
 
 	// TODO: validate parameters
 	//
-	// param
-	param := url.Values{}
-	if opts.Limit > 0 {
-		param.Add("limit", strconv.Itoa(opts.Limit))
+	body, err := json.Marshal(opts)
+	if err != nil {
+		return nil, fmt.Errorf("list: error converting request into json body err=%w", err)
 	}
-
-	// end param
 
 	var resp struct {
 		EagleResponse
-		Data []ListItem `json:"data"`
+		Data []*ListItem `json:"data"`
 	}
 
-	err := Request(ep.Method, uri, nil, &param, &resp)
+	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
 	if err != nil {
 		return nil, fmt.Errorf("list: err=%w", err)
 	}

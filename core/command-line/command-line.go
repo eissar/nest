@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/spf13/cobra"
 	"log"
 	"net/http"
 	"net/url"
@@ -37,6 +38,7 @@ type addCmdOption struct {
 }
 
 func Cmd() {
+
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
 
 	// var addCmdOpts = []addCmdOption{
@@ -49,8 +51,8 @@ func Cmd() {
 	// }
 
 	addsCmd := flag.NewFlagSet("adds", flag.ExitOnError)
-	listCmd := flag.NewFlagSet("list", flag.ExitOnError)
-	listLimit := listCmd.Int("limit", 5, "number of items to retrieve")
+	// listCmd := flag.NewFlagSet("list", flag.ExitOnError)
+	// listLimit := listCmd.Int("limit", 5, "number of items to retrieve")
 
 	revealCmd := flag.NewFlagSet("reveal", flag.ExitOnError)
 	revealPath := revealCmd.String("target", "", "filepath or item id to reveal")
@@ -105,12 +107,6 @@ func Cmd() {
 		Adds(cfg, filepaths)
 		os.Exit(0)
 
-	case "list":
-		cfg := config.GetConfig()
-
-		listCmd.Parse(os.Args[2:])
-		List(cfg, listLimit)
-		os.Exit(0)
 	case "reveal":
 		cfg := config.GetConfig()
 
@@ -149,6 +145,154 @@ func Cmd() {
 	}
 }
 
+// TODO: add flag to delete file after adding.
+func NewAdd() *cobra.Command {
+	// These variables will hold the values from the flags.
+	var addName, addWebsite, addAnnotation, addFolderId string
+	var addPath string
+	addCmd := &cobra.Command{
+		Use:   "add [FILEPATH]",
+		Short: "Adds a file to Eagle",
+		Long: `Adds a file to your Eagle library with optional metadata.
+
+The path to the file can be provided as the first argument directly
+or by using the --file flag.`,
+
+		Args: cobra.MaximumNArgs(1), // Allow zero or one positional argument. Error if more than one.
+		// BEGIN
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Logic to determine the final path.
+			// If a positional argument is given, it's the path.
+			if len(args) > 0 {
+				// Prevent confusion: error if both a positional arg AND --file flag are used.
+				if cmd.Flags().Changed("file") {
+					return errors.New("cannot use both a positional argument and the --file flag")
+				}
+				addPath = args[0]
+			}
+
+			// After checking flags and args, we must have a path.
+			if addPath == "" {
+				return errors.New("a filepath must be provided either as an argument or with the --file flag")
+			}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+
+			cfg := config.GetConfig()
+
+			opts := api.ItemAddFromPathOptions{
+				Path:       addPath,
+				Name:       addName,
+				Website:    addWebsite,
+				Annotation: addAnnotation,
+				FolderId:   addFolderId,
+			}
+
+			// Your business logic function
+			if err := Add1(cfg, opts); err != nil {
+				// Use fmt.Errorf to wrap the error for more context
+				return fmt.Errorf("error adding item: %w", err)
+			}
+
+			fmt.Println("Item added successfully!")
+			return nil
+		},
+	}
+	// Define all the flags for the 'add' command
+	addCmd.Flags().StringVarP(&addPath, "file", "f", "", "Filepath to add to Eagle")
+	addCmd.Flags().StringVarP(&addName, "name", "n", "", "Set a custom name for the item")
+	addCmd.Flags().StringVar(&addWebsite, "website", "", "Set a source website URL")
+	addCmd.Flags().StringVar(&addAnnotation, "annotation", "", "Add an annotation or description")
+	addCmd.Flags().StringVar(&addFolderId, "folderid", "", "ID of the folder to add the item into")
+
+	return addCmd
+
+}
+func NewAdds() *cobra.Command {
+	addsCmd := &cobra.Command{
+		Use:   "adds [FILE1] [FILE2]",
+		Short: "Adds multiple files to Eagle in a single batch",
+		Long: `Adds one or more files to your Eagle library without metadata.
+Provide the paths to the files as arguments separated by spaces.`,
+
+		// This validator ensures at least one positional argument is given.
+		// It automatically provides a user-friendly error message if the condition fails.
+		Args: cobra.MinimumNArgs(1),
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// 'args' is now a slice containing all the file paths provided.
+			pths := args
+
+			cfg := config.GetConfig()
+			opts := []api.ItemAddFromPathOptions{}
+
+			for _, v := range pths {
+				opts = append(opts, api.ItemAddFromPathOptions{Path: v})
+			}
+
+			if err := api.ItemAddFromPaths(cfg.BaseURL(), opts); err != nil {
+				return fmt.Errorf("error while adding items in batch: %w", err)
+			}
+
+			fmt.Printf("Successfully processed %d items.\n", len(pths))
+			return nil
+		},
+	}
+
+	return addsCmd
+}
+
+// NewList creates the "list" command.
+func NewList() *cobra.Command {
+	// This variable will hold the value from the --limit flag.
+	var limit int
+
+	listCmd := &cobra.Command{
+		Use:   "list",
+		Short: "Lists items from the Eagle library",
+		Long:  `Retrieves and prints a list of items from the Eagle library in JSON format.`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg := config.GetConfig()
+			opts := api.ItemListOptions{
+				Limit: limit,
+			}
+
+			List(cfg, opts)
+			data, err := api.ItemList(cfg.BaseURL(), opts)
+			if err != nil {
+				return fmt.Errorf("while retrieving items: %w", err)
+			}
+
+			// output, err := json.MarshalIndent(data, "", "  ") // Using MarshalIndent for nice formatting
+			// if err != nil {
+			// 	return fmt.Errorf("while parsing list items: %w", err)
+			// }
+
+			// On success, print the JSON to standard output.
+			fmt.Println(data)
+			return nil
+		},
+	}
+
+	// Define the --limit flag, with a short version -l, a default value, and a help message.
+	listCmd.Flags().IntVarP(&limit, "limit", "l", 10, "The maximum number of items to return")
+
+	return listCmd
+}
+
+func CmdCobra() {
+	var rootCmd = &cobra.Command{Use: "nest"}
+	rootCmd.AddCommand(NewAdd())
+	rootCmd.AddCommand(NewAdds())
+	rootCmd.AddCommand(NewList())
+
+	if err := rootCmd.Execute(); err != nil {
+		// Cobra prints the error, so we just need to exit.
+		os.Exit(1)
+	}
+}
+
 func Add(cfg config.NestConfig, pth *string) {
 	if pth == nil || *pth == "" {
 		log.Fatalf("[ERROR] add: flag `-file` is required.")
@@ -168,8 +312,6 @@ func Add1(cfg config.NestConfig, item api.ItemAddFromPathOptions) error {
 	return err
 }
 
-// TODO: merge this stupid with other add
-// TODO: Make processing continue after error; then report errors.
 func Adds(cfg config.NestConfig, pths []string) {
 	if len(pths) == 0 {
 		log.Fatalf("[ERROR] adds: flag `-files` is required.")
@@ -188,11 +330,7 @@ func Adds(cfg config.NestConfig, pths []string) {
 
 }
 
-func List(cfg config.NestConfig, limit *int) {
-	opts := api.ItemListOptions{
-		Limit: *limit,
-	}
-
+func List(cfg config.NestConfig, opts api.ItemListOptions) {
 	data, err := api.ItemList(cfg.BaseURL(), opts)
 	if err != nil {
 		log.Fatalf("[ERROR] list: while retrieving items: err=%s", err.Error())
