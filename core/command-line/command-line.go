@@ -30,17 +30,25 @@ func catchKnownErrors(err error) {
 	}
 }
 
+type addCmdOption struct {
+	FlagName     string
+	DefaultValue string
+	Description  string
+}
+
 func Cmd() {
 	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
-	addPath := addCmd.String("file", "", "filepath that will be added to eagle")
-	addName := addCmd.String("name", "", "name")
-	// addWebsite := addCmd.String("website", "", "website")
-	addAnnotation := addCmd.String("annotation", "", "annotation")
-	//addTags := addCmd.String("tags", "", "tags")
-	addFolderId := addCmd.String("folderid", "", "folderid")
+
+	// var addCmdOpts = []addCmdOption{
+	// 	{FlagName: "file", DefaultValue: "", Description: "filepath that will be added to eagle"},
+	// 	{FlagName: "name", DefaultValue: "", Description: "name"},
+	// 	{FlagName: "website", DefaultValue: "", Description: "website"},
+	// 	{FlagName: "annotation", DefaultValue: "", Description: "annotation"},
+	// 	// { FlagName:    "tags", DefaultValue: "", Description: "tags", },
+	// 	{FlagName: "folderid", DefaultValue: "", Description: "folderid"},
+	// }
 
 	addsCmd := flag.NewFlagSet("adds", flag.ExitOnError)
-
 	listCmd := flag.NewFlagSet("list", flag.ExitOnError)
 	listLimit := listCmd.Int("limit", 5, "number of items to retrieve")
 
@@ -66,12 +74,28 @@ func Cmd() {
 	switch os.Args[1] {
 	case "add":
 		cfg := config.GetConfig()
+		addPath := addCmd.String("file", "", "filepath that will be added to eagle")
+		addName := addCmd.String("name", "", "name")
 		addWebsite := addCmd.String("website", "", "website")
+		addAnnotation := addCmd.String("annotation", "", "annotation")
+		//addTags := addCmd.String("tags", "", "tags")
+		addFolderId := addCmd.String("folderid", "", "folderid")
+
 		addCmd.Parse(os.Args[2:])
+		fmt.Println("amount positional: %s")
+
+		// // numPositionalArgs := len(addCmd.Args())
+		// for now, just assign first positional argument to path if -path not specified.
+		if *addPath == "" {
+			*addPath = addCmd.Arg(0)
+		}
 
 		opts := api.ItemAddFromPathOptions{Path: *addPath, Name: *addName, Website: *addWebsite, Annotation: *addAnnotation, FolderId: *addFolderId}
 
-		Add1(cfg, opts)
+		err := Add1(cfg, opts)
+		if err != nil {
+			log.Fatalf("error adding item: %s", err.Error())
+		}
 
 	case "adds":
 		cfg := config.GetConfig()
@@ -138,11 +162,10 @@ func Add(cfg config.NestConfig, pth *string) {
 	}
 }
 
-func Add1(cfg config.NestConfig, item api.ItemAddFromPathOptions) {
+func Add1(cfg config.NestConfig, item api.ItemAddFromPathOptions) error {
+	fmt.Println("adding...")
 	err := api.ItemAddFromPath(cfg.BaseURL(), item)
-	if err != nil {
-		log.Fatalf("Error while adding eagle item: err=%s", err.Error())
-	}
+	return err
 }
 
 // TODO: merge this stupid with other add
