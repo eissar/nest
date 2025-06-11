@@ -149,6 +149,9 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 	if v == nil {
 		return fmt.Errorf("v cannot be nil.")
 	}
+	if req.Body == nil {
+		return fmt.Errorf("req.Body cannot be nil.")
+	}
 
 	var requestBodyBytes []byte // Store the body here
 	var readErr error
