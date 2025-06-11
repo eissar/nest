@@ -176,7 +176,7 @@ func resolveThumbnailPath(thumbnail string) (string, error) {
 	// fmt.Errorf("resolvethumb: no full-res file at path=%s, err=%w", thumbnail)
 }
 
-// on my device thumbnail ONLY end with _thumbnail.png or they do not exist.
+// on my device thumbnails ONLY end with _thumbnail.png or they do not exist.
 // this returns the full file path to the highest available resolution of the file.
 func GetEagleThumbnailFullRes(cfg *config.NestConfig, itemId string) (string, error) {
 	thumbnail, err := GetEagleThumbnail(cfg, itemId)

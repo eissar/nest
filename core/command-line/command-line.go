@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 	"log"
 	"net/http"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
@@ -280,12 +279,52 @@ func NewList() *cobra.Command {
 
 	return listCmd
 }
+func NewReveal() *cobra.Command {
+	revealCmd := &cobra.Command{
+		Use:   "reveal [FILEPATH | ITEM_ID]",
+		Short: "Reveals a file in the file explorer",
+		Long: `Reveals a file in the system's file explorer.
 
+You can provide a direct path to a file on your system.
+Alternatively, you can provide an Eagle item ID, and the command
+will resolve it to the item's location within the library.`,
+
+		// This ensures exactly one argument is provided.
+		Args: cobra.ExactArgs(1),
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			target := args[0]
+			cfg := config.GetConfig()
+
+			var err error
+
+			resolveOrGetFilepath := func() (resolvedPath string) {
+				resolvedPath, _ = filepath.Abs(target)
+				if _, err := os.Stat(resolvedPath); err != nil {
+					resolvedPath, err := nest.GetEagleThumbnailFullRes(&cfg, target)
+					if err != nil {
+						log.Fatalf("error getting thumbnail: %s", err.Error())
+					}
+					fmt.Printf("resolvedPath: %v\n", resolvedPath)
+					return resolvedPath
+				}
+
+				return resolvedPath
+			}
+
+			err = launch.Reveal(resolveOrGetFilepath())
+			return err
+		},
+	}
+
+	return revealCmd
+}
 func CmdCobra() {
 	var rootCmd = &cobra.Command{Use: "nest"}
 	rootCmd.AddCommand(NewAdd())
 	rootCmd.AddCommand(NewAdds())
 	rootCmd.AddCommand(NewList())
+	rootCmd.AddCommand(NewReveal())
 
 	if err := rootCmd.Execute(); err != nil {
 		// Cobra prints the error, so we just need to exit.
@@ -349,7 +388,6 @@ func Reveal(cfg config.NestConfig, t *string) {
 	if len(*t) == 0 {
 		log.Fatalf("[ERROR] add: flag `-target` is required.")
 	}
-	//fmt.Println("path:", *t)
 
 	resolveOrGetFilepath := func() (resolvedPath string) {
 		resolvedPath, _ = filepath.Abs(*t)
@@ -357,10 +395,6 @@ func Reveal(cfg config.NestConfig, t *string) {
 			resolvedPath, err := nest.GetEagleThumbnailFullRes(&cfg, *t)
 			if err != nil {
 				log.Fatalf("error getting thumbnail: %s", err.Error())
-			}
-			resolvedPath, err = url.PathUnescape(resolvedPath)
-			if err != nil {
-				log.Fatalf("error cleaning thumbnail path: %s", err.Error())
 			}
 			fmt.Printf("resolvedPath: %v\n", resolvedPath)
 			return resolvedPath

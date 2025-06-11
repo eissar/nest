@@ -69,31 +69,34 @@ func Reveal(v string) error {
 	is_path := false
 	is_id := false
 
-	// resolve path
-	if err := func() error {
-		pth, _ := filepath.Abs(v)
-		if _, err := os.Stat(pth); err != nil {
-			if !errors.Is(err, os.ErrNotExist) { // error is not ErrNotExist
-				return fmt.Errorf("unknown error testing path %s: err=%s", pth, err.Error())
-			}
-		} else {
-			is_path = true
-			v = pth // reassign to absolute filepath
-		}
-		return nil
-	}(); err != nil {
-		return err
+	pth, err := filepath.Abs(v)
+	if err != nil {
+		// The original code ignored this potential error
+		return fmt.Errorf("failed to resolve absolute path for %q: %w", v, err)
+	}
+	if a, err := os.Lstat(pth); err == nil {
+		is_path = true
+	} else if !errors.Is(err, os.ErrNotExist) {
+		// An unexpected error occurred (e.g., permission denied)
+		return fmt.Errorf("error checking path %q: %w", pth, err)
+	} else if errors.Is(err, os.ErrNotExist) {
+		// If err is os.ErrNotExist, do nothing and continue
+		// fmt.Println("exists?", e, err)
+
+		fmt.Println("filepath:", pth, "error", err.Error())
+		fmt.Println(a)
+		fmt.Println("file does not exist?")
 	}
 
 	if !is_path {
-		fmt.Printf("api.IsValidItemID(v): %v\n", api.IsValidItemID(v))
+		fmt.Printf("api.IsValidItemID(%v): %v\n", pth, api.IsValidItemID(v))
 		if api.IsValidItemID(v) {
 			is_id = true
 		}
 	}
 
 	if is_path {
-		return revealFilePlatformSpecific(v)
+		return revealFilePlatformSpecific(pth)
 	}
 	if is_id {
 		return openEagleItem(v)
