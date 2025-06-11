@@ -3,7 +3,6 @@ package commandline
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"github.com/spf13/cobra"
 	"log"
@@ -30,122 +29,8 @@ func catchKnownErrors(err error) {
 	}
 }
 
-type addCmdOption struct {
-	FlagName     string
-	DefaultValue string
-	Description  string
-}
-
-func Cmd() {
-
-	addCmd := flag.NewFlagSet("add", flag.ExitOnError)
-
-	// var addCmdOpts = []addCmdOption{
-	// 	{FlagName: "file", DefaultValue: "", Description: "filepath that will be added to eagle"},
-	// 	{FlagName: "name", DefaultValue: "", Description: "name"},
-	// 	{FlagName: "website", DefaultValue: "", Description: "website"},
-	// 	{FlagName: "annotation", DefaultValue: "", Description: "annotation"},
-	// 	// { FlagName:    "tags", DefaultValue: "", Description: "tags", },
-	// 	{FlagName: "folderid", DefaultValue: "", Description: "folderid"},
-	// }
-
-	addsCmd := flag.NewFlagSet("adds", flag.ExitOnError)
-	// listCmd := flag.NewFlagSet("list", flag.ExitOnError)
-	// listLimit := listCmd.Int("limit", 5, "number of items to retrieve")
-
-	revealCmd := flag.NewFlagSet("reveal", flag.ExitOnError)
-	revealPath := revealCmd.String("target", "", "filepath or item id to reveal")
-
-	switchCmd := flag.NewFlagSet("switch", flag.ExitOnError)
-	switchName := switchCmd.String("name", "", "name of library to switch to.")
-	//revealCmd := flag.NewFlagSet("reveal", flag.ExitOnError)
-
-	help := flag.Bool("help", false, "print help information")
-	start := flag.Bool("start", false, "run the utility server")
-	//debug := flag.Bool("debug", true, "shows additional information in the console while running. (does nothing)")
-	stop := flag.Bool("stop", false, "stop the utility server")
-	flag.Parse()
-
-	if *help || len(os.Args) < 2 {
-		fmt.Println("expected flag or subcommand.")
-		flag.PrintDefaults()
-		os.Exit(1)
-	}
-
-	switch os.Args[1] {
-	case "add":
-		cfg := config.GetConfig()
-		addPath := addCmd.String("file", "", "filepath that will be added to eagle")
-		addName := addCmd.String("name", "", "name")
-		addWebsite := addCmd.String("website", "", "website")
-		addAnnotation := addCmd.String("annotation", "", "annotation")
-		//addTags := addCmd.String("tags", "", "tags")
-		addFolderId := addCmd.String("folderid", "", "folderid")
-
-		addCmd.Parse(os.Args[2:])
-		fmt.Println("amount positional: %s")
-
-		// // numPositionalArgs := len(addCmd.Args())
-		// for now, just assign first positional argument to path if -path not specified.
-		if *addPath == "" {
-			*addPath = addCmd.Arg(0)
-		}
-
-		opts := api.ItemAddFromPathOptions{Path: *addPath, Name: *addName, Website: *addWebsite, Annotation: *addAnnotation, FolderId: *addFolderId}
-
-		err := Add1(cfg, opts)
-		if err != nil {
-			log.Fatalf("error adding item: %s", err.Error())
-		}
-
-	case "adds":
-		cfg := config.GetConfig()
-		addsCmd.Parse(os.Args[2:])
-		var filepaths []string
-		filepaths = addsCmd.Args()
-		Adds(cfg, filepaths)
-		os.Exit(0)
-
-	case "reveal":
-		cfg := config.GetConfig()
-
-		revealCmd.Parse(os.Args[2:])
-		Reveal(cfg, revealPath)
-		os.Exit(0)
-	case "switch":
-		cfg := config.GetConfig()
-		switchCmd.Parse(os.Args[2:])
-
-		if *switchName != "" {
-			Switch(cfg, *switchName)
-			os.Exit(0)
-		}
-		if len(os.Args) < 3 {
-			log.Fatalf("must pass flag -name")
-			flag.PrintDefaults()
-			os.Exit(1)
-		}
-		Switch(cfg, os.Args[2])
-		os.Exit(0)
-	}
-
-	//if *debug { } /* pwsh.ExecPwshCmd("./powershell-utils/openUrl.ps1 -Uri 'http://localhost:1323/app/notes'") */
-
-	if *start {
-		core.Start() //blocking
-	}
-
-	if *stop {
-		err := Shutdown(config.GetConfig())
-		if err != nil {
-			fmt.Printf("stop: %s", err.Error())
-		}
-		os.Exit(0)
-	}
-}
-
 // TODO: add flag to delete file after adding.
-func NewAdd() *cobra.Command {
+func Add() *cobra.Command {
 	// These variables will hold the values from the flags.
 	var addName, addWebsite, addAnnotation, addFolderId string
 	var addPath string
@@ -188,9 +73,7 @@ or by using the --file flag.`,
 				FolderId:   addFolderId,
 			}
 
-			// Your business logic function
-			if err := Add1(cfg, opts); err != nil {
-				// Use fmt.Errorf to wrap the error for more context
+			if err := api.ItemAddFromPath(cfg.BaseURL(), opts); err != nil {
 				return fmt.Errorf("error adding item: %w", err)
 			}
 
@@ -208,7 +91,7 @@ or by using the --file flag.`,
 	return addCmd
 
 }
-func NewAdds() *cobra.Command {
+func Adds() *cobra.Command {
 	addsCmd := &cobra.Command{
 		Use:   "adds [FILE1] [FILE2]",
 		Short: "Adds multiple files to Eagle in a single batch",
@@ -242,8 +125,8 @@ Provide the paths to the files as arguments separated by spaces.`,
 	return addsCmd
 }
 
-// NewList creates the "list" command.
-func NewList() *cobra.Command {
+// List creates the "list" command.
+func List() *cobra.Command {
 	// This variable will hold the value from the --limit flag.
 	var limit int
 
@@ -257,7 +140,20 @@ func NewList() *cobra.Command {
 				Limit: limit,
 			}
 
-			List(cfg, opts)
+			list := func(cfg config.NestConfig, opts api.ItemListOptions) {
+				data, err := api.ItemList(cfg.BaseURL(), opts)
+				if err != nil {
+					log.Fatalf("[ERROR] list: while retrieving items: err=%s", err.Error())
+				}
+
+				output, err := json.Marshal(data)
+				if err != nil {
+					log.Fatalf("[ERROR] list: while parsing list items: err=%s", err.Error())
+				}
+
+				fmt.Fprintf(os.Stdout, "%v", string(output))
+			}
+			list(cfg, opts)
 			data, err := api.ItemList(cfg.BaseURL(), opts)
 			if err != nil {
 				return fmt.Errorf("while retrieving items: %w", err)
@@ -279,7 +175,7 @@ func NewList() *cobra.Command {
 
 	return listCmd
 }
-func NewReveal() *cobra.Command {
+func Reveal() *cobra.Command {
 	revealCmd := &cobra.Command{
 		Use:   "reveal [FILEPATH | ITEM_ID]",
 		Short: "Reveals a file in the file explorer",
@@ -319,94 +215,97 @@ will resolve it to the item's location within the library.`,
 
 	return revealCmd
 }
-func CmdCobra() {
-	var rootCmd = &cobra.Command{Use: "nest"}
-	rootCmd.AddCommand(NewAdd())
-	rootCmd.AddCommand(NewAdds())
-	rootCmd.AddCommand(NewList())
-	rootCmd.AddCommand(NewReveal())
+func Shutdown() *cobra.Command {
+	cfg := config.GetConfig()
+	shutdownCmd := &cobra.Command{
+		Use:   "shutdown",
+		Short: "Shuts down the running Eagle API server",
+		Long:  `Sends a close request to the Eagle API server to shut it down gracefully.`,
 
-	if err := rootCmd.Execute(); err != nil {
-		// Cobra prints the error, so we just need to exit.
-		os.Exit(1)
-	}
-}
+		PreRunE: func(cmd *cobra.Command, args []string) error {
 
-func Add(cfg config.NestConfig, pth *string) {
-	if pth == nil || *pth == "" {
-		log.Fatalf("[ERROR] add: flag `-file` is required.")
-	}
-
-	opts := api.ItemAddFromPathOptions{Path: *pth}
-
-	err := api.ItemAddFromPath(cfg.BaseURL(), opts)
-	if err != nil {
-		log.Fatalf("Error while adding eagle item: err=%s", err.Error())
-	}
-}
-
-func Add1(cfg config.NestConfig, item api.ItemAddFromPathOptions) error {
-	fmt.Println("adding...")
-	err := api.ItemAddFromPath(cfg.BaseURL(), item)
-	return err
-}
-
-func Adds(cfg config.NestConfig, pths []string) {
-	if len(pths) == 0 {
-		log.Fatalf("[ERROR] adds: flag `-files` is required.")
-	}
-
-	opts := []api.ItemAddFromPathOptions{}
-
-	for _, v := range pths {
-		opts = append(opts, api.ItemAddFromPathOptions{Path: v})
-
-	}
-	err := api.ItemAddFromPaths(cfg.BaseURL(), opts)
-	if err != nil {
-		log.Fatalf("Error while adding eagle item: err=%s", err.Error())
-	}
-
-}
-
-func List(cfg config.NestConfig, opts api.ItemListOptions) {
-	data, err := api.ItemList(cfg.BaseURL(), opts)
-	if err != nil {
-		log.Fatalf("[ERROR] list: while retrieving items: err=%s", err.Error())
-	}
-
-	output, err := json.Marshal(data)
-	if err != nil {
-		log.Fatalf("[ERROR] list: while parsing list items: err=%s", err.Error())
-	}
-
-	fmt.Fprintf(os.Stdout, "%v", string(output))
-}
-
-// param t string: target filepath or item id to reveal (in explorer)
-func Reveal(cfg config.NestConfig, t *string) {
-	if len(*t) == 0 {
-		log.Fatalf("[ERROR] add: flag `-target` is required.")
-	}
-
-	resolveOrGetFilepath := func() (resolvedPath string) {
-		resolvedPath, _ = filepath.Abs(*t)
-		if _, err := os.Stat(resolvedPath); err != nil {
-			resolvedPath, err := nest.GetEagleThumbnailFullRes(&cfg, *t)
-			if err != nil {
-				log.Fatalf("error getting thumbnail: %s", err.Error())
+			pingEndpoint := fmt.Sprintf("http://localhost:%v/api/ping", cfg.Nest.Port)
+			if !isServerRunning(pingEndpoint) {
+				//not running
+				return fmt.Errorf("shutdown: request to %s failed. The server is not running.\n", pingEndpoint)
 			}
-			fmt.Printf("resolvedPath: %v\n", resolvedPath)
-			return resolvedPath
-		}
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			closeEndpoint := fmt.Sprintf("http://localhost:%v/api/server/close", cfg.Nest.Port)
 
-		return resolvedPath
-	}
+			client := &http.Client{
+				Timeout: 10 * time.Second,
+			}
 
-	err := launch.Reveal(resolveOrGetFilepath())
-	if err != nil {
-		log.Fatalf("[ERROR] while adding eagle item: err=%s", err.Error())
+			req, err := http.NewRequest("GET", closeEndpoint, nil)
+			if err != nil {
+				log.Fatalf("error creating request: %v", err)
+			}
+
+			resp, err := client.Do(req)
+			if err != nil {
+				log.Fatalf("error making request: %v", err)
+			}
+
+			if resp.StatusCode != http.StatusOK {
+				log.Fatalf("received code other than 200: %v", resp.StatusCode)
+			}
+
+			return nil
+
+		},
 	}
+	return shutdownCmd
+}
+func Switch() *cobra.Command {
+	cfg := config.GetConfig()
+	switchCmd := &cobra.Command{
+		Use:   "switch [LIBRARY_NAME]",
+		Short: "Switches the active Eagle library",
+		Long:  `Switches to a different Eagle library from your history by its name.`,
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			libraryName := args[0]
+			switchTo := func(libraryPath string) {
+				err := nest.LibrarySwitchSync(cfg.BaseURL(), libraryPath)
+				// err := api.SwitchLibrary(cfg.BaseURL(), libraryPath)
+				if err != nil {
+					log.Fatalf("could not switch library err=%s", err.Error())
+				}
+			}
+			currLib, err := nest.CurrentLibrary()
+			if err != nil {
+				catchKnownErrors(err)
+				log.Fatalf("unknown error getting current library err=%s", err.Error())
+			}
+			// TODO: should we instead print nothing?
+			if currLib.Name == libraryName {
+				log.Fatalf("library is already %s", libraryName)
+			}
+			recentLibraries, err := api.LibraryHistory(cfg.BaseURL())
+			if err != nil {
+				log.Fatalf("could not retrieve recent libaries err=%s", err.Error())
+			}
+			libraryName = strings.ToUpper(libraryName)
+			for i, lib := range recentLibraries {
+				lib = strings.ToUpper(lib)
+
+				_, lib = filepath.Split(lib)
+				if libraryName == lib {
+					switchTo(recentLibraries[i])
+					return nil
+				}
+				lib = strings.TrimSuffix(lib, ".LIBRARY")
+				if libraryName == lib {
+					switchTo(recentLibraries[i])
+					return nil
+				}
+			}
+			return nil
+		},
+	}
+	return switchCmd
 }
 
 // validateIsEagleServerRunning checks if the nest server is running at the specified URL.
@@ -432,77 +331,24 @@ func isServerRunning(url string) bool {
 	return true //, nil
 }
 
-// returns resp or calls log.fatal
-func Shutdown(cfg config.NestConfig) error {
-	closeEndpoint := fmt.Sprintf("http://localhost:%v/api/server/close", cfg.Nest.Port)
-	pingEndpoint := fmt.Sprintf("http://localhost:%v/api/ping", cfg.Nest.Port)
-	if !isServerRunning(pingEndpoint) {
-		//not running
-		return fmt.Errorf("shutdown: request to %s failed. The server is not running.\n", pingEndpoint)
+func CmdCobra() {
+	var rootCmd = &cobra.Command{Use: "nest"}
+	rootCmd.AddCommand(Add())
+	rootCmd.AddCommand(Adds())
+	rootCmd.AddCommand(List())
+	rootCmd.AddCommand(Reveal())
+	rootCmd.AddCommand(Switch())
+	rootCmd.AddCommand(Shutdown())
+	rootCmd.AddCommand(
+		&cobra.Command{
+			Use: "start",
+			Run: func(cmd *cobra.Command, args []string) {
+				core.Start() // blocking
+			},
+		})
+
+	if err := rootCmd.Execute(); err != nil {
+		// Cobra prints the error, so we just need to exit.
+		os.Exit(1)
 	}
-
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
-
-	req, err := http.NewRequest("GET", closeEndpoint, nil)
-	if err != nil {
-		log.Fatalf("error creating request: %v", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Fatalf("error making request: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		log.Fatalf("received code other than 200: %v", resp.StatusCode)
-	}
-
-	return nil
-}
-
-func Switch(cfg config.NestConfig, libraryName string) {
-	if libraryName == "" {
-		log.Fatalf("library name cannot be empty")
-	}
-	switchTo := func(libraryPath string) {
-		err := nest.LibrarySwitchSync(cfg.BaseURL(), libraryPath)
-		// err := api.SwitchLibrary(cfg.BaseURL(), libraryPath)
-		if err != nil {
-			log.Fatalf("could not switch library err=%s", err.Error())
-		}
-	}
-
-	currLib, err := nest.CurrentLibrary()
-	if err != nil {
-		catchKnownErrors(err)
-		log.Fatalf("unknown error getting current library err=%s", err.Error())
-	}
-
-	if currLib.Name == libraryName {
-		log.Fatalf("library is already %s", libraryName)
-	}
-
-	recentLibraries, err := api.LibraryHistory(cfg.BaseURL())
-	if err != nil {
-		log.Fatalf("could not retrieve recent libaries err=%s", err.Error())
-	}
-
-	libraryName = strings.ToUpper(libraryName)
-	for i, lib := range recentLibraries {
-		lib = strings.ToUpper(lib)
-
-		_, lib = filepath.Split(lib)
-		if libraryName == lib {
-			switchTo(recentLibraries[i])
-			return
-		}
-		lib = strings.TrimSuffix(lib, ".LIBRARY")
-		if libraryName == lib {
-			switchTo(recentLibraries[i])
-			return
-		}
-	}
-
 }
