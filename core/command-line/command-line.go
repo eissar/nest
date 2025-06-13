@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/spf13/cobra"
 	"log"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/spf13/cobra"
 
 	"github.com/eissar/nest/api"
 	"github.com/eissar/nest/config"
@@ -29,8 +30,57 @@ func catchKnownErrors(err error) {
 	}
 }
 
+func add() error {
+	return nil
+}
+
+// TODO: remove via filter?
+func CmdRemove() *cobra.Command {
+	var removeItemIds []string
+	// write
+	removeCmd := &cobra.Command{
+		Use:   "remove [ITEM_ID]",
+		Short: "Moves selected Eagle items to the trash",
+
+		Args: cobra.MinimumNArgs(1),
+
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			// Ensure all required arguments are set
+			if len(args) == 0 {
+				return errors.New("at least one item ID is required")
+			}
+
+			for _, arg := range args {
+				if strings.TrimSpace(arg) == "" {
+					return errors.New("item ID should not be empty")
+				}
+			}
+
+			return nil
+		},
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cfg := config.GetConfig()
+
+			if err := removeItem(cfg.BaseURL(), removeItemIds); err != nil {
+				return fmt.Errorf("error removing items: %w", err)
+			}
+
+			info, err := api.ItemInfo(cfg.BaseURL(), removeItemIds[0])
+			fmt.Println(info)
+			fmt.Printf("Items with IDs %v moved to Trash.\n", removeItemIds)
+			if err != nil {
+				return fmt.Errorf("error removing items: %w", err)
+			}
+			return nil
+		},
+		Aliases: []string{"rm"},
+	}
+
+	return removeCmd
+}
+
 // TODO: add flag to delete file after adding.
-func Add() *cobra.Command {
+func CmdAdd() *cobra.Command {
 	// These variables will hold the values from the flags.
 	var addName, addWebsite, addAnnotation, addFolderId string
 	var addPath string
@@ -129,6 +179,7 @@ Provide the paths to the files as arguments separated by spaces.`,
 func List() *cobra.Command {
 	// This variable will hold the value from the --limit flag.
 	var limit int
+	var filter string
 
 	listCmd := &cobra.Command{
 		Use:   "list",
@@ -137,7 +188,8 @@ func List() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := config.GetConfig()
 			opts := api.ItemListOptions{
-				Limit: limit,
+				Limit:   limit,
+				Keyword: filter,
 			}
 
 			list := func(cfg config.NestConfig, opts api.ItemListOptions) {
@@ -172,6 +224,7 @@ func List() *cobra.Command {
 
 	// Define the --limit flag, with a short version -l, a default value, and a help message.
 	listCmd.Flags().IntVarP(&limit, "limit", "l", 10, "The maximum number of items to return")
+	listCmd.Flags().StringVarP(&filter, "filter", "f", "", "Filter items by keyword(s)")
 
 	return listCmd
 }
@@ -333,7 +386,7 @@ func isServerRunning(url string) bool {
 
 func CmdCobra() {
 	var rootCmd = &cobra.Command{Use: "nest"}
-	rootCmd.AddCommand(Add())
+	rootCmd.AddCommand(CmdAdd())
 	rootCmd.AddCommand(Adds())
 	rootCmd.AddCommand(List())
 	rootCmd.AddCommand(Reveal())
@@ -351,4 +404,15 @@ func CmdCobra() {
 		// Cobra prints the error, so we just need to exit.
 		os.Exit(1)
 	}
+}
+
+// TODO: add to command line (all below)
+func removeItem(baseUrl string, itemIds []string) error {
+	err := api.ItemMoveToTrash(baseUrl, itemIds)
+	if err != nil {
+		return fmt.Errorf("failed to move item to trash: %s", err)
+	}
+
+	fmt.Println("Item moved to Trash successfully")
+	return nil
 }
