@@ -58,14 +58,21 @@ type ApiItem struct {
 }
 
 type ListItem struct {
-	Id               string   `json:"id"`
-	Name             string   `json:"name"`
-	URL              string   `json:"url"`
-	Website          string   `json:"website"`
-	Tags             []string `json:"tags"`
-	Annotation       string   `json:"annotation"`
-	ModificationTime int64    `json:"modificationTime"`
-	//FolderID         string   `json:"folderId"`
+	Id   string `json:"id"`
+	Name string `json:"name"`
+	// Size
+	// ext
+	Tags    []string `json:"tags"`
+	Folders []string `json:"folders"`
+	// isDeleted
+	URL              string `json:"url"`
+	Annotation       string `json:"annotation"`
+	ModificationTime int64  `json:"modificationTime"`
+	// height
+	// width
+	// lastModified
+	// palettes
+	Website string `json:"website"`
 }
 
 // give a better name
@@ -289,9 +296,10 @@ func ItemList(baseUrl string, opts ItemListOptions) ([]*ListItem, error) {
 
 	// TODO: validate parameters
 	//
-	body, err := json.Marshal(opts)
+
+	params, err := StructToURLValues(opts)
 	if err != nil {
-		return nil, fmt.Errorf("list: error converting request into json body err=%w", err)
+		return nil, fmt.Errorf("list: error converting parameters into url values err=%w", err)
 	}
 
 	var resp struct {
@@ -299,7 +307,7 @@ func ItemList(baseUrl string, opts ItemListOptions) ([]*ListItem, error) {
 		Data []*ListItem `json:"data"`
 	}
 
-	err = Request(ep.Method, uri, bytes.NewReader(body), nil, &resp)
+	err = Request(ep.Method, uri, nil, &params, &resp)
 	if err != nil {
 		return nil, fmt.Errorf("list: err=%w", err)
 	}
