@@ -36,7 +36,7 @@ windows:
 	@$(PWSH) "foreach (\$$arch in @('amd64','arm64')) { \
 		\$$env:GOOS = 'windows'; \
 		\$$env:GOARCH = \$$arch; \
-		go build -ldflags -o build/nest-windows-\$$arch.exe; \
+		go build -o build/nest-windows-\$$arch.exe; \
 		Write-Host \"Built build/nest-windows-\$$arch.exe\" \
 	}"
 
