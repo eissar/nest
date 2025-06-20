@@ -317,7 +317,6 @@ func Shutdown() *cobra.Command {
 	return shutdownCmd
 }
 func Switch() *cobra.Command {
-	var timeout int
 
 	cfg := config.GetConfig()
 	switchCmd := &cobra.Command{
@@ -328,7 +327,7 @@ func Switch() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			libraryName := args[0]
 			switchTo := func(libraryPath string) {
-				err := nest.LibrarySwitchSync(cfg.BaseURL(), libraryPath, timeout)
+				err := nest.LibrarySwitchSync(cfg.BaseURL(), libraryPath)
 				// err := api.SwitchLibrary(cfg.BaseURL(), libraryPath)
 				if err != nil {
 					log.Fatalf("could not switch library err=%s", err.Error())
@@ -365,9 +364,6 @@ func Switch() *cobra.Command {
 			return nil
 		},
 	}
-
-	switchCmd.Flags().IntVarP(&timeout, "", "t", 10, "The maximum amount of time to wait for library to switch.")
-
 	return switchCmd
 }
 

@@ -33,7 +33,7 @@ func TestCurrentLibrary(t *testing.T) {
 }
 func TestSwitchLibrary(t *testing.T) {
 	cfg := config.GetConfig()
-	err := LibrarySwitchSync(cfg.BaseURL(), cfg.Libraries.Paths[1])
+	err := LibrarySwitchSync(cfg.BaseURL(), cfg.Libraries.Paths[1], 10)
 	if err != nil {
 		t.Fatalf("%s", err.Error())
 	}

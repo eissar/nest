@@ -250,7 +250,7 @@ func pollForSwitch(c context.Context, pollingCh chan bool, targetLib string) {
 	}
 }
 
-func LibrarySwitchSync(baseUrl string, libraryPath string) error {
+func LibrarySwitchSync(baseUrl string, libraryPath string, timeout int) error {
 	currLibraryPath, err := CurrentLibraryPath()
 	if err != nil {
 		return fmt.Errorf("libraryswitchsync: error getting lib info err=%v", err)
@@ -264,7 +264,7 @@ func LibrarySwitchSync(baseUrl string, libraryPath string) error {
 	}
 
 	// switch library
-	timeoutCh := time.After(10 * time.Second)
+	timeoutCh := time.After(time.Duration(timeout)) // timeout
 
 	err = api.LibrarySwitch(baseUrl, libraryPath)
 	if err != nil {
