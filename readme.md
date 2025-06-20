@@ -1,5 +1,6 @@
 <!--toc:start-->
-- [Overview of features](#overview-of-features)
+  - [Usage](#usage)
+  - [Overview of features](#overview-of-features)
     - [Command line interface](#command-line-interface)
       - [Add eagle item](#add-eagle-item)
       - [List eagle item](#list-eagle-item)
