@@ -13,11 +13,14 @@
 - [TODO:](#todo)
 <!--toc:end-->
 
+## Usage
+in the command line, run:
+```bash
+nest start
+```
+a tray icon should appear in the bottom right.
 
-#TODO: nest list broke
-
-
-# Overview of features
+## Overview of features
 
 ### Command line interface
 
@@ -111,7 +114,7 @@ update configuration
 - [X] api/item/reveal
 - [X] synchronous api/library/switch
 - [ ] Config
-    - [ ] open config files from tray icon
+    - [X] open config files from tray icon
 
 ### Configuration
 config is set in %USERPROFILE%/.config/nest directory.
