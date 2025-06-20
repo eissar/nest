@@ -1,12 +1,13 @@
 package trayicon
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
 
 	"fyne.io/systray"
-	"fyne.io/systray/example/icon"
+	"github.com/eissar/nest/api"
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/labstack/echo/v4"
@@ -37,21 +38,41 @@ func setTitle() {
 // possible impl.:?
 // type func MenuItemPopulateFunc() (title string, tooltip string, func())
 // func setMenuItems(...MenuItemPopulateFunc) {}
-func setMenuItems() {
+func setMenuItems(libs []string) (*systray.MenuItem, *systray.MenuItem) {
 	mQuit := systray.AddMenuItem("Quit", "close nest background tasks and exit")
 	mConfig := systray.AddMenuItem("Config", "open nest config")
 
 	//mRefresh := systray.AddMenuItem("Try Refresh?"+time.Now().String(), "test")
 	// Sets the icon of a menu item.
-	mQuit.SetIcon(icon.Data)
+	// mQuit.SetIcon(icon.Datacfg.Libraries.Paths)
 
 	mLibraries := systray.AddMenuItem("Libraries", "Libraries")
 
-	cfg := config.GetConfig()
-	for _, l := range cfg.Libraries.Paths {
-		mLibraries.AddSubMenuItem(l, "")
+	for _, l := range libs {
+		_ = mLibraries.AddSubMenuItem(l, "")
+		// TODO: add switch behavior to these subMenuItems
+	}
+	if len(libs) == 0 {
+		mLibraries.AddSubMenuItem("no library history found.", "")
 	}
 
+	return mQuit, mConfig
+
+}
+func onReady() {
+	cfg := config.GetConfig()
+
+	fmt.Println(cfg.Libraries)
+	setIcon()
+	setTitle()
+
+	// TODO: Make this use or abide by cfg.Libraries.AutoLoad preference
+	libs, err := api.LibraryHistory(cfg.BaseURL())
+	if err != nil {
+		fmt.Printf("WARN: no library history could be found. library paths are missing.")
+	}
+
+	mQuit, mConfig := setMenuItems(libs)
 	// event listeners for menu items
 	go func() {
 		for {
@@ -74,11 +95,6 @@ func setMenuItems() {
 		//set:
 		//	setMenuItems()
 	}()
-}
-func onReady() {
-	setIcon()
-	setTitle()
-	setMenuItems()
 }
 
 func Quit() {
