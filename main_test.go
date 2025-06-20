@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"testing"
 
-	api "github.com/eissar/nest/api"
-	config "github.com/eissar/nest/config"
-	///cmd "github.com/eissar/nest/core/command-line"
+	"github.com/eissar/nest/api"
+	"github.com/eissar/nest/config"
 )
 
 func TestInfo(t *testing.T) {
@@ -16,5 +15,4 @@ func TestInfo(t *testing.T) {
 		t.Error("testinfo", err.Error())
 	}
 	fmt.Print(inf)
-
 }
