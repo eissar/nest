@@ -87,13 +87,13 @@ type LibraryInfoResponse struct {
 //- [X] /api/library/switch
 //- [-] /api/library/icon
 
-func LibraryInfo(baseURL string) (*LibraryInfoResponse, error) {
+func LibraryInfo(baseURL string) (*LibraryData, error) {
 	ep := endpoints.LibraryInfo
 	uri := baseURL + ep.Path
 
 	var resp struct {
-		EagleResponse                     // `json:"response"`
-		Data          LibraryInfoResponse `json:"data"`
+		EagleResponse             // `json:"response"`
+		Data          LibraryData `json:"data"`
 	}
 
 	err := Request(ep.Method, uri, nil, nil, &resp)

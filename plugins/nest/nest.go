@@ -240,8 +240,8 @@ func pollForSwitch(c context.Context, pollingCh chan bool, targetLib string) {
 				// library has switched
 				pollingCh <- true
 			} else {
-				// fmt.Printf("currLib: %v\n", currLib)
-				// fmt.Printf("targetLib: %v\n", targetLib)
+				fmt.Printf("currLib: %v\n", currLib)
+				fmt.Printf("targetLib: %v\n", targetLib)
 			}
 
 		case <-c.Done(): // exit
@@ -259,7 +259,6 @@ func LibrarySwitchSync(baseUrl string, libraryPath string, timeout int) error {
 	libraryPath = strings.TrimSuffix(filepath.Clean(libraryPath), `\`)
 
 	if currLibraryPath == libraryPath {
-		// do nothing.
 		return fmt.Errorf("current library %s is already %s", currLibraryPath, libraryPath)
 	}
 
@@ -294,7 +293,7 @@ func CurrentLibrary() (*api.Library, error) {
 		return nil, fmt.Errorf("error getting library info err=%w", err)
 	}
 	//fmt.Println(libInfo.Data.Library)
-	return &libInfo.Data.Library, nil
+	return &libInfo.Library, nil
 }
 
 // get path to current library
@@ -314,6 +313,6 @@ func CurrentLibraryName() (string, error) {
 		return "", fmt.Errorf("error getting library info err=%w", err)
 	}
 
-	return libInfo.Status, nil
+	return libInfo.Library.Name, nil
 	//return libInfo.Data.Library
 }

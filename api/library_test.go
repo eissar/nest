@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/eissar/nest/config"
@@ -46,7 +47,7 @@ func TestLibrarySwitch(t *testing.T) {
 	// find a library that is not this library...
 	targetLibrary := (func() string {
 		for _, lib := range cfg.Libraries.Paths {
-			if lib != currentLibrary.Data.Library.Path {
+			if lib != currentLibrary.Library.Path {
 				return lib
 			}
 		}
