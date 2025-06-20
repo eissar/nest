@@ -264,7 +264,7 @@ func LibrarySwitchSync(baseUrl string, libraryPath string, timeout int) error {
 	}
 
 	// switch library
-	timeoutCh := time.After(time.Duration(timeout)) // timeout
+	timeoutCh := time.After(time.Duration(timeout) * time.Second) // timeout
 
 	err = api.LibrarySwitch(baseUrl, libraryPath)
 	if err != nil {

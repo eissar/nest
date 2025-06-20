@@ -290,7 +290,7 @@ func Shutdown() *cobra.Command {
 			closeEndpoint := fmt.Sprintf("http://localhost:%v/api/server/close", cfg.Nest.Port)
 
 			client := &http.Client{
-				Timeout: time.Duration(timeout),
+				Timeout: time.Duration(timeout) * time.Second,
 			}
 
 			req, err := http.NewRequest("GET", closeEndpoint, nil)
