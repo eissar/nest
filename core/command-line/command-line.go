@@ -26,8 +26,8 @@ import (
 // we can do some redundant over-checking here and
 // it shouldn't matter much.
 func catchKnownErrors(err error) {
-	if errors.Is(err, api.EagleNotOpenErr) {
-		fmt.Println(api.EagleNotOpenErr.Error())
+	if errors.Is(err, api.EagleNotOpenOrUnavailableErr) {
+		fmt.Println(api.EagleNotOpenOrUnavailableErr.Error())
 		os.Exit(1)
 	}
 }
@@ -386,19 +386,29 @@ func Switch() *cobra.Command {
 			libraryName := args[0]
 			switchTo := func(libraryPath string) {
 				err := nest.LibrarySwitchSync(cfg.BaseURL(), libraryPath, timeout)
+
 				// err := api.SwitchLibrary(cfg.BaseURL(), libraryPath)
 				if err != nil {
-					log.Fatalf("could not switch library err=%s", err.Error())
+
+					if errors.Is(err, api.LibraryIsAlreadyTargetErr) {
+						fmt.Println(err.Error())
+					}
+
+					// var terr *api.LibrarySwitchErr
+					// if errors.As(err, &terr) {
+					// 	fmt.Print("test")
+					// 	fmt.Print(err.Error())
+					// 	os.Exit(0)
+					// }
+
+					// // nope
+					// if errors.Is(err, api.LibraryIsAlreadyTargetErr) {
+					// 	fmt.Print(api.LibraryIsAlreadyTargetErr.Error())
+					// 	os.Exit(0)
+					// }
+
+					// log.Fatalf("could not switch library err=%s", err.Error())
 				}
-			}
-			currLib, err := nest.CurrentLibrary()
-			if err != nil {
-				catchKnownErrors(err)
-				log.Fatalf("unknown error getting current library err=%s", err.Error())
-			}
-			// TODO: should we instead print nothing?
-			if currLib.Name == libraryName {
-				log.Fatalf("library is already %s", libraryName)
 			}
 			recentLibraries, err := api.LibraryHistory(cfg.BaseURL())
 			if err != nil {

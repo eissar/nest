@@ -37,7 +37,14 @@ func (e *EagleApiErr) Error() string {
 	return fmt.Sprintf("eagle api error calling path=%s docurl=%s err=%v ", e.Endpoint.Path, e.Endpoint.HelpUri(), e.Err)
 }
 
-var EagleNotOpenErr = fmt.Errorf("Eagle is not open.")
+// sentinel errors
+var LibraryIsAlreadyTargetErr = errors.New("Library is already active")
+var EagleNotOpenOrUnavailableErr = fmt.Errorf("Eagle is not open or unavailable.")
+
+// constructor
+func GetCurrentLibraryIsAlreadyTargetError(currLib string) error {
+	return fmt.Errorf("%w:  %s", LibraryIsAlreadyTargetErr, currLib)
+}
 
 // #endregion errors
 
@@ -235,7 +242,7 @@ func Request[T any](method string, url string, body io.Reader, urlParam *url.Val
 	return nil
 }
 
-func IsEagleNotOpenErr(err error) bool {
+func IsEagleNotOpenOrUnavailable(err error) bool {
 	// windows, linux
 	if errors.Is(err, windows.WSAECONNREFUSED) || errors.Is(err, syscall.ECONNREFUSED) {
 		return true
@@ -283,8 +290,8 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 
-	if IsEagleNotOpenErr(err) {
-		return EagleNotOpenErr
+	if IsEagleNotOpenOrUnavailable(err) {
+		return EagleNotOpenOrUnavailableErr
 	}
 	if err != nil {
 		oErr, ok := err.(*net.OpError)

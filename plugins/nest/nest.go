@@ -259,7 +259,7 @@ func LibrarySwitchSync(baseUrl string, libraryPath string, timeout int) error {
 	libraryPath = strings.TrimSuffix(filepath.Clean(libraryPath), `\`)
 
 	if currLibraryPath == libraryPath {
-		return fmt.Errorf("current library %s is already %s", currLibraryPath, libraryPath)
+		return api.GetCurrentLibraryIsAlreadyTargetError(currLibraryPath)
 	}
 
 	// switch library
@@ -267,7 +267,7 @@ func LibrarySwitchSync(baseUrl string, libraryPath string, timeout int) error {
 
 	err = api.LibrarySwitch(baseUrl, libraryPath)
 	if err != nil {
-		return fmt.Errorf("couldn't switch to lib=%s err=%v", libraryPath, err)
+		return fmt.Errorf("couldn't switch to lib=%s err=%w", libraryPath, err)
 	}
 
 	ctx, cancelPolling := context.WithCancel(context.Background())
