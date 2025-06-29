@@ -53,4 +53,4 @@ clean:
 
 
 # gh release create v1.0.0 yourfile.zip -t "Release 1.0.0" -n "Release notes"
-# git commit -m 'message' && git tag v0.0.0
+#  git tag -a v0.0.7 -m 'improve error handling for nest switch' 4db8bc0 && git push --tags

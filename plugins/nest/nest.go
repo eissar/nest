@@ -2,8 +2,10 @@ package nest
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
+
 	//"net/http"
 	"os"
 	"path/filepath"
@@ -15,6 +17,7 @@ import (
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/eissar/nest/plugins/pwsh"
+	"github.com/eissar/nest/progress"
 	"github.com/fsnotify/fsnotify"
 	"golang.org/x/net/context"
 
@@ -224,27 +227,52 @@ func WatchMtime(n config.NestConfig) {
 //#endregion
 
 // wait until library is switched
-func pollForSwitch(c context.Context, pollingCh chan bool, targetLib string) {
-	t := time.NewTicker(500 * time.Millisecond)
+func pollForSwitch(c context.Context, wg *sync.WaitGroup, pollingCh chan bool, targetLib string) {
+	wg.Add(1)
+	defer wg.Done()
+
+	// Use a buffered channel to prevent the sender from blocking if the
+	// renderer is momentarily busy.
+	messageCh := make(chan string, 10)
+
+	go func() {
+		progress.Render(c, wg, messageCh)
+	}()
+
+	messageCh <- "started polling\n"
+	t := time.NewTicker(100 * time.Millisecond)
+	defer t.Stop()
 	targetLib = strings.TrimSuffix(targetLib, `\`) // https://github.com/golang/go/issues/27791
+
+	clean := func() {
+		close(messageCh)
+	}
 
 	for {
 		select {
 		case <-t.C: // tick
 			currLib, err := CurrentLibraryPath()
 			if err != nil {
-				log.Printf("warning err=%v\n", err)
+				if errors.Is(err, api.EagleNotOpenOrUnavailableErr) {
+					messageCh <- "Eagle not open or unavailable (possibly in loading state)"
+				} else {
+					messageCh <- fmt.Sprintf("warning err=%v\n", err)
+				}
 				continue
 			}
 			if currLib == targetLib {
 				// library has switched
+				messageCh <- fmt.Sprintf("library switched to %s", currLib)
+				clean()
 				pollingCh <- true
+				return
 			} else {
-				fmt.Printf("currLib: %v\n", currLib)
-				fmt.Printf("targetLib: %v\n", targetLib)
+				continue
+				// messageCh <- fmt.Sprintf("currLib: %v\n", currLib)
 			}
 
 		case <-c.Done(): // exit
+			fmt.Println("c.Done")
 			return
 		}
 	}
@@ -272,12 +300,15 @@ func LibrarySwitchSync(baseUrl string, libraryPath string, timeout int) error {
 
 	ctx, cancelPolling := context.WithCancel(context.Background())
 	pollingCh := make(chan bool)
-	go pollForSwitch(ctx, pollingCh, libraryPath)
+	var wg sync.WaitGroup
+	go pollForSwitch(ctx, &wg, pollingCh, libraryPath)
 	defer cancelPolling()
 
 	for {
 		select {
 		case <-pollingCh:
+			wg.Wait()
+			// fmt.Println("POLLING END")
 			return nil
 		case <-timeoutCh:
 			return fmt.Errorf("timeout elapsed")

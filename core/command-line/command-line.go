@@ -394,20 +394,6 @@ func Switch() *cobra.Command {
 						fmt.Println(err.Error())
 					}
 
-					// var terr *api.LibrarySwitchErr
-					// if errors.As(err, &terr) {
-					// 	fmt.Print("test")
-					// 	fmt.Print(err.Error())
-					// 	os.Exit(0)
-					// }
-
-					// // nope
-					// if errors.Is(err, api.LibraryIsAlreadyTargetErr) {
-					// 	fmt.Print(api.LibraryIsAlreadyTargetErr.Error())
-					// 	os.Exit(0)
-					// }
-
-					// log.Fatalf("could not switch library err=%s", err.Error())
 				}
 			}
 			recentLibraries, err := api.LibraryHistory(cfg.BaseURL())
