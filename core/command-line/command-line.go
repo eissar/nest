@@ -84,6 +84,8 @@ func CmdRemove() *cobra.Command {
 }
 
 // TODO: add flag to delete file after adding.
+// TODO: rename -f file flag to -p path
+// TODO: accept relative file paths
 func CmdAdd() *cobra.Command {
 	// These variables will hold the values from the flags.
 	var addName, addWebsite, addAnnotation, addFolderId string
@@ -117,6 +119,11 @@ or by using the --file flag.`,
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 
+			addPath, err := filepath.Abs(addPath)
+			if err != nil {
+				return err
+			}
+
 			cfg := config.GetConfig()
 
 			opts := api.ItemAddFromPathOptions{
@@ -128,7 +135,8 @@ or by using the --file flag.`,
 			}
 
 			if err := api.ItemAddFromPath(cfg.BaseURL(), opts); err != nil {
-				return fmt.Errorf("error adding item: %w", err)
+				// return fmt.Errorf("error adding item: %w", err)
+				return err
 			}
 
 			fmt.Println("Item added successfully!")
