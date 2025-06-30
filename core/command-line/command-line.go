@@ -9,11 +9,13 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/go-logfmt/logfmt"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 
 	"github.com/eissar/nest/api"
 	"github.com/eissar/nest/config"
@@ -217,6 +219,24 @@ func jsonFmtStdOut(cmd *cobra.Command, data []*api.ListItem, exclude []string) e
 	return nil
 }
 
+// TODO: fix extract vs..
+
+func rebuildCmdText(cmd *cobra.Command, args []string) string {
+	var commandBuilder strings.Builder
+
+	commandBuilder.WriteString(cmd.CommandPath())
+
+	cmd.Flags().Visit(func(flag *pflag.Flag) {
+		commandBuilder.WriteString(fmt.Sprintf(" --%s=%s", flag.Name, flag.Value))
+	})
+	if len(args) > 0 {
+		commandBuilder.WriteString(" ")
+		commandBuilder.WriteString(strings.Join(args, " "))
+	}
+
+	return commandBuilder.String()
+}
+
 // List creates the "list" command.
 func List() *cobra.Command {
 	// This variable will hold the value from the --limit flag.
@@ -227,6 +247,8 @@ func List() *cobra.Command {
 
 	allowedFormats := []string{"json"}
 	//allowedFormats := []string{"json", "log", "logfmt"}
+	// TODO: url and website?
+	defaultFields := []string{"id", "name", "tags", "annotation", "url", "website"}
 
 	listCmd := &cobra.Command{
 		Use:   "list",
@@ -234,10 +256,8 @@ func List() *cobra.Command {
 		Long:  "Retrieves and prints a list of items from the Eagle library in logfmt.\n",
 
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			for _, f := range allowedFormats {
-				if f == format {
-					return nil
-				}
+			if slices.Contains(allowedFormats, format) {
+				return nil
 			}
 			return fmt.Errorf("invalid format: %s. Please use one of: %s", format, helpFmt(&allowedFormats))
 		},
@@ -253,16 +273,25 @@ func List() *cobra.Command {
 				return fmt.Errorf("while retrieving items: %w", err)
 			}
 
+			fmtFields := func(props string) []string {
+				// strings.ReplaceAll(props, " ", "") // remove whitespace
+				fields := strings.Split(props, ",")
+
+				return fields
+			}
+
 			switch format {
 			case "json":
-				inputFilterFields := strings.Split(properties, ",")
-				allfields := structToKeys(&api.ListItem{})
-				// fmt.Fprintf(os.Stderr, "allfields: %v\n", allfields)
+				var targetProperties []string
+				if properties != "" {
+					targetProperties = fmtFields(properties)
+				} else {
+					targetProperties = defaultFields
+				}
 
+				allFields := structToKeys(&api.ListItem{}) // no struct keys should have any whitespace
 				// find fields which are in allfields but not in inputFilterFields
-				exclFields := filterFieldsByReference(inputFilterFields, allfields)
-				// fmt.Fprintf(os.Stderr, "exclFields: %v\n", exclFields)
-
+				exclFields := filterFieldsByReference(targetProperties, allFields)
 				err = jsonFmtStdOut(cmd, data, exclFields)
 				if err != nil {
 					fmt.Printf("jsonFmtStdOut: %v\n", err)
@@ -277,10 +306,13 @@ func List() *cobra.Command {
 		},
 	}
 
-	// Define the --limit flag, with a short version -l, a default value, and a help message.
+	// TODO: improve argument parsing to accept commas like "2, 2" and "1,2"
+	// NOTE: we won't be able to accept ', ' sep values without more advanced argument
+	// handling. cobra uses <https://github.com/spf13/pflag> for parsing.
+	// we could make properties a positional argument, but I don't see the benefit
 	listCmd.Flags().IntVarP(&limit, "limit", "l", 10, "The maximum number of items to return")
 	listCmd.Flags().StringVarP(&filter, "filter", "f", "", "Filter items by keyword(s)")
-	listCmd.Flags().StringVarP(&properties, "properties", "p", "", "select properties to include in the output: "+helpFmt(&api.ListItem{}))
+	listCmd.Flags().StringVarP(&properties, "properties", "p", "", "select properties to include in the output: "+helpFmt(&api.ListItem{})+" default:"+helpFmt(&defaultFields))
 	listCmd.Flags().StringVarP(&format, "format", "o", "json", "output format. One of: "+helpFmt(&allowedFormats))
 
 	return listCmd
@@ -373,6 +405,8 @@ func Shutdown() *cobra.Command {
 
 	return shutdownCmd
 }
+
+// todo: add long flag names to flags
 func Switch() *cobra.Command {
 	var timeout int
 
