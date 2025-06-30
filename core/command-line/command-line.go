@@ -306,7 +306,7 @@ func List() *cobra.Command {
 		},
 	}
 
-	// TODO: improve argument parsing to accept commas like "2, 2" and "1,2"
+	// TODO: improve argument parsing to accept commas like "1, 2" and "1,2"
 	// NOTE: we won't be able to accept ', ' sep values without more advanced argument
 	// handling. cobra uses <https://github.com/spf13/pflag> for parsing.
 	// we could make properties a positional argument, but I don't see the benefit
@@ -401,7 +401,7 @@ func Shutdown() *cobra.Command {
 		},
 	}
 
-	shutdownCmd.Flags().IntVarP(&timeout, "", "t", 10, "The maximum amount of time to wait for library to switch.")
+	shutdownCmd.Flags().IntVarP(&timeout, "timeout", "t", 10, "The maximum amount of time to wait for library to switch.")
 
 	return shutdownCmd
 }
@@ -409,51 +409,77 @@ func Shutdown() *cobra.Command {
 // todo: add long flag names to flags
 func Switch() *cobra.Command {
 	var timeout int
+	var targetLibraryName string
 
 	cfg := config.GetConfig()
+
+	// TODO: use instead cfg.Libraries
+	recentLibraries, err := api.LibraryHistory(cfg.BaseURL())
+	if err != nil {
+		log.Fatalf("could not retrieve recent libaries err=%s", err.Error())
+	}
+
+	switchTo := func(libraryPath string) {
+		err := nest.LibrarySwitchSync(cfg.BaseURL(), libraryPath, timeout)
+
+		// err := api.SwitchLibrary(cfg.BaseURL(), libraryPath)
+		if err != nil {
+
+			if errors.Is(err, api.LibraryIsAlreadyTargetErr) {
+				fmt.Println(err.Error())
+			}
+
+		}
+	}
 	switchCmd := &cobra.Command{
 		Use:   "switch [LIBRARY_NAME]",
 		Short: "Switches the active Eagle library",
 		Long:  `Switches to a different Eagle library from your history by its name.`,
 		Args:  cobra.ExactArgs(1),
+		PreRunE: func(cmd *cobra.Command, args []string) error {
+			if !cmd.Flags().Changed("name") {
+				// flag was not set with flag
+				targetLibraryName = args[0]
+			}
+
+			if targetLibraryName == "" {
+				return errors.New("name should not be an empty string")
+			}
+
+			return nil
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			libraryName := args[0]
-			switchTo := func(libraryPath string) {
-				err := nest.LibrarySwitchSync(cfg.BaseURL(), libraryPath, timeout)
-
-				// err := api.SwitchLibrary(cfg.BaseURL(), libraryPath)
-				if err != nil {
-
-					if errors.Is(err, api.LibraryIsAlreadyTargetErr) {
-						fmt.Println(err.Error())
-					}
-
-				}
-			}
-			recentLibraries, err := api.LibraryHistory(cfg.BaseURL())
-			if err != nil {
-				log.Fatalf("could not retrieve recent libaries err=%s", err.Error())
-			}
-			libraryName = strings.ToUpper(libraryName)
+			targetLibraryName = strings.ToUpper(targetLibraryName)
 			for i, lib := range recentLibraries {
 				lib = strings.ToUpper(lib)
 
 				_, lib = filepath.Split(lib)
-				if libraryName == lib {
+				if targetLibraryName == lib {
 					switchTo(recentLibraries[i])
 					return nil
 				}
 				lib = strings.TrimSuffix(lib, ".LIBRARY")
-				if libraryName == lib {
+				if targetLibraryName == lib {
+					libPath := recentLibraries[i]
+					_, err := os.Stat(libPath)
+					if err != nil {
+						if errors.Is(err, os.ErrNotExist) {
+							return fmt.Errorf("switch: invalid library path at %s (invalid or unavailable filepath)", libPath)
+						}
+					}
+
 					switchTo(recentLibraries[i])
 					return nil
 				}
 			}
+			return errors.New("invalid library name: library must be present in recentLibraries (check available libraries in eagle GUI)")
+
 			return nil
 		},
 	}
 
-	switchCmd.Flags().IntVarP(&timeout, "", "t", 10, "The maximum amount of time to wait for library to switch.")
+	switchCmd.Flags().IntVarP(&timeout, "timeout", "t", 10, "The maximum amount of time to wait for library to switch.")
+	switchCmd.Flags().StringVarP(&targetLibraryName, "name", "n", "", "name of the library to switch to")
 
 	return switchCmd
 }
