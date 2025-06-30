@@ -406,7 +406,8 @@ func Shutdown() *cobra.Command {
 	return shutdownCmd
 }
 
-// todo: add long flag names to flags
+// TODO: add nest list available or nest list list or nest list show or nest list libs or nest list libraries
+// to show libraries available to switch to (print)
 func Switch() *cobra.Command {
 	var timeout int
 	var targetLibraryName string
@@ -472,9 +473,10 @@ func Switch() *cobra.Command {
 					return nil
 				}
 			}
+			// not found in recentLibraries
 			return errors.New("invalid library name: library must be present in recentLibraries (check available libraries in eagle GUI)")
 
-			return nil
+			// return nil
 		},
 	}
 
