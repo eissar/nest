@@ -257,11 +257,11 @@ func List() *cobra.Command {
 			case "json":
 				inputFilterFields := strings.Split(properties, ",")
 				allfields := structToKeys(&api.ListItem{})
-				fmt.Fprintf(os.Stderr, "allfields: %v\n", allfields)
+				// fmt.Fprintf(os.Stderr, "allfields: %v\n", allfields)
 
 				// find fields which are in allfields but not in inputFilterFields
 				exclFields := filterFieldsByReference(inputFilterFields, allfields)
-				fmt.Fprintf(os.Stderr, "exclFields: %v\n", exclFields)
+				// fmt.Fprintf(os.Stderr, "exclFields: %v\n", exclFields)
 
 				err = jsonFmtStdOut(cmd, data, exclFields)
 				if err != nil {
