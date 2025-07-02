@@ -34,10 +34,6 @@ func catchKnownErrors(err error) {
 	}
 }
 
-func add() error {
-	return nil
-}
-
 // TODO: remove via filter?
 func CmdRemove() *cobra.Command {
 	var removeItemIds []string
@@ -84,8 +80,8 @@ func CmdRemove() *cobra.Command {
 }
 
 // TODO: add flag to delete file after adding.
-// TODO: rename -f file flag to -p path
-// TODO: accept relative file paths
+// TODO: rename -f file flag to -p path ?
+// TODO: possible to check for item existence before api request?
 func CmdAdd() *cobra.Command {
 	// These variables will hold the values from the flags.
 	var addName, addWebsite, addAnnotation, addFolderId string
@@ -99,30 +95,34 @@ The path to the file can be provided as the first argument directly
 or by using the --file flag.`,
 
 		Args: cobra.MaximumNArgs(1), // Allow zero or one positional argument. Error if more than one.
-		// BEGIN
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			// Logic to determine the final path.
-			// If a positional argument is given, it's the path.
 			if len(args) > 0 {
-				// Prevent confusion: error if both a positional arg AND --file flag are used.
+				// error if both a positional arg AND --file flag are used.
 				if cmd.Flags().Changed("file") {
 					return errors.New("cannot use both a positional argument and the --file flag")
 				}
 				addPath = args[0]
 			}
 
-			// After checking flags and args, we must have a path.
 			if addPath == "" {
 				return errors.New("a filepath must be provided either as an argument or with the --file flag")
+			}
+
+			var err error
+			addPath, err = filepath.Abs(addPath)
+			if err != nil {
+				return err
+			}
+
+			_, err = os.Stat(addPath)
+			if err != nil {
+				if errors.Is(err, os.ErrNotExist) {
+					return fmt.Errorf("addPath: invalid path at %s (invalid or unavailable filepath)", addPath)
+				}
 			}
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-
-			addPath, err := filepath.Abs(addPath)
-			if err != nil {
-				return err
-			}
 
 			cfg := config.GetConfig()
 
@@ -135,11 +135,10 @@ or by using the --file flag.`,
 			}
 
 			if err := api.ItemAddFromPath(cfg.BaseURL(), opts); err != nil {
-				// return fmt.Errorf("error adding item: %w", err)
 				return err
 			}
 
-			fmt.Println("Item added successfully!")
+			fmt.Println("Item added successfully")
 			return nil
 		},
 	}
@@ -193,9 +192,9 @@ func logFmtStdOut(data []*api.ListItem, props []string) {
 	outp.EncodeKeyvals("test", nil)
 	outp.EndRecord()
 	// for _, item := range data {
-	// 	// outp.EncodeKeyval("url", item.URL)
-	// 	// outp.EncodeKeyval("folderIds", strings.Join(item.Folders, ", "))
-	// 	outp.EndRecord()
+	//	// outp.EncodeKeyval("url", item.URL)
+	//	// outp.EncodeKeyval("folderIds", strings.Join(item.Folders, ", "))
+	//	outp.EndRecord()
 	// }
 
 }
@@ -226,8 +225,6 @@ func jsonFmtStdOut(cmd *cobra.Command, data []*api.ListItem, exclude []string) e
 
 	return nil
 }
-
-// TODO: fix extract vs..
 
 func rebuildCmdText(cmd *cobra.Command, args []string) string {
 	var commandBuilder strings.Builder
@@ -574,9 +571,9 @@ func structToKeys[T any](a *T) []string {
 		}
 
 		// fmt.Printf("Field Name: %s, Field Type: %s, Field Value: %v\n",
-		// 	fieldType.Name,
-		// 	fieldType.Type,
-		// 	fieldValue.Interface(), // Use .Interface() to get the actual value
+		//	fieldType.Name,
+		//	fieldType.Type,
+		//	fieldValue.Interface(), // Use .Interface() to get the actual value
 		// )
 	}
 
@@ -602,7 +599,7 @@ func helpFmt[T any](a *T) string {
 
 // filterStructFields takes a struct and two lists of allowed field names.
 // It returns a map containing only the fields that are present in BOTH lists.
-func filterStructFields(s interface{}, list1, list2 []string) map[string]interface{} {
+func filterStructFields(s any, list1, list2 []string) map[string]any {
 	// Use maps for efficient O(1) lookups.
 	allowList1 := make(map[string]struct{})
 	for _, fieldName := range list1 {
@@ -644,14 +641,14 @@ func filterStructFields(s interface{}, list1, list2 []string) map[string]interfa
 
 // extractFields takes a struct and a list of desired field names.
 // It returns a map containing only the fields from the struct that are present in the list.
-func extractFields(s interface{}, fieldsToKeep []string) map[string]interface{} {
+func extractFields(s any, fieldsToKeep []string) map[string]any {
 	allowList := make(map[string]struct{}, len(fieldsToKeep))
 	for _, fieldName := range fieldsToKeep {
 		allowList[fieldName] = struct{}{}
 	}
 
 	// The map to store the filtered result.
-	result := make(map[string]interface{})
+	result := make(map[string]any)
 
 	val := reflect.ValueOf(s)
 	val = reflect.Indirect(val)
@@ -676,7 +673,7 @@ func extractFields(s interface{}, fieldsToKeep []string) map[string]interface{} 
 	return result
 }
 
-func extractFields1(a interface{}, fields []string) (filteredFields []string) {
+func extractFields1(a any, fields []string) (filteredFields []string) {
 	referenceKeys := structToKeys(&a)
 	for _, field := range fields {
 		for i, _ := range referenceKeys {

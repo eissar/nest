@@ -209,6 +209,7 @@ func ItemAddFromUrls(baseUrl string, items []ItemAddFromUrlOptions, folderId str
 }
 
 // returns status only.
+// TODO: endpoint which adds item & returns itemId
 func ItemAddFromPath(baseUrl string, item ItemAddFromPathOptions) error {
 	ep := endpoints.ItemAddFromPath
 	uri := baseUrl + ep.Path

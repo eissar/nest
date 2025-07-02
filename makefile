@@ -18,6 +18,8 @@ open:
 docs:
 	swag init -d .\core\,.\handlers\,.\plugins\nest\ -g .\core.go --parseInternal --parseFuncBody --parseDependency
 
+1:
+	go build && nest add "../R.png"
 
 dev: stop build open
 
