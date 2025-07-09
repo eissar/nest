@@ -196,13 +196,13 @@ You can specify the folder name either as a positional argument or using the --n
 If both are provided, the positional argument takes precedence.`,
 		Example: `
   # Create a folder using a positional argument
-  mycli folder Reports
+  nest folder Reports
 
   # Create a folder using the --name flag
-  mycli folder --name Reports
+  nest folder --name Reports
 
   # Using shorthand for the flag
-  mycli folder -n Reports
+  nest folder -n Reports
 `,
 		Args: cobra.MaximumNArgs(1),
 
