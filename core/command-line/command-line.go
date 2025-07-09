@@ -182,8 +182,49 @@ Provide the paths to the files as arguments separated by spaces.`,
 			return nil
 		},
 	}
-
 	return addsCmd
+}
+func Folder() *cobra.Command {
+	var folderName string
+	var folderOutput bool
+	folderCmd := &cobra.Command{
+		Use:   "folder [name]",
+		Short: "Create a new folder",
+		Long: `Create a new folder on the remote server.
+
+You can specify the folder name either as a positional argument or using the --name flag.
+If both are provided, the positional argument takes precedence.`,
+		Example: `
+  # Create a folder using a positional argument
+  mycli folder Reports
+
+  # Create a folder using the --name flag
+  mycli folder --name Reports
+
+  # Using shorthand for the flag
+  mycli folder -n Reports
+`,
+		Args: cobra.MaximumNArgs(1),
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if len(args) > 0 {
+				folderName = args[0]
+			} else if folderName == "" {
+				return fmt.Errorf("create folder: flag 'name' cannot be nil and no positional param.")
+			}
+			cfg := config.GetConfig()
+			if out, err := api.FolderCreate(cfg.BaseURL(), folderName); err != nil {
+				return fmt.Errorf("create folder: %w", err)
+			} else if folderOutput { // user wants folder id in output.
+				fmt.Fprint(os.Stdout, out.ID)
+			}
+			return nil
+		},
+	}
+
+	folderCmd.Flags().BoolVarP(&folderOutput, "output", "o", false, "whether or not to output folder ID on success.")
+	folderCmd.Flags().StringVarP(&folderName, "name", "n", "", "Set a custom name for the folder")
+	return folderCmd
 }
 
 func logFmtStdOut(data []*api.ListItem, props []string) {
@@ -522,6 +563,7 @@ func CmdCobra() {
 	rootCmd.AddCommand(Reveal())
 	rootCmd.AddCommand(Switch())
 	rootCmd.AddCommand(Shutdown())
+	rootCmd.AddCommand(Folder())
 	rootCmd.AddCommand(
 		&cobra.Command{
 			Use: "start",
