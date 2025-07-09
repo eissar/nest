@@ -19,11 +19,11 @@ type FolderCreateResponse struct {
 	ID               string `json:"id"`
 	Name             string `json:"name"`
 	ModificationTime int    `json:"modificationTime"`
-	//Images           ...          `json:"images"`
-	//Folders          ...          `json:"folders"`
-	//ImagesMappings   ... `json:"imagesMappings"`
-	//Tags             ...          `json:"tags"`
-	//Children         ...          `json:"children"`
+	//Images                     `json:"images"`
+	//Folders                    `json:"folders"`
+	//ImagesMappings    `json:"imagesMappings"`
+	//Tags                       `json:"tags"`
+	//Children                   `json:"children"`
 	//IsExpand         bool   `json:"isExpand"`
 }
 type FolderRenameResponse struct {
@@ -120,7 +120,7 @@ func FolderCreate(baseUrl string, folderName string) (FolderCreateResponse, erro
 		return resp.Data, fmt.Errorf("foldercreate: err=%w", ErrStatusErr)
 	}
 
-	return FolderCreateResponse{}, nil
+	return resp.Data, nil
 }
 func FolderRename(baseUrl string, folderId string, newName string) /* folder */ error {
 	ep := endpoints.FolderRename
