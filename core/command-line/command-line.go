@@ -226,6 +226,46 @@ If both are provided, the positional argument takes precedence.`,
 	folderCmd.Flags().StringVarP(&folderName, "name", "n", "", "Set a custom name for the folder")
 	return folderCmd
 }
+func RecentLibraries() *cobra.Command {
+	// var libraryList string
+	librariesCmd := &cobra.Command{
+		Use:   "libraries",
+		Short: "list recent libraries",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// if len(args) > 0
+			cfg := config.GetConfig()
+			//
+			// fmt.Print(cfg.Libraries)
+
+			recentLibraries, err := api.LibraryHistory(cfg.BaseURL())
+			if err != nil {
+				log.Fatalf("could not retrieve recent libaries err=%s", err.Error())
+			}
+
+			if err != nil {
+				return fmt.Errorf("recent libraries: %w", err)
+			}
+
+			var formattedLibs []string
+
+			for _, v := range recentLibraries {
+				// replace multiple [seperators] to a single one then conv to forward slashes `/`
+				fmt := filepath.ToSlash(filepath.Clean(v))
+				formattedLibs = append(formattedLibs, fmt)
+			}
+
+			// jsonFmtStdOut(cmd, recentLibraries, nil)
+
+			stdout := json.NewEncoder(os.Stdout)
+
+			stdout.Encode(formattedLibs)
+
+			return nil // Added missing return statement
+		},
+	}
+
+	return librariesCmd
+}
 
 func logFmtStdOut(data []*api.ListItem, props []string) {
 	outp := logfmt.NewEncoder(os.Stdout)
@@ -242,7 +282,7 @@ func logFmtStdOut(data []*api.ListItem, props []string) {
 
 // exclude properties to exclude
 func jsonFmtStdOut(cmd *cobra.Command, data []*api.ListItem, exclude []string) error {
-	json.NewEncoder(os.Stdout)
+	// json.NewEncoder(os.Stdout)
 
 	b, err := json.Marshal(data)
 	if err != nil {
@@ -564,6 +604,7 @@ func CmdCobra() {
 	rootCmd.AddCommand(Switch())
 	rootCmd.AddCommand(Shutdown())
 	rootCmd.AddCommand(Folder())
+	rootCmd.AddCommand(RecentLibraries())
 	rootCmd.AddCommand(
 		&cobra.Command{
 			Use: "start",
