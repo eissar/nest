@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"runtime"
 	"time"
 
 	"github.com/eissar/nest/api"
@@ -37,6 +38,43 @@ import (
 
 // @host petstore.swagger.io
 // @BasePath /v2
+
+
+func RegisterStaticRoutes(server *echo.Echo) {
+	// (route prefix, directory)
+	server.Static("css", "./assets/css")
+	server.Static("js", "./assets/js")
+	server.Static("img", "./assets/img")
+
+}
+// /eagle; /api; /template;
+func RegisterGroupRoutes(server *echo.Echo) {
+	nest.RegisterGroupRoutes(
+		server.Group("/eagle")
+	)
+
+	api.RegisterGroupRoutes(
+		server.Group("/api")
+	)
+
+	templates.RegisterTemplateRoutes(
+		server.Group("/template")
+	)
+}
+// registers routes on the server root (/)
+func RegisterRootRoutes(nestConfig config.NestConfig, server *echo.Echo) {
+	// ROOT ROUTES
+	nest.RegisterRootRoutes(nestConfig, server)
+	api.RegisterRootRoutes(server)
+	//server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
+
+	// ServerShutdown godoc
+	//
+	//	@Summary close the server?
+	server.GET("/api/server/close", ServerShutdown)
+	server.GET("/api/ping", Ping)
+}
+
 func Start() {
 	var err error
 
@@ -47,11 +85,6 @@ func Start() {
 
 	server := echo.New()
 
-	fmt.Println("test")
-	//#region testing
-	// go nest.WatchMtime(nestConfig)
-	// nest.TryIngestMtime(nestConfig)
-	//#endregion
 	// TRAY ICON
 	trayicon.Run(server, func() {
 		Shutdown(server) // onExit trayicon function
@@ -69,7 +102,9 @@ func Start() {
 		Templates: render.MustImportTemplates(),
 	}
 
-	fmt.Printf("%s", nestConfig.Host)
+	if runtime.GOOS == "#DEBUG" {
+		fmt.Printf("nestConfig.Host: %v\n", nestConfig.Host)
+	}
 
 	// MIDDLEWARE LOGGING
 	excludedPaths := []string{"/api/ping", "/template/open-tabs"}
@@ -79,25 +114,11 @@ func Start() {
 		AllowOrigins: []string{"app://obsidian.md"},
 	}))
 
-	// SCOPED ROUTES
-	eagle_group := server.Group("/eagle")
-	nest.RegisterGroupRoutes(eagle_group)
 
-	eagleapi_group := server.Group("/api")
-	api.RegisterGroupRoutes(eagleapi_group)
+	RegisterRootRoutes(nestConfig, server)
+	RegisterGroupRoutes(server)
+	RegisterStaticRoutes(server)
 
-	template_group := server.Group("/template")
-	templates.RegisterTemplateRoutes(template_group)
-
-	// ROOT ROUTES
-	nest.RegisterRootRoutes(nestConfig, server)
-	api.RegisterRootRoutes(server)
-	RegisterRootRoutes(server)
-
-	// STATIC ROUTES (route prefix, directory)
-	server.Static("css", "./assets/css")
-	server.Static("js", "./assets/js")
-	server.Static("img", "./assets/img")
 
 	// @description special handler for user-facing static files
 	// so file endings don't have to be shown in the URI
@@ -173,13 +194,3 @@ func Shutdown(s *echo.Echo) error {
 	return nil
 }
 
-// registers routes on the server root (/)
-func RegisterRootRoutes(server *echo.Echo) {
-	//server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
-
-	// ServerShutdown godoc
-	//
-	//	@Summary close the server?
-	server.GET("/api/server/close", ServerShutdown)
-	server.GET("/api/ping", Ping)
-}
