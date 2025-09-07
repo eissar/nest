@@ -54,5 +54,17 @@ clean:
 	rm -rf build/*
 
 
+## all commits since last tag
+# git log "$(git describe --tags --abbrev=0)..HEAD" --oneline
+#
 # gh release create v1.0.0 yourfile.zip -t "Release 1.0.0" -n "Release notes"
 #  git tag -a v0.0.7 -m 'improve error handling for nest switch' 4db8bc0 && git push --tags
+
+# tag last commit (local?)
+# git tag -a <VERSION>
+#
+# tag last commit (local?)
+# git tag -a <VERSION> -m <message> -m <description>
+#
+# git tag -a <VERSION> -m <message> -m (git log "$(git describe --tags --abbrev=0)..HEAD" --oneline)
+#
