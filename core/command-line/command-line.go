@@ -556,14 +556,15 @@ func isServerRunning(url string) bool {
 
 func CmdCobra() {
 	var rootCmd = &cobra.Command{Use: "nest"}
-	rootCmd.AddCommand(CmdAdd())
 	rootCmd.AddCommand(Adds())
-	rootCmd.AddCommand(List())
-	rootCmd.AddCommand(Reveal())
-	rootCmd.AddCommand(Switch())
-	rootCmd.AddCommand(Shutdown())
+	rootCmd.AddCommand(CmdAdd())
+	rootCmd.AddCommand(Config())
 	rootCmd.AddCommand(Folder())
+	rootCmd.AddCommand(List())
 	rootCmd.AddCommand(RecentLibraries())
+	rootCmd.AddCommand(Reveal())
+	rootCmd.AddCommand(Shutdown())
+	rootCmd.AddCommand(Switch())
 	rootCmd.AddCommand(
 		&cobra.Command{
 			Use: "start",

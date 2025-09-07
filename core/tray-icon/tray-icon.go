@@ -62,7 +62,7 @@ func setMenuItems(libs []string) (*systray.MenuItem, *systray.MenuItem) {
 func onReady() {
 	cfg := config.GetConfig()
 
-	fmt.Println(cfg.Libraries)
+	// fmt.Printf("cfg.Libraries: %v\n", cfg.Libraries)
 	setIcon()
 	setTitle()
 

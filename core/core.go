@@ -39,7 +39,6 @@ import (
 // @host petstore.swagger.io
 // @BasePath /v2
 
-
 func RegisterStaticRoutes(server *echo.Echo) {
 	// (route prefix, directory)
 	server.Static("css", "./assets/css")
@@ -47,20 +46,22 @@ func RegisterStaticRoutes(server *echo.Echo) {
 	server.Static("img", "./assets/img")
 
 }
+
 // /eagle; /api; /template;
 func RegisterGroupRoutes(server *echo.Echo) {
 	nest.RegisterGroupRoutes(
-		server.Group("/eagle")
+		server.Group("/eagle"),
 	)
 
 	api.RegisterGroupRoutes(
-		server.Group("/api")
+		server.Group("/api"),
 	)
 
 	templates.RegisterTemplateRoutes(
-		server.Group("/template")
+		server.Group("/template"),
 	)
 }
+
 // registers routes on the server root (/)
 func RegisterRootRoutes(nestConfig config.NestConfig, server *echo.Echo) {
 	// ROOT ROUTES
@@ -114,11 +115,9 @@ func Start() {
 		AllowOrigins: []string{"app://obsidian.md"},
 	}))
 
-
 	RegisterRootRoutes(nestConfig, server)
 	RegisterGroupRoutes(server)
 	RegisterStaticRoutes(server)
-
 
 	// @description special handler for user-facing static files
 	// so file endings don't have to be shown in the URI
@@ -193,4 +192,3 @@ func Shutdown(s *echo.Echo) error {
 	}
 	return nil
 }
-
