@@ -120,7 +120,7 @@ func GetConfigV0() NestConfig {
 	cfg, err := os.ReadFile(a)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			fmt.Println("[INFO] getconfig: creating new config file at", a)
+			fmt.Println("[INFO] getconfig: creating new config file in", a)
 			MustNewConfig()
 		} else {
 			log.Fatalf("getconfig: error reading file err=%s", err)
