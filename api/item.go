@@ -118,13 +118,14 @@ type BulkItem struct {
 	//FolderId string `json:"omitempty`
 }
 type ItemListOptions struct {
-	Limit   int    `json:"limit" flag:"The number of items to be displayed. the default number is 200"` //
-	Offset  int    `json:"offset,omitempty"`                                                            // Offset a collection of results from the api. Start with 0.
-	OrderBy string `json:"orderBy,omitempty"`                                                           // The sorting order.CREATEDATE , FILESIZE , NAME , RESOLUTION , add a minus sign for descending order: -FILESIZE
-	Keyword string `json:"keyword,omitempty"`                                                           // Filter by the keyword
-	Ext     string `json:"ext,omitempty"`                                                               // Filter by the extension type, e.g.: jpg ,  png
-	Tags    string `json:"tags,omitempty"`                                                              // Filter by tags. Use , to divide different tags. E.g.: Design, Poster
-	Folders string `json:"folders,omitempty"`                                                           // Filter by Folders.  Use , to divide folder IDs. E.g.: KAY6NTU6UYI5Q,KBJ8Z60O88VMG
+	Limit int ` json:"limit"
+	flag:"The number of items to be displayed. the default number is 200"`
+	Offset  int    `json:"offset,omitempty" flag:"Offset a collection of results from the api. Start with 0."`
+	OrderBy string `json:"orderBy,omitempty" flag:"The sorting order.CREATEDATE , FILESIZE , NAME , RESOLUTION , add a minus sign for descending order: -FILESIZE"`
+	Keyword string `json:"keyword,omitempty" flag:"Filter by the keyword"`
+	Ext     string `json:"ext,omitempty" flag:"Filter by the extension type, e.g.: jpg ,  png"`
+	Tags    string `json:"tags,omitempty" flag:"Filter by tags. Use , to divide different tags. E.g.: Design, Poster"`
+	Folders string `json:"folders,omitempty" flag:"Filter by Folders.  Use , to divide folder IDs. E.g.: KAY6NTU6UYI5Q,KBJ8Z60O88VMG"`
 }
 type ItemAddFromPathOptions struct {
 	Path       string   `json:"path"`                 // Required, the path of the local file.
@@ -531,15 +532,6 @@ func ItemCmd() *cobra.Command {
 			fmt.Println(cmd.Flags())
 		},
 	}
-
-	func() {
-		// Your IIFE logic here
-		defer func() {
-			// Cleanup code
-		}()
-
-		fmt.Println("Hello from immediate function")
-	}()
 
 	item.PersistentFlags().VarP(&o, "format", "o", "output format")
 
