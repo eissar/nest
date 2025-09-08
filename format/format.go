@@ -10,8 +10,24 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
+
+// TODO: move this somewhere else
+// misses flag set
+type CobraPFlagParams struct {
+	// P is the pointer to the string variable that will hold the flag's value.
+	P *string
+	// Name is the long name of the flag.
+	Name string
+	// Shorthand is the single‑character abbreviation.
+	Shorthand string
+	// Value is the default value for the flag.
+	Value string
+	// Usage describes the purpose of the flag.
+	Usage string
+}
 
 // don't use in big loop, uses reflection
 func structToKeys[T any](a *T) []string {
@@ -76,14 +92,40 @@ func WriteJSON(v any, w io.Writer) {
 }
 
 // FormatType defines the allowed formats for the Format function.
-
+// it implements pflag.VarP
 type FormatType string
 
 const (
-	FormatJSON   FormatType = "json"
-	FormatLog    FormatType = "log"
-	FormatLogFmt FormatType = "logfmt"
+	FormatJSON FormatType = "json"
+	// FormatLog    FormatType = "log"
+	// FormatLogFmt FormatType = "logfmt"
+	// case  "yaml", "yml":
 )
+
+// Set implements pflag.Value. It validates and sets the format.
+func (f *FormatType) Set(val string) error {
+	switch FormatType(val) {
+	case FormatJSON: //, FormatLog, FormatLogFmt:
+		*f = FormatType(val)
+		return nil
+	default:
+		panic("FormatType")
+		return fmt.Errorf("unsupported format %q (supported: %s) ", val, FormatJSON) //, FormatLog, FormatLogFmt)
+	}
+}
+
+// String implements pflag.Value.
+func (f *FormatType) String() string {
+	if f == nil {
+		return ""
+	}
+	return string(*f)
+}
+
+// Type implements pflag.Value (required by cobra/pflag for help output).
+func (f *FormatType) Type() string {
+	return "format"
+}
 
 // allowedFormats := []f.FormatType{f.FormatJSON}
 // format := apiCmd.Flag("format")
@@ -94,7 +136,8 @@ const (
 //
 // format.Usage = "output format. One of: "+f.HelpFmt(&allowedFormats)
 func OutputFmtFlagUsage(allowedFormats []FormatType) string {
-	return "output format. One of: " + HelpFmt(&allowedFormats)
+	return "output format. One of: " + fmt.Sprint(allowedFormats)
+	// HelpFmt(&allowedFormats)
 }
 
 // o outputFormat
@@ -115,5 +158,42 @@ func Format(f FormatType, o ...any) {
 		{
 			WriteJSON(o, os.Stdout)
 		}
+	default:
+		WriteJSON(o, os.Stdout)
+	}
+}
+
+// ValidateFlags returns a PersistentPreRunE that validates flag values
+// against pre-defined sets of allowed values.  It uses generics so the
+// allowed slice can be any comparable type (string, int, custom enums...).
+func ValidateFlags[T comparable](rules map[string][]T) func(*cobra.Command, []string) error {
+	fmt.Println("DEBUG")
+	return func(cmd *cobra.Command, args []string) error {
+		for name, allowed := range rules {
+			fl := cmd.Flags().Lookup(name)
+			if fl == nil || !fl.Changed {
+				continue
+			}
+
+			// convert the flag value to the target type
+			var val T
+			switch any(val).(type) {
+			case string:
+				v, ok := any(fl.Value.String()).(T)
+				if !ok {
+					return fmt.Errorf("flag --%s: cannot convert %q to %T", name, fl.Value.String(), val)
+				}
+				val = v
+			default:
+				if err := json.Unmarshal([]byte(fl.Value.String()), &val); err != nil {
+					return fmt.Errorf("flag --%s: cannot unmarshal %q into %T: %w", name, fl.Value.String(), val, err)
+				}
+			}
+
+			if !slices.Contains(allowed, val) {
+				return fmt.Errorf("flag --%s: invalid value %v (must be one of %v)", name, val, allowed)
+			}
+		}
+		return nil
 	}
 }

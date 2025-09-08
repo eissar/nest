@@ -10,8 +10,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 
 	"github.com/eissar/nest/api/endpoints"
+	"github.com/eissar/nest/config"
+	f "github.com/eissar/nest/format"
+	"github.com/spf13/cobra"
 )
 
 // todo rename
@@ -72,7 +76,7 @@ type FolderDetailOverview struct {
 	ID                   string    `json:"id"`
 	Name                 string    `json:"name"`
 	Description          string    `json:"description"`
-	Children             []string  `json:"children"`
+	Children             []any     `json:"children"`
 	ModificationTime     int       `json:"modificationTime"`
 	Tags                 []string  `json:"tags"`
 	Password             *string   `json:"password"`     // optional
@@ -91,6 +95,18 @@ type FolderStyles struct {
 	Depth int  `json:"depth"`
 	First bool `json:"first"`
 	Last  bool `json:"last"`
+}
+
+var folderColors = []string{"red", "orange", "green", "yellow", "aqua", "blue", "purple", "pink"}
+
+// StringSliceContains checks if a string is present in a slice.
+func colorsContains(color string) bool {
+	for _, c := range folderColors {
+		if c == color {
+			return true
+		}
+	}
+	return false
 }
 
 func FolderCreate(baseUrl string, folderName string) (FolderCreateResponse, error) {
@@ -151,18 +167,6 @@ func FolderRename(baseUrl string, folderId string, newName string) /* folder */ 
 	}
 
 	return nil
-}
-
-var folderColors = []string{"red", "orange", "green", "yellow", "aqua", "blue", "purple", "pink"}
-
-// StringSliceContains checks if a string is present in a slice.
-func colorsContains(color string) bool {
-	for _, c := range folderColors {
-		if c == color {
-			return true
-		}
-	}
-	return false
 }
 
 // colors
@@ -244,4 +248,119 @@ func FolderListRecent(baseUrl string) ([]FolderDetailOverview, error) {
 	}
 
 	return resp.Data, nil
+}
+
+func addFlags(
+	cmd *cobra.Command,
+	id *string,
+	name *string,
+	newName *string,
+	newDescription *string,
+	newColor *string,
+) *cobra.Command {
+	if id != nil {
+		cmd.Flags().StringVar(id, "id", "", "folder id")
+	}
+	if name != nil {
+		cmd.Flags().StringVar(name, "name", "", "folder name")
+	}
+	if newName != nil {
+		cmd.Flags().StringVar(newName, "new-name", "", "updated  folder name")
+	}
+	if newDescription != nil {
+		cmd.Flags().StringVar(newDescription, "description", "", "updated folder description")
+	}
+	if newColor != nil {
+		cmd.Flags().StringVar(newColor, "color", "", "updated folder color")
+	}
+	return cmd
+}
+
+func FolderCmd() *cobra.Command {
+	cfg := config.GetConfig()
+
+	var id string
+	var name string
+	var newName string
+	var newDescription string
+	var newColor string
+	var o f.FormatType
+
+	folder := &cobra.Command{
+		Use:   "folder",
+		Short: "Manage folders",
+	}
+	folder.PersistentFlags().VarP(&o, "format", "o", "output format")
+
+	// idFlag := f.CobraPFlagParams{}
+	// addIDFlag := func(fs *pflag.FlagSet) {
+	// 	fs.StringVarP(&id, idFlag.Name, idFlag.Shorthand, idFlag.Value, idFlag.Usage)
+	// }
+
+	folder.AddCommand(
+		addFlags(&cobra.Command{
+			Use:   "create <name>",
+			Short: "Create a new folder",
+			Args:  cobra.ExactArgs(1),
+			RunE: func(cmd *cobra.Command, args []string) error {
+				resp, err := FolderCreate(cfg.BaseURL(), name)
+				if err != nil {
+					log.Fatalf("FolderCreate: %v", err)
+				}
+				f.Format(o, resp)
+				return nil
+			},
+		}, nil, &name, nil, nil, nil),
+	)
+	folder.AddCommand(
+		addFlags(&cobra.Command{
+			Use:   "rename <id> <new-name>",
+			Short: "Rename an existing folder",
+			Args:  cobra.ExactArgs(2),
+			RunE: func(cmd *cobra.Command, args []string) error {
+				if err := FolderRename(cfg.BaseURL(), id, newName); err != nil {
+					log.Fatalf("FolderRename: %v", err)
+				}
+				return nil
+			},
+		}, &id, nil, &newName, nil, nil),
+	)
+	folder.AddCommand(addFlags(&cobra.Command{
+		Use:   "update <id> <new-name> <new-description> <new-color>",
+		Short: "Update folder metadata",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if err := FolderUpdate(cfg.BaseURL(), args[0], args[1], args[2], args[3]); err != nil {
+				log.Fatalf("FolderUpdate: %v", err)
+			}
+			return nil
+		},
+	}, &id, nil, &newName, &newDescription, &newColor),
+	)
+	folder.AddCommand(&cobra.Command{
+		Use:   "recent",
+		Short: "List recently accessed folders",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			recent, err := FolderListRecent(cfg.BaseURL())
+			if err != nil {
+				log.Fatalf("FolderListRecent: %v", err)
+			}
+			f.Format(o, recent)
+			return nil
+		}})
+
+	folder.AddCommand(
+		&cobra.Command{Use: "list",
+			Short: "List all folders",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				list, err := FolderList(cfg.BaseURL())
+				if err != nil {
+					log.Fatalf("FolderList: %v", err)
+				}
+				f.Format(o, list)
+				return nil
+			},
+		},
+	)
+
+	return folder
 }
