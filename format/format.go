@@ -104,7 +104,7 @@ func WriteLogFmt(v any, w io.Writer) {
 		enc.EncodeKeyval("msg", val)
 	case error:
 		enc.EncodeKeyval("error", val.Error())
-	case map[string]interface{}:
+	case map[string]any:
 		for k, v := range val {
 			enc.EncodeKeyval(k, v)
 		}
