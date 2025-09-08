@@ -253,3 +253,56 @@ func ValidateFlags[T comparable](rules map[string][]T) func(*cobra.Command, []st
 // case "logfmt":
 // 	logFmtStdOut(data, strings.Split(properties, ","))
 // }
+
+// bindStructToFlags populates every flag in cmd with a field from opts.
+func BindStructToFlags(cmd *cobra.Command, opts any) error {
+
+	val := reflect.ValueOf(opts)
+	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
+		return fmt.Errorf("opts must be a pointer to struct")
+	}
+	val = val.Elem()
+	typ := val.Type()
+
+	for i := 0; i < typ.NumField(); i++ {
+		f := typ.Field(i)
+
+		// #region try
+
+		// #endregion end try
+
+		if f.PkgPath != "" { // unexported
+			continue
+		}
+		// "camelCase" field name works as long as the struct follows that pattern.
+		flagName := toKebabCase(f.Name) // turn "Limit" into "limit"
+		usageTag := f.Tag.Get("flag")   // e.g. flag:"max items to fetch"
+		if usageTag == "" {
+			usageTag = defaultUsageForField(f) // fallback
+		}
+
+		addr := val.Field(i).Addr().Interface()
+
+		switch x := addr.(type) {
+		case *int:
+			cmd.Flags().IntVarP(x, flagName, "", *x, usageTag)
+		case *string:
+			cmd.Flags().StringVarP(x, flagName, "", *x, usageTag)
+		// add other simple kinds here (bool, float64, ...) if needed
+		default:
+			return fmt.Errorf("unsupported field %s of type %s", f.Name, f.Type)
+		}
+	}
+	return nil
+}
+
+func defaultUsageForField(f reflect.StructField) string {
+	return fmt.Sprintf("sets the %s parameter", f.Name)
+}
+
+// --- fairly trivial helpers --------------------------------------------------
+func toKebabCase(s string) string {
+	// naive camel -> kebab, e.g. "OrderBy" -> "order-by"
+	// actual implementation could use the flect package or github.com/iancoleman/strcase
+	return s // simplified stub
+}
