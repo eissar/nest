@@ -46,23 +46,14 @@ func ApplicationInfo(baseUrl string) (ApplicationInfoData, error) {
 // provides commands
 func ApplicationCmds() []*cobra.Command {
 	cfg := config.GetConfig()
-	allowedFormats := []f.FormatType{f.FormatJSON}
 
 	var o f.FormatType
 
-	// extracted PersistentPreRunE as an inline function variable
-	persistentPreRunE := func(cmd *cobra.Command, args []string) error {
-		oFlag := cmd.Flag("format") // o output
-		o = f.FormatType(oFlag.Value.String())
-		return f.UpdateUsageAndAssertContains(oFlag, allowedFormats)
-	}
-
 	return []*cobra.Command{
 		{
-			Use:               "app info",
-			Short:             "Display detailed information about the running Eagle application.",
-			Long:              "Retrieves and prints detailed information about the Eagle application currently running. Supports output in JSON format.",
-			PersistentPreRunE: persistentPreRunE,
+			Use:   "app info",
+			Short: "Display detailed information about the running Eagle application.",
+			Long:  "Retrieves and prints detailed information about the Eagle application currently running. Supports output in JSON format.",
 			RunE: func(cmd *cobra.Command, args []string) error {
 				v, err := ApplicationInfo(cfg.BaseURL())
 

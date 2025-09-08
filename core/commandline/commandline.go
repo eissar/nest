@@ -16,9 +16,10 @@ type apiCmdOpts struct {
 }
 
 func SubCmdApi() *cobra.Command {
-	var format string
 	var apiCmd = &cobra.Command{Use: "api"}
-	apiCmd.PersistentFlags().StringVarP(&format, "format", "o", "json", "output format")
+
+	// var format string
+	// apiCmd.PersistentFlags().StringVarP(&format, "format", "o", "json", "output format")
 
 	apiCmd.AddCommand(api.ApplicationCmds()...)
 	return apiCmd
@@ -33,7 +34,10 @@ func CmdCobra() {
 	// rootCmd.AddCommand(Folder())
 	rootCmd.AddCommand(api.FolderCmd())
 	rootCmd.AddCommand(List())
+
 	rootCmd.AddCommand(RecentLibraries())
+	rootCmd.AddCommand(api.LibraryCmd())
+
 	rootCmd.AddCommand(Reveal())
 	rootCmd.AddCommand(Shutdown())
 	rootCmd.AddCommand(Switch())

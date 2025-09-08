@@ -290,10 +290,12 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 
-	if IsEagleNotOpenOrUnavailable(err) {
-		return EagleNotOpenOrUnavailableErr
-	}
+	// fmt.Printf("resp.StatusCode: %v\n", resp.StatusCode)
+	// fmt.Printf("resp.Body: %v\n", resp.Body)
 	if err != nil {
+		if IsEagleNotOpenOrUnavailable(err) {
+			return EagleNotOpenOrUnavailableErr
+		}
 		oErr, ok := err.(*net.OpError)
 		if ok {
 			//if IsEagleNotOpenErr(oErr) {
@@ -311,12 +313,36 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 		var error_message any
 		err = json.NewDecoder(resp.Body).Decode(&error_message)
 		if err != nil {
-			return fmt.Errorf("error decoding response: %w", err)
+			// Warning: failed to decode JSON response, attempting to read as string
+			fmt.Println("[WARN] Could not decode error message.")
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			error_message = string(bodyBytes)
 		}
 
 		return fmt.Errorf("response code from eagle was not 2XX: response: %v; request body: %v", error_message, string(requestBodyBytes))
 	}
 
+	contentLength, err := strconv.Atoi(resp.Header.Get("Content-Length"))
+	if err != nil {
+		contentLength = -1
+	}
+	if contentLength > 0 && contentLength < 1024 {
+		// readall
+		respBody, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		if err := json.Unmarshal(respBody, &v); err != nil {
+			b := string(respBody)
+			if strings.Contains(b, "Library does not exist.") {
+				fmt.Println("[ERR] Eagle response: Library does not exist. \nCheck that the library path exists and is accessible (e.g., not an unavailable network drive or disconnected volume)")
+				os.Exit(1)
+			}
+
+			fmt.Printf("error decoding response. resp: %s\n", string(respBody))
+		}
+	}
 	// parse the response
 	err = json.NewDecoder(resp.Body).Decode(&v)
 	if err != nil {
