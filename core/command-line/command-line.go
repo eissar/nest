@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	f "github.com/eissar/nest/format"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
@@ -304,7 +305,7 @@ func List() *cobra.Command {
 			if slices.Contains(allowedFormats, format) {
 				return nil
 			}
-			return fmt.Errorf("invalid format: %s. Please use one of: %s", format, helpFmt(&allowedFormats))
+			return fmt.Errorf("invalid format: %s. Please use one of: %s", format, f.HelpFmt(&allowedFormats))
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cfg := config.GetConfig()
@@ -357,8 +358,8 @@ func List() *cobra.Command {
 	// we could make properties a positional argument, but I don't see the benefit
 	listCmd.Flags().IntVarP(&limit, "limit", "l", 10, "The maximum number of items to return")
 	listCmd.Flags().StringVarP(&filter, "filter", "f", "", "Filter items by keyword(s)")
-	listCmd.Flags().StringVarP(&properties, "properties", "p", "", "select properties to include in the output: "+helpFmt(&api.ListItem{})+" default:"+helpFmt(&defaultFields))
-	listCmd.Flags().StringVarP(&format, "format", "o", "json", "output format. One of: "+helpFmt(&allowedFormats))
+	listCmd.Flags().StringVarP(&properties, "properties", "p", "", "select properties to include in the output: "+f.HelpFmt(&api.ListItem{})+" default:"+f.HelpFmt(&defaultFields))
+	listCmd.Flags().StringVarP(&format, "format", "o", "json", "output format. One of: "+f.HelpFmt(&allowedFormats))
 
 	return listCmd
 }
@@ -554,7 +555,22 @@ func isServerRunning(url string) bool {
 	return true //, nil
 }
 
+// appCmdOpts groups options specific to the “app” commands.
+type apiCmdOpts struct {
+	format f.FormatType
+}
+
+func SubCmdApi() *cobra.Command {
+	var format string
+	var apiCmd = &cobra.Command{Use: "api"}
+	apiCmd.PersistentFlags().StringVarP(&format, "format", "o", "json", "output format")
+
+	apiCmd.AddCommand(api.ApplicationCmds()...)
+	return apiCmd
+}
+
 func CmdCobra() {
+	// This variable will hold the value from the --limit flag.
 	var rootCmd = &cobra.Command{Use: "nest"}
 	rootCmd.AddCommand(Adds())
 	rootCmd.AddCommand(CmdAdd())
@@ -565,6 +581,7 @@ func CmdCobra() {
 	rootCmd.AddCommand(Reveal())
 	rootCmd.AddCommand(Shutdown())
 	rootCmd.AddCommand(Switch())
+	rootCmd.AddCommand(SubCmdApi())
 	rootCmd.AddCommand(
 		&cobra.Command{
 			Use: "start",
@@ -621,23 +638,6 @@ func structToKeys[T any](a *T) []string {
 	}
 
 	return arr
-}
-
-func helpFmt[T any](a *T) string {
-	val := reflect.Indirect(reflect.ValueOf(a))
-
-	switch val.Kind() {
-	case reflect.Slice:
-		return strings.Join(val.Interface().([]string), ", ")
-
-	case reflect.Struct:
-		// Assuming structToKeys correctly inspects the struct and returns its key names.
-		return strings.Join(structToKeys(a), ", ")
-
-	default:
-		// Provide a fallback for any other types.
-		return fmt.Sprint(val.Interface())
-	}
 }
 
 // filterStructFields takes a struct and two lists of allowed field names.

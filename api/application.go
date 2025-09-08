@@ -2,8 +2,12 @@ package api
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/eissar/nest/api/endpoints"
+	"github.com/eissar/nest/config"
+	f "github.com/eissar/nest/format"
+	"github.com/spf13/cobra"
 )
 
 //	TODO:
@@ -37,4 +41,34 @@ func ApplicationInfo(baseUrl string) (ApplicationInfoData, error) {
 	}
 
 	return resp.Data, nil
+}
+
+func ApplicationCmds() []*cobra.Command {
+	cfg := config.GetConfig()
+	allowedFormats := []f.FormatType{f.FormatJSON}
+
+	var o f.FormatType
+
+	return []*cobra.Command{
+		{
+			Use:   "app info",
+			Short: "Display detailed information about the running Eagle application.",
+			Long:  "Retrieves and prints detailed information about the Eagle application currently running. Supports output in JSON format.",
+			PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+				oFlag := cmd.Flag("format") // o output
+				o = f.FormatType(oFlag.Value.String())
+				return f.UpdateUsageAndAssertContains(oFlag, allowedFormats)
+			},
+			RunE: func(cmd *cobra.Command, args []string) error {
+				v, err := ApplicationInfo(cfg.BaseURL())
+
+				if err != nil {
+					log.Fatalf("Application: %v", err)
+				}
+
+				f.Format(o, v)
+				return nil
+			},
+		},
+	}
 }
