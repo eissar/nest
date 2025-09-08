@@ -109,7 +109,6 @@ func (f *FormatType) Set(val string) error {
 		*f = FormatType(val)
 		return nil
 	default:
-		panic("FormatType")
 		return fmt.Errorf("unsupported format %q (supported: %s) ", val, FormatJSON) //, FormatLog, FormatLogFmt)
 	}
 }
