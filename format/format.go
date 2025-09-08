@@ -10,6 +10,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/go-logfmt/logfmt"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -91,14 +92,42 @@ func WriteJSON(v any, w io.Writer) {
 	}
 }
 
+func WriteLogFmt(v any, w io.Writer) {
+	if w == nil {
+		w = os.Stdout
+	}
+	enc := logfmt.NewEncoder(w)
+
+	// Handle different types of values
+	switch val := v.(type) {
+	case string:
+		enc.EncodeKeyval("msg", val)
+	case error:
+		enc.EncodeKeyval("error", val.Error())
+	case map[string]interface{}:
+		for k, v := range val {
+			enc.EncodeKeyval(k, v)
+		}
+	case map[string]string:
+		for k, v := range val {
+			enc.EncodeKeyval(k, v)
+		}
+	default:
+		// For any other type, use reflection to get field names and values
+		enc.EncodeKeyval("value", fmt.Sprint(val))
+	}
+
+	enc.EndRecord()
+}
+
 // FormatType defines the allowed formats for the Format function.
 // it implements pflag.VarP
 type FormatType string
 
 const (
-	FormatJSON FormatType = "json"
+	FormatJSON   FormatType = "json"
+	FormatLogFmt FormatType = "logfmt"
 	// FormatLog    FormatType = "log"
-	// FormatLogFmt FormatType = "logfmt"
 	// case  "yaml", "yml":
 )
 
@@ -154,9 +183,9 @@ func UpdateUsageAndAssertContains(o *pflag.Flag, allowedFormats []FormatType) er
 func Format(f FormatType, o ...any) {
 	switch f {
 	case FormatJSON:
-		{
-			WriteJSON(o, os.Stdout)
-		}
+		WriteJSON(o, os.Stdout)
+	case FormatLogFmt:
+		WriteLogFmt(o, os.Stdout)
 	default:
 		WriteJSON(o, os.Stdout)
 	}
@@ -196,3 +225,31 @@ func ValidateFlags[T comparable](rules map[string][]T) func(*cobra.Command, []st
 		return nil
 	}
 }
+
+// TODO: some kind of way to filter by fields
+
+// fmtFields := func(props string) []string {
+// 	// strings.ReplaceAll(props, " ", "") // remove whitespace
+// 	fields := strings.Split(props, ",")
+//
+// 	return fields
+// }
+// switch format {
+// case "json":
+// 	var targetProperties []string
+// 	if properties != "" {
+// 		targetProperties = fmtFields(properties)
+// 	} else {
+// 		targetProperties = defaultFields
+// 	}
+//
+// 	allFields := structToKeys(&api.ListItem{}) // no struct keys should have any whitespace
+// 	// find fields which are in allfields but not in inputFilterFields
+// 	exclFields := filterFieldsByReference(targetProperties, allFields)
+// 	err = jsonFmtStdOut(cmd, data, exclFields)
+// 	if err != nil {
+// 		fmt.Printf("jsonFmtStdOut: %v\n", err)
+// 	}
+// case "logfmt":
+// 	logFmtStdOut(data, strings.Split(properties, ","))
+// }
