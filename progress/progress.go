@@ -166,7 +166,7 @@ func Render(ctx context.Context, wg *sync.WaitGroup, messageChannel <-chan strin
 			}
 
 			linesRendered = 0
-			for _, line := range strings.Split(msg, "\n") {
+			for line := range strings.SplitSeq(msg, "\n") {
 				linesForSegment := (len(line) + width - 1) / width
 				if linesForSegment == 0 {
 					// empty segment (e.g., "a\n\nb") still counts as one
