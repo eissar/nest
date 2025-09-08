@@ -8,6 +8,9 @@ import (
 	_ "net/url"
 
 	"github.com/eissar/nest/api/endpoints"
+	// "github.com/eissar/nest/config"
+	f "github.com/eissar/nest/format"
+	"github.com/spf13/cobra"
 )
 
 // #region types
@@ -115,13 +118,13 @@ type BulkItem struct {
 	//FolderId string `json:"omitempty`
 }
 type ItemListOptions struct {
-	Limit   int    `json:"limit"`             // The number of items to be displayed. the default number is 200
-	Offset  int    `json:"offset,omitempty"`  // Offset a collection of results from the api. Start with 0.
-	OrderBy string `json:"orderBy,omitempty"` // The sorting order.CREATEDATE , FILESIZE , NAME , RESOLUTION , add a minus sign for descending order: -FILESIZE
-	Keyword string `json:"keyword,omitempty"` // Filter by the keyword
-	Ext     string `json:"ext,omitempty"`     // Filter by the extension type, e.g.: jpg ,  png
-	Tags    string `json:"tags,omitempty"`    // Filter by tags. Use , to divide different tags. E.g.: Design, Poster
-	Folders string `json:"folders,omitempty"` // Filter by Folders.  Use , to divide folder IDs. E.g.: KAY6NTU6UYI5Q,KBJ8Z60O88VMG
+	Limit   int    `json:"limit" flag:"The number of items to be displayed. the default number is 200"` //
+	Offset  int    `json:"offset,omitempty"`                                                            // Offset a collection of results from the api. Start with 0.
+	OrderBy string `json:"orderBy,omitempty"`                                                           // The sorting order.CREATEDATE , FILESIZE , NAME , RESOLUTION , add a minus sign for descending order: -FILESIZE
+	Keyword string `json:"keyword,omitempty"`                                                           // Filter by the keyword
+	Ext     string `json:"ext,omitempty"`                                                               // Filter by the extension type, e.g.: jpg ,  png
+	Tags    string `json:"tags,omitempty"`                                                              // Filter by tags. Use , to divide different tags. E.g.: Design, Poster
+	Folders string `json:"folders,omitempty"`                                                           // Filter by Folders.  Use , to divide folder IDs. E.g.: KAY6NTU6UYI5Q,KBJ8Z60O88VMG
 }
 type ItemAddFromPathOptions struct {
 	Path       string   `json:"path"`                 // Required, the path of the local file.
@@ -426,18 +429,18 @@ func ItemRefreshThumbnail(baseUrl string, id string) error {
 }
 
 // returns thumbnail path and error
-func ItemThumbnail(baseUrl string, itemId string) (string, error) {
+func ItemThumbnail(baseUrl string, id string) (string, error) {
 	ep := endpoints.ItemThumbnail
 	uri := baseUrl + ep.Path
 
 	// validate query params
-	if !IsValidItemID(itemId) {
+	if !IsValidItemID(id) {
 		return "", fmt.Errorf("list: error creating request err= itemId parameter malformed or empty.")
 	}
 
 	// add query params
 	param := url.Values{}
-	param.Add("id", itemId)
+	param.Add("id", id)
 
 	// TODO: replace with struct
 	var resp ThumbnailData
@@ -488,4 +491,59 @@ func ItemUpdate(baseUrl string, item ItemUpdateOptions) (respItem ApiItem, err e
 	}
 
 	return respItem, nil
+}
+
+/*
+func ItemAddFromUrl(baseUrl string, item ItemAddFromUrlOptions) error {
+func ItemAddFromUrls(baseUrl string, items []ItemAddFromUrlOptions, folderId string) error {
+func ItemAddFromPath(baseUrl string, item ItemAddFromPathOptions) error {
+func ItemAddFromPaths(baseUrl string, items []ItemAddFromPathOptions) error {
+func ItemAddBookmark(baseUrl string, item ItemAddBookmarkOptions) error {
+func ItemList(baseUrl string, opts ItemListOptions) ([]*ListItem, error) {
+func ItemMoveToTrash(baseUrl string, ids []string) error {
+func ItemRefreshPalette(baseUrl string, id string) error {
+func ItemInfo(baseUrl string, id string) (respItem ApiItem, err error) {
+func ItemRefreshThumbnail(baseUrl string, id string) error {
+func ItemThumbnail(baseUrl string, itemId string) (string, error) {
+func ItemUpdate(baseUrl string, item ItemUpdateOptions) (respItem ApiItem, err error) {
+*/
+
+func ItemCmd() *cobra.Command {
+	// cfg := config.GetConfig()
+
+	// ! item: `ItemAddFromUrlOptions` | `ItemAddFromPathOptions` | `ItemAddBookmarkOptions` | `ItemUpdateOptions`
+	// ! items: `[]ItemAddFromUrlOptions` | `[]ItemAddFromPathOptions`
+
+	// var id string
+	// var folderId string
+	// var ids []string
+
+	var opts ItemListOptions
+
+	// opts = ItemListOptions{Limit: 10}
+
+	var o f.FormatType
+
+	item := &cobra.Command{
+		Use:   "item",
+		Short: "Manage items",
+		Run: func(cmd *cobra.Command, args []string) {
+			fmt.Println(cmd.Flags())
+		},
+	}
+
+	func() {
+		// Your IIFE logic here
+		defer func() {
+			// Cleanup code
+		}()
+
+		fmt.Println("Hello from immediate function")
+	}()
+
+	item.PersistentFlags().VarP(&o, "format", "o", "output format")
+
+	f.BindStructToFlags(item, &opts)
+
+	return item
 }

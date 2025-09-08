@@ -37,6 +37,7 @@ func CmdCobra() {
 
 	rootCmd.AddCommand(RecentLibraries())
 	rootCmd.AddCommand(api.LibraryCmd())
+	rootCmd.AddCommand(api.ItemCmd())
 
 	rootCmd.AddCommand(Reveal())
 	rootCmd.AddCommand(Shutdown())

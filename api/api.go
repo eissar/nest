@@ -291,7 +291,8 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 	resp, err := client.Do(req)
 
 	// fmt.Printf("resp.StatusCode: %v\n", resp.StatusCode)
-	// fmt.Printf("resp.Body: %v\n", resp.Body)
+	// fmt.Printf("req.URL: %v\n", req.URL)
+
 	if err != nil {
 		if IsEagleNotOpenOrUnavailable(err) {
 			return EagleNotOpenOrUnavailableErr
