@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"os"
 	"reflect"
 	"slices"
@@ -14,6 +15,110 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
+
+// StructToURLValues converts a struct to a url.Values map based on its json tags.
+// This allows you to easily serialize a struct into URL query parameters.
+func StructToURLValues(data interface{}) (url.Values, error) {
+	// The url.Values type is a map[string][]string, which is what http.Request.URL.Query() returns.
+	// It's the standard way to represent query parameters in Go.
+	values := url.Values{}
+
+	// Use reflection to inspect the struct.
+	// We expect data to be a struct, so we get its value.
+	v := reflect.ValueOf(data)
+	if v.Kind() == reflect.Ptr {
+		// If it's a pointer, dereference it to get the struct.
+		v = v.Elem()
+	}
+
+	// Ensure we are working with a struct.
+	if v.Kind() != reflect.Struct {
+		return nil, fmt.Errorf("StructToURLValues only accepts structs; got %T", data)
+	}
+
+	// Get the type of the struct to access its fields and tags.
+	t := v.Type()
+
+	// Iterate over all the fields of the struct.
+	for i := 0; i < v.NumField(); i++ {
+		fieldValue := v.Field(i)
+		fieldType := t.Field(i)
+
+		// Get the json tag for the current field.
+		jsonTag := fieldType.Tag.Get("json")
+
+		// Skip this field if the json tag is "-"
+		if jsonTag == "-" {
+			continue
+		}
+
+		// Parse the tag to get the parameter name and options like "omitempty".
+		tagParts := strings.Split(jsonTag, ",")
+		paramName := tagParts[0]
+
+		// If the paramName is empty, it means the field is unexported or has no tag.
+		// We use the field name as a fallback, but this is often not desired.
+		// A better practice is to ensure all exported fields have tags.
+		if paramName == "" {
+			// Skip unexported fields.
+			if !fieldType.IsExported() {
+				continue
+			}
+			paramName = fieldType.Name
+		}
+
+		// Check for the "omitempty" option.
+		hasOmitempty := false
+		if len(tagParts) > 1 {
+			for _, part := range tagParts[1:] {
+				if part == "omitempty" {
+					hasOmitempty = true
+					break
+				}
+			}
+		}
+
+		// If "omitempty" is present and the field has its zero value, skip it.
+		if hasOmitempty && fieldValue.IsZero() {
+			continue
+		}
+
+		// Convert the field's value to a string.
+		var paramValue string
+		switch fieldValue.Kind() {
+		case reflect.String:
+			paramValue = fieldValue.String()
+		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+			paramValue = strconv.FormatInt(fieldValue.Int(), 10)
+		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+			paramValue = strconv.FormatUint(fieldValue.Uint(), 10)
+		case reflect.Float32, reflect.Float64:
+			paramValue = strconv.FormatFloat(fieldValue.Float(), 'f', -1, 64)
+		case reflect.Bool:
+			paramValue = strconv.FormatBool(fieldValue.Bool())
+		case reflect.Slice:
+			// Handle slices by joining elements with a comma.
+			// Another common approach is to add multiple parameters with the same name.
+			// e.g., ?tags=go&tags=web
+			// We'll demonstrate the comma-separated approach here.
+			sliceVal := reflect.ValueOf(fieldValue.Interface())
+			var elements []string
+			for j := 0; j < sliceVal.Len(); j++ {
+				elements = append(elements, fmt.Sprint(sliceVal.Index(j).Interface()))
+			}
+			paramValue = strings.Join(elements, ",")
+		default:
+			// For other types, you might need more complex logic.
+			// For this example, we'll just skip them.
+			continue
+		}
+
+		// Add the key-value pair to our url.Values map.
+		values.Add(paramName, paramValue)
+	}
+
+	return values, nil
+}
 
 // TODO: move this somewhere else
 // misses flag set
@@ -334,25 +439,77 @@ func defaultUsageForField(f reflect.StructField) string {
 	return fmt.Sprintf("sets the %s parameter", f.Name)
 }
 
+// CamelCase converts a string to camelCase, handling various cases.
+// It first checks if the string is entirely uppercase and, if so, converts it to lowercase.
+// Then, it processes the string to create camelCase by capitalizing letters
+// that follow a space, underscore, or hyphen, and lowercasing the very first letter.
 func CamelCase(s string) string {
-	var b strings.Builder
-	upperNext := false
+	// 1) Detect if there is at least one ASCII letter, and if every ASCII letter is uppercase.
+	hasLetter := false
+	allUpper := true
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case 'a' <= c && c <= 'z':
+			hasLetter = true
+			allUpper = false
+		case 'A' <= c && c <= 'Z':
+			hasLetter = true
+		}
+	}
 
-	for _, r := range s {
-		if r == ' ' || r == '_' || r == '-' {
+	// If all ASCII letters are uppercase, lowercase them all and return.
+	if hasLetter && allUpper {
+		var b strings.Builder
+		b.Grow(len(s))
+		for i := 0; i < len(s); i++ {
+			c := s[i]
+			if 'A' <= c && c <= 'Z' {
+				b.WriteByte(c + ('a' - 'A'))
+			} else {
+				b.WriteByte(c)
+			}
+		}
+		return b.String()
+	}
+
+	// 2) Otherwise build camelCase:
+	//    - First letter → lowercase (if ASCII letter)
+	//    - Any letter after ' ', '_' or '-' → uppercase
+	//    - All other letters remain as-is.
+	var b strings.Builder
+	b.Grow(len(s))
+
+	upperNext := false
+	first := true
+
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+
+		// delimiters trigger next letter uppercase, and are skipped
+		if c == ' ' || c == '_' || c == '-' {
 			upperNext = true
 			continue
 		}
 
-		if upperNext {
-			if 'a' <= r && r <= 'z' {
-				b.WriteRune(r - 'a' + 'A')
+		if first {
+			// lowercase first letter if needed
+			if 'A' <= c && c <= 'Z' {
+				b.WriteByte(c + ('a' - 'A'))
 			} else {
-				b.WriteRune(r)
+				b.WriteByte(c)
+			}
+			first = false
+		} else if upperNext {
+			// uppercase this letter if it’s ASCII lowercase
+			if 'a' <= c && c <= 'z' {
+				b.WriteByte(c - ('a' - 'A'))
+			} else {
+				b.WriteByte(c)
 			}
 			upperNext = false
 		} else {
-			b.WriteRune(r)
+			b.WriteByte(c)
 		}
 	}
 
