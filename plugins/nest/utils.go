@@ -199,7 +199,9 @@ func GetEagleThumbnailFullRes(cfg *config.NestConfig, itemId string) (string, er
 }
 
 func GetList(cfg *config.NestConfig) (any, error) {
-	_, err := api.ItemList(cfg.BaseURL(), api.ItemListOptions{Limit: 5})
+	// _, err := api.ItemList(cfg.BaseURL(), api.ItemListOptions{Limit: 5})
+	_, err := api.ItemList(cfg.BaseURL(), api.ItemListOptions.WithDefaults()
+
 	if err != nil {
 		log.Fatal(err.Error())
 	}
