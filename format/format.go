@@ -255,40 +255,43 @@ func ValidateFlags[T comparable](rules map[string][]T) func(*cobra.Command, []st
 // 	logFmtStdOut(data, strings.Split(properties, ","))
 // }
 
-// BindStructFlags automatically binds struct fields to Cobra command-line flags.
-//
-// The function uses reflection to iterate over exported fields of opts, creating
-// a flag for each one. Fields must be exported (start with capital letter) to be
-// considered for flag binding.
-//
-// Flag naming follows these rules:
-// - Use the struct tag `flagname:"custom-name"` to override the default name (WIP?)
-// - Default flag name converts Go field name to kebab-case ("MyField" → "my-field")
-//
-// Flag usage is determined by:
-// - Use the struct tag `flag:"description"` to set help text
-// - Falls back to generated usage based on field type and name if not provided
-//
-// Supported field types: int, string (bool, float64, etc. can be added to switch)
-//
-// Parameters:
-// - cmd: The Cobra command to add flags to
-// - opts: Pointer to struct whose fields become flags. Must be pointer to struct.
-//
-// Returns error if:
-// - opts is not a pointer to struct
-// - Unsupported field type is encountered
-//
-// Example:
-//
-//	type Options struct {
-//	    Debug       bool   `flag:"Enable debug logging"`
-//	    MaxItems    int    `flagname:"max-items" flag:"Maximum items to process"`
-//	    OutputFile  string
-//	}
-//
-//	var opts Options
-//	BindStructFlags(cmd, &opts)
+/*
+BindStructFlags automatically binds struct fields to Cobra command-line flags.
+
+The function uses reflection to iterate over exported fields of opts, creating
+a flag for each one. Fields must be exported (start with capital letter) to be
+considered for flag binding.
+
+Flag naming follows these rules:
+- Use the struct tag `flagname:"custom-name"` to override the default name (WIP?)
+- Default flag name converts Go field name to kebab-case ("MyField" → "my-field")
+
+Flag usage is determined by:
+- Use the struct tag `flag:"description"` to set help text
+- Falls back to generated usage based on field type and name if not provided
+
+Supported field types: int, string (bool, float64, etc. can be added to switch)
+
+Parameters:
+- cmd: The Cobra command to add flags to
+- opts: Pointer to struct whose fields become flags. Must be pointer to struct.
+
+Returns error if:
+- opts is not a pointer to struct
+- Unsupported field type is encountered
+
+Example:
+
+	```go
+	type Options struct {
+			Debug       bool   `flag:"Enable debug logging"`
+			MaxItems    int    `flagname:"max-items" flag:"Maximum items to process"`
+			OutputFile  string
+	}
+	var opts Options
+	BindStructFlags(cmd, &opts)
+	```
+*/
 func BindStructFlags[T any](cmd *cobra.Command, opts *T) error {
 	val := reflect.ValueOf(opts)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
@@ -305,7 +308,7 @@ func BindStructFlags[T any](cmd *cobra.Command, opts *T) error {
 		}
 		flagName := f.Tag.Get("flagname")
 		if flagName == "" {
-			flagName = toKebabCase(f.Name)
+			flagName = CamelCase(f.Name)
 		}
 		usageTag := f.Tag.Get("flag") // e.g., flag:"max items to fetch"
 		if usageTag == "" {
@@ -331,19 +334,27 @@ func defaultUsageForField(f reflect.StructField) string {
 	return fmt.Sprintf("sets the %s parameter", f.Name)
 }
 
-func toKebabCase(s string) string {
+func CamelCase(s string) string {
 	var b strings.Builder
-	for i, r := range s {
-		if 'A' <= r && r <= 'Z' {
-			if i > 0 {
-				b.WriteRune('-')
+	upperNext := false
+
+	for _, r := range s {
+		if r == ' ' || r == '_' || r == '-' {
+			upperNext = true
+			continue
+		}
+
+		if upperNext {
+			if 'a' <= r && r <= 'z' {
+				b.WriteRune(r - 'a' + 'A')
+			} else {
+				b.WriteRune(r)
 			}
-			b.WriteRune(r + 'a' - 'A')
-		} else if r == ' ' || r == '_' {
-			b.WriteRune('-')
+			upperNext = false
 		} else {
 			b.WriteRune(r)
 		}
 	}
-	return strings.ToLower(b.String())
+
+	return b.String()
 }
