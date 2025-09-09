@@ -119,8 +119,9 @@ type BulkItem struct {
 	Item
 	//FolderId string `json:"omitempty`
 }
+
 type ItemListOptions struct {
-	Limit   int    ` json:"limit" flag:"The number of items to be displayed. the default number is 0"`
+	Limit   int    `json:"limit" flag:"The number of items to be displayed. the default number is 200"`
 	Offset  int    `json:"offset,omitempty" flag:"Offset a collection of results from the api. Start with 0."`
 	OrderBy string `json:"orderBy,omitempty" flag:"The sorting order. CREATEDATE , FILESIZE , NAME , RESOLUTION , add a minus sign for descending order: -FILESIZE"`
 	Keyword string `json:"keyword,omitempty" flag:"Filter by the keyword"`
@@ -128,13 +129,21 @@ type ItemListOptions struct {
 	Tags    string `json:"tags,omitempty" flag:"Filter by tags. Use , to divide different tags. E.g.: Design, Poster"`
 	Folders string `json:"folders,omitempty" flag:"Filter by Folders.  Use , to divide folder IDs. E.g.: KAY6NTU6UYI5Q,KBJ8Z60O88VMG"`
 }
+
+func (o ItemListOptions) WithDefaults() ItemListOptions {
+	if o.Limit == 0 {
+		o.Limit = 200
+	}
+	return o
+}
+
 type ItemAddFromPathOptions struct {
-	Path       string   `json:"path"`                 // Required, the path of the local file.
-	Name       string   `json:"name,omitempty"`       // Required, the name of the image to be added. (not really req)
-	Website    string   `json:"website,omitempty"`    // The Address of the source of the image.
-	Annotation string   `json:"annotation,omitempty"` // The annotation for the image.
-	Tags       []string `json:"tags,omitempty"`       // Tags for the image.
-	FolderId   string   `json:"folderId,omitempty"`   // If this parameter is defined, the image will be added to the corresponding folder.
+	Path       string   `json:"path" flag:"Required, the path of the local file."`
+	Name       string   `json:"name,omitempty" flag:"Required, the name of the image to be added. (not really req)"`
+	Website    string   `json:"website,omitempty" flag:"The Address of the source of the image."`
+	Annotation string   `json:"annotation,omitempty" flag:"The annotation for the image."`
+	Tags       []string `json:"tags,omitempty" flag:"Tags for the image."`
+	FolderId   string   `json:"folderId,omitempty" flag:"If this parameter is defined, the image will be added to the corresponding folder."`
 }
 type ThumbnailData struct {
 	Status        string `json:"status"`
@@ -535,9 +544,8 @@ func ItemCmd() *cobra.Command {
 
 	item.PersistentFlags().VarP(&o, "format", "o", "output format")
 
-	func() {
-		opts := ItemListOptions{Limit: 10}
-
+	func() { // [X] use default opts; [X] struct tag metadata
+		opts := ItemListOptions{}.WithDefaults()
 		cmd := &cobra.Command{
 			Use:   "list",
 			Short: "List Items",
@@ -759,7 +767,7 @@ func ItemCmd() *cobra.Command {
 				return nil
 			},
 		}
-		cmd.Flags().StringVar(&itemId, "item-id", "", "Item ID")
+		cmd.Flags().StringVar(&itemId, "id", "", "Item ID")
 		item.AddCommand(cmd)
 	}()
 
