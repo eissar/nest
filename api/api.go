@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
@@ -44,6 +43,22 @@ var EagleNotOpenOrUnavailableErr = fmt.Errorf("Eagle is not open or unavailable.
 // constructor
 func GetCurrentLibraryIsAlreadyTargetError(currLib string) error {
 	return fmt.Errorf("%w:  %s", LibraryIsAlreadyTargetErr, currLib)
+}
+
+func IsEagleNotOpenOrUnavailable(err error) bool {
+	// windows, linux
+	if errors.Is(err, windows.WSAECONNREFUSED) || errors.Is(err, syscall.ECONNREFUSED) {
+		return true
+	}
+	return false
+	// var sysErr *os.SyscallError
+	// if ok := errors.As(err, &sysErr); ok {
+	// 	if errno, ok := sysErr.Err.(syscall.Errno); ok && int(errno) == 10061 {
+	// 		// <https://github.com/ddev/ddev/blob/ec7870af3af6356cfe26282b6d64e551e1891544/pkg/netutil/netutil.go#L36>
+
+	// 		return true
+	// 	}
+	// }
 }
 
 // #endregion errors
@@ -88,110 +103,6 @@ const (
 
 var eagleItemIDRegex = regexp.MustCompile(eagleItemIDPattern)
 
-// StructToURLValues converts a struct to a url.Values map based on its json tags.
-// This allows you to easily serialize a struct into URL query parameters.
-func StructToURLValues(data interface{}) (url.Values, error) {
-	// The url.Values type is a map[string][]string, which is what http.Request.URL.Query() returns.
-	// It's the standard way to represent query parameters in Go.
-	values := url.Values{}
-
-	// Use reflection to inspect the struct.
-	// We expect data to be a struct, so we get its value.
-	v := reflect.ValueOf(data)
-	if v.Kind() == reflect.Ptr {
-		// If it's a pointer, dereference it to get the struct.
-		v = v.Elem()
-	}
-
-	// Ensure we are working with a struct.
-	if v.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("StructToURLValues only accepts structs; got %T", data)
-	}
-
-	// Get the type of the struct to access its fields and tags.
-	t := v.Type()
-
-	// Iterate over all the fields of the struct.
-	for i := 0; i < v.NumField(); i++ {
-		fieldValue := v.Field(i)
-		fieldType := t.Field(i)
-
-		// Get the json tag for the current field.
-		jsonTag := fieldType.Tag.Get("json")
-
-		// Skip this field if the json tag is "-"
-		if jsonTag == "-" {
-			continue
-		}
-
-		// Parse the tag to get the parameter name and options like "omitempty".
-		tagParts := strings.Split(jsonTag, ",")
-		paramName := tagParts[0]
-
-		// If the paramName is empty, it means the field is unexported or has no tag.
-		// We use the field name as a fallback, but this is often not desired.
-		// A better practice is to ensure all exported fields have tags.
-		if paramName == "" {
-			// Skip unexported fields.
-			if !fieldType.IsExported() {
-				continue
-			}
-			paramName = fieldType.Name
-		}
-
-		// Check for the "omitempty" option.
-		hasOmitempty := false
-		if len(tagParts) > 1 {
-			for _, part := range tagParts[1:] {
-				if part == "omitempty" {
-					hasOmitempty = true
-					break
-				}
-			}
-		}
-
-		// If "omitempty" is present and the field has its zero value, skip it.
-		if hasOmitempty && fieldValue.IsZero() {
-			continue
-		}
-
-		// Convert the field's value to a string.
-		var paramValue string
-		switch fieldValue.Kind() {
-		case reflect.String:
-			paramValue = fieldValue.String()
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			paramValue = strconv.FormatInt(fieldValue.Int(), 10)
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			paramValue = strconv.FormatUint(fieldValue.Uint(), 10)
-		case reflect.Float32, reflect.Float64:
-			paramValue = strconv.FormatFloat(fieldValue.Float(), 'f', -1, 64)
-		case reflect.Bool:
-			paramValue = strconv.FormatBool(fieldValue.Bool())
-		case reflect.Slice:
-			// Handle slices by joining elements with a comma.
-			// Another common approach is to add multiple parameters with the same name.
-			// e.g., ?tags=go&tags=web
-			// We'll demonstrate the comma-separated approach here.
-			sliceVal := reflect.ValueOf(fieldValue.Interface())
-			var elements []string
-			for j := 0; j < sliceVal.Len(); j++ {
-				elements = append(elements, fmt.Sprint(sliceVal.Index(j).Interface()))
-			}
-			paramValue = strings.Join(elements, ",")
-		default:
-			// For other types, you might need more complex logic.
-			// For this example, we'll just skip them.
-			continue
-		}
-
-		// Add the key-value pair to our url.Values map.
-		values.Add(paramName, paramValue)
-	}
-
-	return values, nil
-}
-
 // TODO: remove regex?
 func IsValidItemID(id string) bool {
 	if len(id) >= MaxEagleItemIDLength {
@@ -234,7 +145,7 @@ func Request[T any](method string, url string, body io.Reader, urlParam *url.Val
 	if urlParam != nil {
 		req.URL.RawQuery = urlParam.Encode()
 	}
-	err = InvokeEagleAPIV2(req, &v)
+	err = invokeEagleAPI(req, &v)
 	if err != nil {
 		return err
 	}
@@ -242,25 +153,9 @@ func Request[T any](method string, url string, body io.Reader, urlParam *url.Val
 	return nil
 }
 
-func IsEagleNotOpenOrUnavailable(err error) bool {
-	// windows, linux
-	if errors.Is(err, windows.WSAECONNREFUSED) || errors.Is(err, syscall.ECONNREFUSED) {
-		return true
-	}
-	return false
-	// var sysErr *os.SyscallError
-	// if ok := errors.As(err, &sysErr); ok {
-	// 	if errno, ok := sysErr.Err.(syscall.Errno); ok && int(errno) == 10061 {
-	// 		// <https://github.com/ddev/ddev/blob/ec7870af3af6356cfe26282b6d64e551e1891544/pkg/netutil/netutil.go#L36>
-
-	// 		return true
-	// 	}
-	// }
-}
-
 // all responses have a `status` field (excl. /api/library/icon)
 // populates pointer v with response from req
-func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
+func invokeEagleAPI[T any](req *http.Request, v *T) error {
 	if v == nil {
 		return fmt.Errorf("v cannot be nil.")
 	}
@@ -353,13 +248,13 @@ func InvokeEagleAPIV2[T any](req *http.Request, v *T) error {
 	return nil
 }
 
+// #region routes
+
 func wrapperHandler(c echo.Context) error {
 	if c.Request().Method == "GET" {
 	}
 	return c.String(200, c.Request().URL.Path)
 }
-
-// #region routes
 
 func RegisterGroupRoutes(g *echo.Group) {
 	g.GET("*", wrapperHandler)

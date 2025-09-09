@@ -359,7 +359,7 @@ func ItemList(baseUrl string, opts ItemListOptions) ([]*ListItem, error) {
 	// TODO: validate parameters
 	//
 
-	params, err := StructToURLValues(opts)
+	params, err := f.StructToURLValues(opts)
 	if err != nil {
 		return nil, fmt.Errorf("list: error converting parameters into url values err=%w", err)
 	}

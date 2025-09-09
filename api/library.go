@@ -184,7 +184,7 @@ func LibraryIcon(baseURL string) (string, error) {
 
 	// FIX
 	var a *EagleMessage
-	err = InvokeEagleAPIV2(req, &a)
+	err = invokeEagleAPI(req, &a)
 	if err != nil {
 		return currentLibraryPath, fmt.Errorf("getcurrlibrarypath: error invoking request err=%w", err)
 	}
