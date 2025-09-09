@@ -255,8 +255,41 @@ func ValidateFlags[T comparable](rules map[string][]T) func(*cobra.Command, []st
 // 	logFmtStdOut(data, strings.Split(properties, ","))
 // }
 
-// bindStructToFlags populates every flag in cmd with a field from opts.
-func BindStructToFlags[T any](cmd *cobra.Command, opts *T) error {
+// BindStructFlags automatically binds struct fields to Cobra command-line flags.
+//
+// The function uses reflection to iterate over exported fields of opts, creating
+// a flag for each one. Fields must be exported (start with capital letter) to be
+// considered for flag binding.
+//
+// Flag naming follows these rules:
+// - Use the struct tag `flagname:"custom-name"` to override the default name (WIP?)
+// - Default flag name converts Go field name to kebab-case ("MyField" → "my-field")
+//
+// Flag usage is determined by:
+// - Use the struct tag `flag:"description"` to set help text
+// - Falls back to generated usage based on field type and name if not provided
+//
+// Supported field types: int, string (bool, float64, etc. can be added to switch)
+//
+// Parameters:
+// - cmd: The Cobra command to add flags to
+// - opts: Pointer to struct whose fields become flags. Must be pointer to struct.
+//
+// Returns error if:
+// - opts is not a pointer to struct
+// - Unsupported field type is encountered
+//
+// Example:
+//
+//	type Options struct {
+//	    Debug       bool   `flag:"Enable debug logging"`
+//	    MaxItems    int    `flagname:"max-items" flag:"Maximum items to process"`
+//	    OutputFile  string
+//	}
+//
+//	var opts Options
+//	BindStructFlags(cmd, &opts)
+func BindStructFlags[T any](cmd *cobra.Command, opts *T) error {
 	val := reflect.ValueOf(opts)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("opts must be a pointer to struct")
@@ -267,31 +300,26 @@ func BindStructToFlags[T any](cmd *cobra.Command, opts *T) error {
 	for i := 0; i < typ.NumField(); i++ {
 		f := typ.Field(i)
 
-		// #region try
-
-		// #endregion end try
-
 		if f.PkgPath != "" { // unexported
 			continue
 		}
-		// "camelCase" field name works as long as the struct follows that pattern.
 		flagName := f.Tag.Get("flagname")
 		if flagName == "" {
 			flagName = toKebabCase(f.Name)
 		}
-		usageTag := f.Tag.Get("flag") // e.g. flag:"max items to fetch"
+		usageTag := f.Tag.Get("flag") // e.g., flag:"max items to fetch"
 		if usageTag == "" {
 			usageTag = defaultUsageForField(f) // fallback
 		}
 
 		addr := val.Field(i).Addr().Interface()
 
+		// TODO: MORE TYPES
 		switch x := addr.(type) {
 		case *int:
 			cmd.Flags().IntVarP(x, flagName, "", *x, usageTag)
 		case *string:
 			cmd.Flags().StringVarP(x, flagName, "", *x, usageTag)
-		// add other simple kinds here (bool, float64, ...) if needed
 		default:
 			return fmt.Errorf("unsupported field %s of type %s", f.Name, f.Type)
 		}
