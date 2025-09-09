@@ -250,7 +250,7 @@ func FolderListRecent(baseUrl string) ([]FolderDetailOverview, error) {
 	return resp.Data, nil
 }
 
-func addFlags(
+func addFolderFlags(
 	cmd *cobra.Command,
 	id *string,
 	name *string,
@@ -298,7 +298,7 @@ func FolderCmd() *cobra.Command {
 	// }
 
 	folder.AddCommand(
-		addFlags(&cobra.Command{
+		addFolderFlags(&cobra.Command{
 			Use:   "create <name>",
 			Short: "Create a new folder",
 			Args:  cobra.ExactArgs(1),
@@ -313,7 +313,7 @@ func FolderCmd() *cobra.Command {
 		}, nil, &name, nil, nil, nil),
 	)
 	folder.AddCommand(
-		addFlags(&cobra.Command{
+		addFolderFlags(&cobra.Command{
 			Use:   "rename <id> <new-name>",
 			Short: "Rename an existing folder",
 			Args:  cobra.ExactArgs(2),
@@ -325,7 +325,7 @@ func FolderCmd() *cobra.Command {
 			},
 		}, &id, nil, &newName, nil, nil),
 	)
-	folder.AddCommand(addFlags(&cobra.Command{
+	folder.AddCommand(addFolderFlags(&cobra.Command{
 		Use:   "update <id> <new-name> <new-description> <new-color>",
 		Short: "Update folder metadata",
 		RunE: func(cmd *cobra.Command, args []string) error {

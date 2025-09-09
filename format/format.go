@@ -80,6 +80,7 @@ func HelpFmt[T any](a *T) string {
 	}
 }
 
+// TODO: try to unwrap
 func WriteJSON(v any, w io.Writer) {
 	if w == nil {
 		w = os.Stdout
@@ -255,8 +256,7 @@ func ValidateFlags[T comparable](rules map[string][]T) func(*cobra.Command, []st
 // }
 
 // bindStructToFlags populates every flag in cmd with a field from opts.
-func BindStructToFlags(cmd *cobra.Command, opts any) error {
-
+func BindStructToFlags[T any](cmd *cobra.Command, opts *T) error {
 	val := reflect.ValueOf(opts)
 	if val.Kind() != reflect.Ptr || val.Elem().Kind() != reflect.Struct {
 		return fmt.Errorf("opts must be a pointer to struct")
@@ -275,8 +275,11 @@ func BindStructToFlags(cmd *cobra.Command, opts any) error {
 			continue
 		}
 		// "camelCase" field name works as long as the struct follows that pattern.
-		flagName := toKebabCase(f.Name) // turn "Limit" into "limit"
-		usageTag := f.Tag.Get("flag")   // e.g. flag:"max items to fetch"
+		flagName := f.Tag.Get("flagname")
+		if flagName == "" {
+			flagName = toKebabCase(f.Name)
+		}
+		usageTag := f.Tag.Get("flag") // e.g. flag:"max items to fetch"
 		if usageTag == "" {
 			usageTag = defaultUsageForField(f) // fallback
 		}
@@ -300,9 +303,19 @@ func defaultUsageForField(f reflect.StructField) string {
 	return fmt.Sprintf("sets the %s parameter", f.Name)
 }
 
-// --- fairly trivial helpers --------------------------------------------------
 func toKebabCase(s string) string {
-	// naive camel -> kebab, e.g. "OrderBy" -> "order-by"
-	// actual implementation could use the flect package or github.com/iancoleman/strcase
-	return s // simplified stub
+	var b strings.Builder
+	for i, r := range s {
+		if 'A' <= r && r <= 'Z' {
+			if i > 0 {
+				b.WriteRune('-')
+			}
+			b.WriteRune(r + 'a' - 'A')
+		} else if r == ' ' || r == '_' {
+			b.WriteRune('-')
+		} else {
+			b.WriteRune(r)
+		}
+	}
+	return strings.ToLower(b.String())
 }

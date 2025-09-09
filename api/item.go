@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/url"
 	_ "net/url"
 
 	"github.com/eissar/nest/api/endpoints"
+	"github.com/eissar/nest/config"
 	// "github.com/eissar/nest/config"
 	f "github.com/eissar/nest/format"
 	"github.com/spf13/cobra"
@@ -82,7 +84,7 @@ type ListItem struct {
 // bulk (addFromUrls) does not include `star` or `folderId`
 // pointers represent optional keys and null represents unset
 type ItemAddFromUrlOptions struct {
-	URL              string            `json:"url"`
+	URL              string            `json:"url" flagname:"u"`
 	Name             string            `json:"name"`
 	Website          string            `json:"website,omitempty"`
 	Tags             []string          `json:"tags,omitempty"`
@@ -118,10 +120,9 @@ type BulkItem struct {
 	//FolderId string `json:"omitempty`
 }
 type ItemListOptions struct {
-	Limit int ` json:"limit"
-	flag:"The number of items to be displayed. the default number is 200"`
+	Limit   int    ` json:"limit" flag:"The number of items to be displayed. the default number is 0"`
 	Offset  int    `json:"offset,omitempty" flag:"Offset a collection of results from the api. Start with 0."`
-	OrderBy string `json:"orderBy,omitempty" flag:"The sorting order.CREATEDATE , FILESIZE , NAME , RESOLUTION , add a minus sign for descending order: -FILESIZE"`
+	OrderBy string `json:"orderBy,omitempty" flag:"The sorting order. CREATEDATE , FILESIZE , NAME , RESOLUTION , add a minus sign for descending order: -FILESIZE"`
 	Keyword string `json:"keyword,omitempty" flag:"Filter by the keyword"`
 	Ext     string `json:"ext,omitempty" flag:"Filter by the extension type, e.g.: jpg ,  png"`
 	Tags    string `json:"tags,omitempty" flag:"Filter by tags. Use , to divide different tags. E.g.: Design, Poster"`
@@ -495,47 +496,291 @@ func ItemUpdate(baseUrl string, item ItemUpdateOptions) (respItem ApiItem, err e
 }
 
 /*
-func ItemAddFromUrl(baseUrl string, item ItemAddFromUrlOptions) error {
-func ItemAddFromUrls(baseUrl string, items []ItemAddFromUrlOptions, folderId string) error {
-func ItemAddFromPath(baseUrl string, item ItemAddFromPathOptions) error {
-func ItemAddFromPaths(baseUrl string, items []ItemAddFromPathOptions) error {
-func ItemAddBookmark(baseUrl string, item ItemAddBookmarkOptions) error {
-func ItemList(baseUrl string, opts ItemListOptions) ([]*ListItem, error) {
-func ItemMoveToTrash(baseUrl string, ids []string) error {
-func ItemRefreshPalette(baseUrl string, id string) error {
-func ItemInfo(baseUrl string, id string) (respItem ApiItem, err error) {
-func ItemRefreshThumbnail(baseUrl string, id string) error {
-func ItemThumbnail(baseUrl string, itemId string) (string, error) {
-func ItemUpdate(baseUrl string, item ItemUpdateOptions) (respItem ApiItem, err error) {
-*/
+[ ] func ItemAddFromUrl(baseUrl string, item ItemAddFromUrlOptions) error {
+[ ] func ItemAddFromUrls(baseUrl string, items []ItemAddFromUrlOptions, folderId string) error {
+[ ] func ItemAddFromPath(baseUrl string, item ItemAddFromPathOptions) error {
+[ ] func ItemAddFromPaths(baseUrl string, items []ItemAddFromPathOptions) error {
+[ ] func ItemAddBookmark(baseUrl string, item ItemAddBookmarkOptions) error {
+[ ] func ItemList(baseUrl string, opts ItemListOptions) ([]*ListItem, error) {
+[ ] func ItemMoveToTrash(baseUrl string, ids []string) error {
+[ ] func ItemRefreshPalette(baseUrl string, id string) error {
+[ ] func ItemInfo(baseUrl string, id string) (respItem ApiItem, err error) {
+[ ] func ItemRefreshThumbnail(baseUrl string, id string) error {
+[ ] func ItemThumbnail(baseUrl string, itemId string) (string, error) {
+[ ] func ItemUpdate(baseUrl string, item ItemUpdateOptions) (respItem ApiItem, err error) {
+[ ] */
 
 func ItemCmd() *cobra.Command {
-	// cfg := config.GetConfig()
+	cfg := config.GetConfig()
 
-	// ! item: `ItemAddFromUrlOptions` | `ItemAddFromPathOptions` | `ItemAddBookmarkOptions` | `ItemUpdateOptions`
 	// ! items: `[]ItemAddFromUrlOptions` | `[]ItemAddFromPathOptions`
 
 	// var id string
 	// var folderId string
 	// var ids []string
 
-	var opts ItemListOptions
+	// ! item: `ItemAddFromUrlOptions` | `ItemAddFromPathOptions` | `ItemAddBookmarkOptions` | `ItemUpdateOptions`
 
 	// opts = ItemListOptions{Limit: 10}
 
 	var o f.FormatType
 
 	item := &cobra.Command{
-		Use:   "item",
-		Short: "Manage items",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Println(cmd.Flags())
-		},
+		Use: "item",
+		// Short: "Manage items",
+		// Run: func(cmd *cobra.Command, args []string) {
+		// 	fmt.Println(cmd.Flags())
+		// },
 	}
 
 	item.PersistentFlags().VarP(&o, "format", "o", "output format")
 
-	f.BindStructToFlags(item, &opts)
+	func() {
+		opts := ItemListOptions{Limit: 10}
+
+		cmd := &cobra.Command{
+			Use:   "list",
+			Short: "List Items",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				list, err := ItemList(cfg.BaseURL(), opts)
+				if err != nil {
+					log.Fatalf("FolderList: %v", err)
+				}
+				fmt.Printf("output f: %v\n", o)
+				f.Format(o, list)
+				return nil
+			},
+		}
+
+		f.BindStructToFlags(cmd, &opts)
+		item.AddCommand(cmd)
+	}()
+
+	// ItemAddFromUrl
+	func() {
+		opts := ItemAddFromUrlOptions{}
+		cmd := &cobra.Command{
+			Use:   "url [a]",
+			Short: "Add item from URL",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				err := ItemAddFromUrl(cfg.BaseURL(), opts)
+				if err != nil {
+					return fmt.Errorf("failed to add item from URL: %w", err)
+				}
+				fmt.Println("Successfully added item from URL")
+				return nil
+			},
+		}
+		f.BindStructToFlags(cmd, &opts)
+		item.AddCommand(cmd)
+	}()
+
+	// ItemAddFromUrls
+	func() {
+		opts := []ItemAddFromUrlOptions{}
+		cmd := &cobra.Command{
+			Use:   "urls",
+			Short: "Add multiple items from URLs",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				folderId, _ := cmd.Flags().GetString("folder-id")
+				err := ItemAddFromUrls(cfg.BaseURL(), opts, folderId)
+				if err != nil {
+					return fmt.Errorf("failed to add items from URLs: %w", err)
+				}
+				fmt.Println("Successfully added items from URLs")
+				return nil
+			},
+		}
+		f.BindStructToFlags(cmd, &opts)
+		cmd.Flags().String("folder-id", "", "Folder ID to add items to")
+		item.AddCommand(cmd)
+	}()
+
+	// ItemAddFromPath
+	func() {
+		opts := ItemAddFromPathOptions{}
+		cmd := &cobra.Command{
+			Use:   "path",
+			Short: "Add item from local path",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				err := ItemAddFromPath(cfg.BaseURL(), opts)
+				if err != nil {
+					return fmt.Errorf("failed to add item from path: %w", err)
+				}
+				fmt.Println("Successfully added item from path")
+				return nil
+			},
+		}
+		f.BindStructToFlags(cmd, &opts)
+		item.AddCommand(cmd)
+	}()
+
+	// ItemAddFromPaths
+	func() {
+		opts := []ItemAddFromPathOptions{}
+		cmd := &cobra.Command{
+			Use:   "paths",
+			Short: "Add multiple items from local paths",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				err := ItemAddFromPaths(cfg.BaseURL(), opts)
+				if err != nil {
+					return fmt.Errorf("failed to add items from paths: %w", err)
+				}
+				fmt.Println("Successfully added items from paths")
+				return nil
+			},
+		}
+		f.BindStructToFlags(cmd, &opts)
+		item.AddCommand(cmd)
+	}()
+
+	// ItemAddBookmark
+	func() {
+		opts := ItemAddBookmarkOptions{}
+		cmd := &cobra.Command{
+			Use:   "bookmark",
+			Short: "Add bookmark item",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				err := ItemAddBookmark(cfg.BaseURL(), opts)
+				if err != nil {
+					return fmt.Errorf("failed to add bookmark: %w", err)
+				}
+				fmt.Println("Successfully added bookmark")
+				return nil
+			},
+		}
+		f.BindStructToFlags(cmd, &opts)
+		item.AddCommand(cmd)
+	}()
+
+	// ItemMoveToTrash
+	func() {
+		ids := []string{}
+		cmd := &cobra.Command{
+			Use:   "delete",
+			Short: "Move items to trash",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				if len(ids) == 0 && len(args) > 0 {
+					ids = args
+				}
+				err := ItemMoveToTrash(cfg.BaseURL(), ids)
+				if err != nil {
+					return fmt.Errorf("failed to move items to trash: %w", err)
+				}
+				fmt.Printf("Successfully moved %d items to trash\n", len(ids))
+				return nil
+			},
+		}
+		cmd.Flags().StringSliceVar(&ids, "ids", []string{}, "Item IDs to move to trash")
+		item.AddCommand(cmd)
+	}()
+
+	// ItemRefreshPalette
+	func() {
+		var id string
+		cmd := &cobra.Command{
+			Use:   "refresh-palette",
+			Short: "Refresh item color palette",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				if id == "" && len(args) > 0 {
+					id = args[0]
+				}
+				err := ItemRefreshPalette(cfg.BaseURL(), id)
+				if err != nil {
+					return fmt.Errorf("failed to refresh palette: %w", err)
+				}
+				fmt.Println("Successfully refreshed color palette")
+				return nil
+			},
+		}
+		cmd.Flags().StringVar(&id, "id", "", "Item ID")
+		item.AddCommand(cmd)
+	}()
+
+	// ItemInfo
+	func() {
+		var id string
+		cmd := &cobra.Command{
+			Use:   "info",
+			Short: "Get item info",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				if id == "" && len(args) > 0 {
+					id = args[0]
+				}
+				resp, err := ItemInfo(cfg.BaseURL(), id)
+				if err != nil {
+					return fmt.Errorf("failed to get item info: %w", err)
+				}
+				f.Format(o, resp)
+				return nil
+			},
+		}
+		cmd.Flags().StringVar(&id, "id", "", "Item ID")
+		item.AddCommand(cmd)
+	}()
+
+	// ItemRefreshThumbnail
+	func() {
+		var id string
+		cmd := &cobra.Command{
+			Use:   "refresh-thumbnail",
+			Short: "Refresh item thumbnail",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				if id == "" && len(args) > 0 {
+					id = args[0]
+				}
+				err := ItemRefreshThumbnail(cfg.BaseURL(), id)
+				if err != nil {
+					return fmt.Errorf("failed to refresh thumbnail: %w", err)
+				}
+				fmt.Println("Successfully refreshed thumbnail")
+				return nil
+			},
+		}
+		cmd.Flags().StringVar(&id, "id", "", "Item ID")
+		item.AddCommand(cmd)
+	}()
+
+	// ItemThumbnail
+	func() {
+		var itemId string
+		cmd := &cobra.Command{
+			Use:   "thumbnail",
+			Short: "Get item thumbnail",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				if itemId == "" && len(args) > 0 {
+					itemId = args[0]
+				}
+				thumbnail, err := ItemThumbnail(cfg.BaseURL(), itemId)
+				if err != nil {
+					return fmt.Errorf("failed to get thumbnail: %w", err)
+				}
+				fmt.Println(thumbnail)
+				return nil
+			},
+		}
+		cmd.Flags().StringVar(&itemId, "item-id", "", "Item ID")
+		item.AddCommand(cmd)
+	}()
+
+	// ItemUpdate
+	func() {
+		opts := ItemUpdateOptions{}
+		cmd := &cobra.Command{
+			Use:   "update",
+			Short: "Update item",
+			RunE: func(cmd *cobra.Command, args []string) error {
+				resp, err := ItemUpdate(cfg.BaseURL(), opts)
+				if err != nil {
+					return fmt.Errorf("failed to update item: %w", err)
+				}
+				f.Format(o, resp)
+				return nil
+			},
+		}
+		f.BindStructToFlags(cmd, &opts)
+		item.AddCommand(cmd)
+	}()
 
 	return item
 }
