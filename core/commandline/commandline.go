@@ -15,15 +15,15 @@ type apiCmdOpts struct {
 	format f.FormatType
 }
 
-func SubCmdApi() *cobra.Command {
-	var apiCmd = &cobra.Command{Use: "api"}
-
-	// var format string
-	// apiCmd.PersistentFlags().StringVarP(&format, "format", "o", "json", "output format")
-
-	apiCmd.AddCommand(api.ApplicationCmds()...)
-	return apiCmd
-}
+//	func SubCmdApi() *cobra.Command {
+//		var apiCmd = &cobra.Command{Use: "api"}
+//
+//		// var format string
+//		// apiCmd.PersistentFlags().StringVarP(&format, "format", "o", "json", "output format")
+//
+//		apiCmd.AddCommand(api.ApplicationCmd())
+//		return apiCmd
+//	}
 
 func CmdCobra() {
 	// This variable will hold the value from the --limit flag.
@@ -42,7 +42,10 @@ func CmdCobra() {
 	rootCmd.AddCommand(Reveal())
 	rootCmd.AddCommand(Shutdown())
 	rootCmd.AddCommand(Switch())
-	rootCmd.AddCommand(SubCmdApi())
+
+	// rootCmd.AddCommand(SubCmdApi())
+	rootCmd.AddCommand(api.ApplicationCmd())
+
 	rootCmd.AddCommand(
 		&cobra.Command{
 			Use: "start",

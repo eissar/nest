@@ -45,7 +45,7 @@ func GetCurrentLibraryIsAlreadyTargetError(currLib string) error {
 	return fmt.Errorf("%w:  %s", LibraryIsAlreadyTargetErr, currLib)
 }
 
-func IsEagleNotOpenOrUnavailable(err error) bool {
+func IsEagleNotOpenOrUnavailableError(err error) bool {
 	// windows, linux
 	if errors.Is(err, windows.WSAECONNREFUSED) || errors.Is(err, syscall.ECONNREFUSED) {
 		return true
@@ -189,7 +189,7 @@ func invokeEagleAPI[T any](req *http.Request, v *T) error {
 	// fmt.Printf("req.URL: %v\n", req.URL)
 
 	if err != nil {
-		if IsEagleNotOpenOrUnavailable(err) {
+		if IsEagleNotOpenOrUnavailableError(err) {
 			return EagleNotOpenOrUnavailableErr
 		}
 		oErr, ok := err.(*net.OpError)
