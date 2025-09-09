@@ -44,16 +44,25 @@ func ApplicationInfo(baseUrl string) (ApplicationInfoData, error) {
 }
 
 // provides commands
-func ApplicationCmds() []*cobra.Command {
+func ApplicationCmd() *cobra.Command {
 	cfg := config.GetConfig()
 
 	var o f.FormatType
 
-	return []*cobra.Command{
-		{
-			Use:   "app info",
+	app := &cobra.Command{
+		Use: "app",
+		// Short: "Manage items",
+		// Run: func(cmd *cobra.Command, args []string) {
+		// 	fmt.Println(cmd.Flags())
+		// },
+	}
+	// return []*cobra.Command{
+
+	func() {
+		cmd := &cobra.Command{
+			Use:   "info", //
 			Short: "Display detailed information about the running Eagle application.",
-			Long:  "Retrieves and prints detailed information about the Eagle application currently running. Supports output in JSON format.",
+			Long:  "Retrieves and prints detailed information about the Eagle application currently running. ",
 			RunE: func(cmd *cobra.Command, args []string) error {
 				v, err := ApplicationInfo(cfg.BaseURL())
 
@@ -64,6 +73,8 @@ func ApplicationCmds() []*cobra.Command {
 				f.Format(o, v)
 				return nil
 			},
-		},
-	}
+		}
+		app.AddCommand(cmd)
+	}()
+	return app
 }
