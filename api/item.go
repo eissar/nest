@@ -619,7 +619,7 @@ func ItemCmd() *cobra.Command {
 			Short: "Add item from URL",
 			RunE: func(cmd *cobra.Command, args []string) error {
 				if defaultErr != nil {
-					return fmt.Errorf("Options Error: %w", defaultErr)
+					return defaultErr // should be good enough
 				}
 
 				err := ItemAddFromUrl(cfg.BaseURL(), opts)
@@ -663,7 +663,7 @@ func ItemCmd() *cobra.Command {
 			Short: "Add item from local path",
 			RunE: func(cmd *cobra.Command, args []string) error {
 				if defaultErr != nil {
-					return fmt.Errorf("Options Error: %w", defaultErr)
+					return defaultErr // should be good enough
 				}
 				err := ItemAddFromPath(cfg.BaseURL(), opts)
 				if err != nil {
@@ -704,7 +704,7 @@ func ItemCmd() *cobra.Command {
 			Short: "Add bookmark item",
 			RunE: func(cmd *cobra.Command, args []string) error {
 				if defaultErr != nil {
-					return fmt.Errorf("Options Error: %w", defaultErr)
+					return defaultErr // should be good enough
 				}
 				err := ItemAddBookmark(cfg.BaseURL(), opts)
 				if err != nil {
@@ -836,7 +836,7 @@ func ItemCmd() *cobra.Command {
 			Short: "Update item",
 			RunE: func(cmd *cobra.Command, args []string) error {
 				if defaultErr != nil {
-					return fmt.Errorf("Options Error: %w", defaultErr)
+					return defaultErr // should be good enough
 				}
 				resp, err := ItemUpdate(cfg.BaseURL(), opts)
 				if err != nil {
