@@ -7,9 +7,11 @@ import (
 	"log"
 	"net/url"
 	_ "net/url"
+	"os"
 
 	"github.com/eissar/nest/api/endpoints"
 	"github.com/eissar/nest/config"
+
 	// "github.com/eissar/nest/config"
 	f "github.com/eissar/nest/format"
 	"github.com/spf13/cobra"
@@ -81,37 +83,69 @@ type ListItem struct {
 }
 
 // give a better name
+// defaults to use url as item name in eagle
 // bulk (addFromUrls) does not include `star` or `folderId`
 // pointers represent optional keys and null represents unset
 type ItemAddFromUrlOptions struct {
-	URL              string            `json:"url" flagname:"u"`
-	Name             string            `json:"name"`
-	Website          string            `json:"website,omitempty"`
-	Tags             []string          `json:"tags,omitempty"`
-	Star             *int              `json:"star,omitempty"`
-	Annotation       string            `json:"annotation,omitempty"`
-	ModificationTime int               `json:"modificationTime,omitempty"`
-	FolderID         *string           `json:"folderId,omitempty"`
-	Headers          map[string]string `json:"headers,omitempty"`
+	URL              string            `json:"url" flagname:"u" flag:"url to item to add"`
+	Name             string            `json:"name" flag:"name to use for item"`
+	Website          string            `json:"website,omitempty" flag:"associated website of item"`
+	Tags             []string          `json:"tags,omitempty" flag:"tags to apply to item"`
+	Star             *int              `json:"star,omitempty" flag:"star rating of the item"`
+	Annotation       string            `json:"annotation,omitempty" flag:"annotation text for the item"`
+	ModificationTime int               `json:"modificationTime,omitempty" flag:"modification time in epoch milliseconds"`
+	FolderID         *string           `json:"folderId,omitempty" flag:"folder id to place the item in"`
+	Headers          map[string]string `json:"headers,omitempty" flag:"http headers to be sent with requests"`
+}
+
+func (o ItemAddFromUrlOptions) WithDefaults() (ItemAddFromUrlOptions, error) {
+	if o.URL == "" {
+		return o, fmt.Errorf("ItemAddFromUrlOptions: url is required")
+	}
+	if o.Name == "" {
+		o.Name = o.URL
+	}
+	return o, nil
 }
 
 // give better name
 type ItemAddBookmarkOptions struct {
-	URL              string   `json:"url"`
-	Name             string   `json:"name"`
-	Base64           string   `json:"base64,omitempty"`
-	Tags             []string `json:"tags,omitempty"`
-	ModificationTime string   `json:"modificationTime,omitempty"`
-	FolderID         string   `json:"folderId,omitempty"`
+	URL string `json:"url" flag:"URL of the bookmark"`
+
+	Name             string   `json:"name" flag:"Display name for the bookmark"`
+	Base64           string   `json:"base64,omitempty" flag:"Optional base64-encoded data"`
+	Tags             []string `json:"tags,omitempty" flag:"Optional list of tag names"`
+	ModificationTime string   `json:"modificationTime,omitempty" flag:"DESC TODO"`
+	FolderID         string   `json:"folderId,omitempty" flag:"Optional ID of target folder to place the bookmark"`
+}
+
+func (o ItemAddBookmarkOptions) WithDefaults() (ItemAddBookmarkOptions, error) {
+	if o.URL == "" {
+		return o, fmt.Errorf("ItemAddBookmarkOptions: url is required")
+	}
+	if o.Name == "" {
+		o.Name = o.URL
+	}
+	return o, nil
 }
 
 // pointers represent optional keys and null represents unset
 type ItemUpdateOptions struct {
-	ID         string    `json:"id"`
-	Tags       *[]string `json:"tags"`
-	Annotation *string   `json:"annotation"`
-	URL        *string   `json:"url"`
-	Star       *int      `json:"star"`
+	ID         string    `json:"id" flag:"unique identifier"`
+	Tags       *[]string `json:"tags" flag:"list of tags associated with the item"`
+	Annotation *string   `json:"annotation" flag:"user-provided annotation or note"`
+	URL        *string   `json:"url" flag:"web URL associated with the item"`
+	Star       *int      `json:"star" flag:"star rating from 1-5, nil for no rating"`
+}
+
+func (o ItemUpdateOptions) WithDefaults() (ItemUpdateOptions, error) {
+	if o.ID == "" {
+		return o, fmt.Errorf("ItemUpdateOptions: id is required")
+	}
+	if o.Tags == nil && o.Annotation == nil && o.URL == nil && o.Star == nil {
+		return o, fmt.Errorf("ItemUpdateOptions: no updates specified - at least one field must be set")
+	}
+	return o, nil
 }
 
 // no folder Id
@@ -145,6 +179,19 @@ type ItemAddFromPathOptions struct {
 	Tags       []string `json:"tags,omitempty" flag:"Tags for the image."`
 	FolderId   string   `json:"folderId,omitempty" flag:"If this parameter is defined, the image will be added to the corresponding folder."`
 }
+
+// WithDefaults returns a validated copy of the options with all defaults applied.
+// It checks that Path is set and valid.
+func (o ItemAddFromPathOptions) WithDefaults() (ItemAddFromPathOptions, error) {
+	if o.Path == "" {
+		return o, fmt.Errorf("ItemAddFromPathOptions: path is required")
+	}
+	if _, err := os.Stat(o.Path); err != nil {
+		return o, fmt.Errorf("ItemAddFromPathOptions: invalid path: %w", err)
+	}
+	return o, nil
+}
+
 type ThumbnailData struct {
 	Status        string `json:"status"`
 	ThumbnailPath string `json:"data"`
@@ -560,17 +607,21 @@ func ItemCmd() *cobra.Command {
 			},
 		}
 
-		f.BindStructToFlags(cmd, &opts)
+		f.BindStructFlags(cmd, &opts)
 		item.AddCommand(cmd)
 	}()
 
 	// ItemAddFromUrl
-	func() {
-		opts := ItemAddFromUrlOptions{}
+	func() { // [X] use default opts; [X] struct tag metadata
+		opts, defaultErr := ItemAddFromUrlOptions{}.WithDefaults()
 		cmd := &cobra.Command{
 			Use:   "url [a]",
 			Short: "Add item from URL",
 			RunE: func(cmd *cobra.Command, args []string) error {
+				if defaultErr != nil {
+					return fmt.Errorf("Options Error: %w", defaultErr)
+				}
+
 				err := ItemAddFromUrl(cfg.BaseURL(), opts)
 				if err != nil {
 					return fmt.Errorf("failed to add item from URL: %w", err)
@@ -579,38 +630,41 @@ func ItemCmd() *cobra.Command {
 				return nil
 			},
 		}
-		f.BindStructToFlags(cmd, &opts)
+		f.BindStructFlags(cmd, &opts)
 		item.AddCommand(cmd)
 	}()
 
 	// ItemAddFromUrls
-	func() {
-		opts := []ItemAddFromUrlOptions{}
-		cmd := &cobra.Command{
-			Use:   "urls",
-			Short: "Add multiple items from URLs",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				folderId, _ := cmd.Flags().GetString("folder-id")
-				err := ItemAddFromUrls(cfg.BaseURL(), opts, folderId)
-				if err != nil {
-					return fmt.Errorf("failed to add items from URLs: %w", err)
-				}
-				fmt.Println("Successfully added items from URLs")
-				return nil
-			},
-		}
-		f.BindStructToFlags(cmd, &opts)
-		cmd.Flags().String("folder-id", "", "Folder ID to add items to")
-		item.AddCommand(cmd)
-	}()
+	// func() { // [ ] use default opts; [ ] struct tag metadata
+	// 	opts := []ItemAddFromUrlOptions{}
+	// 	cmd := &cobra.Command{
+	// 		Use:   "urls",
+	// 		Short: "Add multiple items from URLs",
+	// 		RunE: func(cmd *cobra.Command, args []string) error {
+	// 			folderId, _ := cmd.Flags().GetString("folder-id")
+	// 			err := ItemAddFromUrls(cfg.BaseURL(), opts, folderId)
+	// 			if err != nil {
+	// 				return fmt.Errorf("failed to add items from URLs: %w", err)
+	// 			}
+	// 			fmt.Println("Successfully added items from URLs")
+	// 			return nil
+	// 		},
+	// 	}
+	// 	f.BindStructFlags(cmd, &opts)
+	// 	cmd.Flags().String("folder-id", "", "Folder ID to add items to")
+	// 	item.AddCommand(cmd)
+	// }()
 
 	// ItemAddFromPath
-	func() {
-		opts := ItemAddFromPathOptions{}
+	func() { // [X] use default opts; [X] struct tag metadata
+		opts, defaultErr := ItemAddFromPathOptions{}.WithDefaults()
 		cmd := &cobra.Command{
 			Use:   "path",
 			Short: "Add item from local path",
 			RunE: func(cmd *cobra.Command, args []string) error {
+				if defaultErr != nil {
+					return fmt.Errorf("Options Error: %w", defaultErr)
+				}
 				err := ItemAddFromPath(cfg.BaseURL(), opts)
 				if err != nil {
 					return fmt.Errorf("failed to add item from path: %w", err)
@@ -619,36 +673,39 @@ func ItemCmd() *cobra.Command {
 				return nil
 			},
 		}
-		f.BindStructToFlags(cmd, &opts)
+		f.BindStructFlags(cmd, &opts)
 		item.AddCommand(cmd)
 	}()
 
 	// ItemAddFromPaths
-	func() {
-		opts := []ItemAddFromPathOptions{}
-		cmd := &cobra.Command{
-			Use:   "paths",
-			Short: "Add multiple items from local paths",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				err := ItemAddFromPaths(cfg.BaseURL(), opts)
-				if err != nil {
-					return fmt.Errorf("failed to add items from paths: %w", err)
-				}
-				fmt.Println("Successfully added items from paths")
-				return nil
-			},
-		}
-		f.BindStructToFlags(cmd, &opts)
-		item.AddCommand(cmd)
-	}()
+	// func() { // [ ] use default opts; [ ] struct tag metadata
+	// 	opts := []ItemAddFromPathOptions{}
+	// 	cmd := &cobra.Command{
+	// 		Use:   "paths",
+	// 		Short: "Add multiple items from local paths",
+	// 		RunE: func(cmd *cobra.Command, args []string) error {
+	// 			err := ItemAddFromPaths(cfg.BaseURL(), opts)
+	// 			if err != nil {
+	// 				return fmt.Errorf("failed to add items from paths: %w", err)
+	// 			}
+	// 			fmt.Println("Successfully added items from paths")
+	// 			return nil
+	// 		},
+	// 	}
+	// 	f.BindStructFlags(cmd, &opts)
+	// 	item.AddCommand(cmd)
+	// }()
 
 	// ItemAddBookmark
-	func() {
-		opts := ItemAddBookmarkOptions{}
+	func() { // [X] use default opts; [X] struct tag metadata
+		opts, defaultErr := ItemAddBookmarkOptions{}.WithDefaults()
 		cmd := &cobra.Command{
 			Use:   "bookmark",
 			Short: "Add bookmark item",
 			RunE: func(cmd *cobra.Command, args []string) error {
+				if defaultErr != nil {
+					return fmt.Errorf("Options Error: %w", defaultErr)
+				}
 				err := ItemAddBookmark(cfg.BaseURL(), opts)
 				if err != nil {
 					return fmt.Errorf("failed to add bookmark: %w", err)
@@ -657,7 +714,7 @@ func ItemCmd() *cobra.Command {
 				return nil
 			},
 		}
-		f.BindStructToFlags(cmd, &opts)
+		f.BindStructFlags(cmd, &opts)
 		item.AddCommand(cmd)
 	}()
 
@@ -666,7 +723,7 @@ func ItemCmd() *cobra.Command {
 		ids := []string{}
 		cmd := &cobra.Command{
 			Use:   "delete",
-			Short: "Move items to trash",
+			Short: "Move item to the trash",
 			RunE: func(cmd *cobra.Command, args []string) error {
 				if len(ids) == 0 && len(args) > 0 {
 					ids = args
@@ -773,11 +830,14 @@ func ItemCmd() *cobra.Command {
 
 	// ItemUpdate
 	func() {
-		opts := ItemUpdateOptions{}
+		opts, defaultErr := ItemUpdateOptions{}.WithDefaults()
 		cmd := &cobra.Command{
 			Use:   "update",
 			Short: "Update item",
 			RunE: func(cmd *cobra.Command, args []string) error {
+				if defaultErr != nil {
+					return fmt.Errorf("Options Error: %w", defaultErr)
+				}
 				resp, err := ItemUpdate(cfg.BaseURL(), opts)
 				if err != nil {
 					return fmt.Errorf("failed to update item: %w", err)
@@ -786,7 +846,7 @@ func ItemCmd() *cobra.Command {
 				return nil
 			},
 		}
-		f.BindStructToFlags(cmd, &opts)
+		f.BindStructFlags(cmd, &opts)
 		item.AddCommand(cmd)
 	}()
 
