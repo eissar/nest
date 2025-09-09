@@ -87,7 +87,7 @@ type ListItem struct {
 // bulk (addFromUrls) does not include `star` or `folderId`
 // pointers represent optional keys and null represents unset
 type ItemAddFromUrlOptions struct {
-	URL              string            `json:"url" flagname:"u" flag:"url to item to add"`
+	URL              string            `json:"url" flag:"url to item to add"`
 	Name             string            `json:"name" flag:"name to use for item"`
 	Website          string            `json:"website,omitempty" flag:"associated website of item"`
 	Tags             []string          `json:"tags,omitempty" flag:"tags to apply to item"`
