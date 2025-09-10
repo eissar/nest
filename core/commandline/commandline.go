@@ -3,7 +3,6 @@ package commandline
 import (
 	"os"
 
-	f "github.com/eissar/nest/format"
 	"github.com/spf13/cobra"
 
 	"github.com/eissar/nest/api"

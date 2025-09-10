@@ -9,6 +9,7 @@ import (
 	"os"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/go-logfmt/logfmt"
