@@ -287,8 +287,57 @@ func FolderCmd() *cobra.Command {
 	var o f.FormatType
 
 	folder := &cobra.Command{
-		Use:   "folder",
+		Use:   "folder [id]",
 		Short: "Manage folders",
+		Long:  "use a subcommand or print details for a folder or smart-folder given a single positional ID argument.\nnote: does not find nested smart folders (wip)",
+
+		RunE: func(cmd *cobra.Command, args []string) error {
+			// no args
+			if len(args) == 0 {
+				cmd.Help()
+				return nil
+			}
+			// one positional arg
+			if len(args) == 1 {
+				targetId := args[0]
+				var matchedFolderDetail interface{} // zero value : nil
+
+				cfg := config.GetConfig()
+				detail, err := FolderList(cfg.BaseURL())
+				if err != nil {
+					return err
+				}
+				for _, folder := range detail {
+					if folder.ID == targetId {
+						matchedFolderDetail = folder
+						break
+					}
+				}
+
+				if matchedFolderDetail == nil {
+					// we can check if they entered a smart folder
+					info, err := LibraryInfo(cfg.BaseURL())
+					if err != nil {
+						return err
+					}
+					for _, folder := range info.SmartFolders {
+						if folder.ID == targetId {
+							matchedFolderDetail = folder
+							break
+						}
+					}
+				}
+				if matchedFolderDetail == nil {
+					// no matches.
+					return fmt.Errorf("Could not find any folder or smart folder matching id (%s)", targetId)
+				}
+
+				f.Format(o, matchedFolderDetail)
+				return nil
+			}
+
+			return nil
+		},
 	}
 	folder.PersistentFlags().VarP(&o, "format", "o", "output format")
 
@@ -339,6 +388,7 @@ func FolderCmd() *cobra.Command {
 	folder.AddCommand(&cobra.Command{
 		Use:   "recent",
 		Short: "List recently accessed folders",
+		Long:  "List recently accessed folders.\nDoes not enumerate `smart` folders (use nest lib info) for now.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			recent, err := FolderListRecent(cfg.BaseURL())
 			if err != nil {
