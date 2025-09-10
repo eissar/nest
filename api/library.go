@@ -90,6 +90,12 @@ type LibraryInfoResponse struct {
 //- [X] /api/library/switch
 //- [-] /api/library/icon
 
+func addLibFlags(cmd *cobra.Command, libraryPath *string) *cobra.Command {
+	if libraryPath != nil {
+	}
+	return cmd
+}
+
 func LibraryInfo(baseURL string) (*LibraryData, error) {
 	ep := endpoints.LibraryInfo
 	uri := baseURL + ep.Path
@@ -199,17 +205,10 @@ func LibraryIcon(baseURL string) (string, error) {
 	return currentLibraryPath, nil
 }
 
-func addLibFlags(cmd *cobra.Command, libraryPath *string) *cobra.Command {
-	if libraryPath != nil {
-		cmd.Flags().StringVarP(libraryPath, "librarypath", "L", "", "path to library")
-	}
-	return cmd
-}
 func LibraryCmd() *cobra.Command {
 	cfg := config.GetConfig()
 
 	var o f.FormatType
-	var libraryPath string
 
 	library := &cobra.Command{
 		Use:   "lib",
@@ -217,8 +216,8 @@ func LibraryCmd() *cobra.Command {
 	}
 	library.PersistentFlags().VarP(&o, "format", "o", "output format")
 
-	library.AddCommand(
-		&cobra.Command{
+	func() { // LibraryInfo
+		cmd := &cobra.Command{
 			Use:   "info",
 			Short: "Display current library details",
 			Args:  cobra.NoArgs,
@@ -230,11 +229,13 @@ func LibraryCmd() *cobra.Command {
 				f.Format(o, data)
 				return nil
 			},
-		},
-	)
+		}
 
-	library.AddCommand(
-		&cobra.Command{
+		library.AddCommand(cmd)
+	}()
+
+	func() { // LibraryHistory
+		cmd := &cobra.Command{
 			Use:   "history",
 			Short: "List libraries in the recent list in the menu bar > libraries",
 			Args:  cobra.NoArgs,
@@ -246,19 +247,31 @@ func LibraryCmd() *cobra.Command {
 				f.Format(o, data)
 				return nil
 			},
-		},
-	)
+		}
+		library.AddCommand(cmd)
+	}()
 
-	library.AddCommand(
-		addLibFlags(&cobra.Command{
+	func() { // LibrarySwitch
+		var libraryPath string
+
+		cmd := &cobra.Command{
 			Use:   "switch [library-path]",
 			Short: "Change active library to the given path",
-			Args:  cobra.ExactArgs(1),
+			Args:  cobra.MaximumNArgs(1),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				return LibrarySwitch(cfg.BaseURL(), libraryPath)
+				path := libraryPath
+				if len(args) > 0 {
+					path = args[0]
+				}
+				if path == "" {
+					return fmt.Errorf("library path is required")
+				}
+				return LibrarySwitch(cfg.BaseURL(), path)
 			},
-		}, &libraryPath),
-	)
+		}
+		cmd.Flags().StringVarP(&libraryPath, "librarypath", "L", "", "path to library")
+		library.AddCommand(cmd)
+	}()
 
 	// TODO: this endpoint always returns `library does not exist?`
 	// library.AddCommand(

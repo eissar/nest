@@ -98,20 +98,23 @@ type ItemAddFromUrlOptions struct {
 	Headers          map[string]string `json:"headers,omitempty" flag:"http headers to be sent with requests"`
 }
 
-func (o ItemAddFromUrlOptions) WithDefaults() (ItemAddFromUrlOptions, error) {
+func (o ItemAddFromUrlOptions) Validate() error {
 	if o.URL == "" {
-		return o, fmt.Errorf("ItemAddFromUrlOptions: url is required")
+		return fmt.Errorf("ItemAddFromUrlOptions: url is required")
 	}
+	return nil
+}
+
+func (o ItemAddFromUrlOptions) WithDefaults() ItemAddFromUrlOptions {
 	if o.Name == "" {
 		o.Name = o.URL
 	}
-	return o, nil
+	return o
 }
 
 // give better name
 type ItemAddBookmarkOptions struct {
-	URL string `json:"url" flag:"URL of the bookmark"`
-
+	URL              string   `json:"url" flag:"URL of the bookmark"`
 	Name             string   `json:"name" flag:"Display name for the bookmark"`
 	Base64           string   `json:"base64,omitempty" flag:"Optional base64-encoded data"`
 	Tags             []string `json:"tags,omitempty" flag:"Optional list of tag names"`
@@ -119,14 +122,18 @@ type ItemAddBookmarkOptions struct {
 	FolderID         string   `json:"folderId,omitempty" flag:"Optional ID of target folder to place the bookmark"`
 }
 
-func (o ItemAddBookmarkOptions) WithDefaults() (ItemAddBookmarkOptions, error) {
+func (o ItemAddBookmarkOptions) Validate() error {
 	if o.URL == "" {
-		return o, fmt.Errorf("ItemAddBookmarkOptions: url is required")
+		return fmt.Errorf("ItemAddBookmarkOptions: url is required")
 	}
+	return nil
+}
+
+func (o ItemAddBookmarkOptions) WithDefaults() ItemAddBookmarkOptions {
 	if o.Name == "" {
 		o.Name = o.URL
 	}
-	return o, nil
+	return o
 }
 
 // pointers represent optional keys and null represents unset
@@ -138,14 +145,18 @@ type ItemUpdateOptions struct {
 	Star       *int      `json:"star" flag:"star rating from 1-5, nil for no rating"`
 }
 
-func (o ItemUpdateOptions) WithDefaults() (ItemUpdateOptions, error) {
+// func (o ItemUpdateOptions) WithDefaults() ItemUpdateOptions {
+// 	return o
+// }
+
+func (o ItemUpdateOptions) Validate() error {
 	if o.ID == "" {
-		return o, fmt.Errorf("ItemUpdateOptions: id is required")
+		return fmt.Errorf("ItemUpdateOptions: id is required")
 	}
 	if o.Tags == nil && o.Annotation == nil && o.URL == nil && o.Star == nil {
-		return o, fmt.Errorf("ItemUpdateOptions: no updates specified - at least one field must be set")
+		return fmt.Errorf("ItemUpdateOptions: no updates specified - at least one field must be set")
 	}
-	return o, nil
+	return nil
 }
 
 // no folder Id
@@ -180,16 +191,18 @@ type ItemAddFromPathOptions struct {
 	FolderId   string   `json:"folderId,omitempty" flag:"If this parameter is defined, the image will be added to the corresponding folder."`
 }
 
-// WithDefaults returns a validated copy of the options with all defaults applied.
-// It checks that Path is set and valid.
-func (o ItemAddFromPathOptions) WithDefaults() (ItemAddFromPathOptions, error) {
+// func (o ItemAddFromPathOptions) WithDefaults() ItemAddFromPathOptions {
+// 	return o
+// }
+
+func (o ItemAddFromPathOptions) Validate() error {
 	if o.Path == "" {
-		return o, fmt.Errorf("ItemAddFromPathOptions: path is required")
+		return fmt.Errorf("ItemAddFromPathOptions: path is required")
 	}
 	if _, err := os.Stat(o.Path); err != nil {
-		return o, fmt.Errorf("ItemAddFromPathOptions: invalid path: %w", err)
+		return fmt.Errorf("ItemAddFromPathOptions: invalid path: %w", err)
 	}
-	return o, nil
+	return nil
 }
 
 type ThumbnailData struct {
@@ -613,13 +626,13 @@ func ItemCmd() *cobra.Command {
 
 	// ItemAddFromUrl
 	func() { // [X] use default opts; [X] struct tag metadata
-		opts, defaultErr := ItemAddFromUrlOptions{}.WithDefaults()
+		opts := ItemAddFromUrlOptions{}.WithDefaults()
 		cmd := &cobra.Command{
 			Use:   "url [a]",
 			Short: "Add item from URL",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if defaultErr != nil {
-					return defaultErr // should be good enough
+				if err := opts.Validate(); err != nil {
+					return err
 				}
 
 				err := ItemAddFromUrl(cfg.BaseURL(), opts)
@@ -657,14 +670,15 @@ func ItemCmd() *cobra.Command {
 
 	// ItemAddFromPath
 	func() { // [X] use default opts; [X] struct tag metadata
-		opts, defaultErr := ItemAddFromPathOptions{}.WithDefaults()
+		opts := ItemAddFromPathOptions{}
 		cmd := &cobra.Command{
 			Use:   "path",
 			Short: "Add item from local path",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if defaultErr != nil {
-					return defaultErr // should be good enough
+				if err := opts.Validate(); err != nil {
+					return err
 				}
+
 				err := ItemAddFromPath(cfg.BaseURL(), opts)
 				if err != nil {
 					return fmt.Errorf("failed to add item from path: %w", err)
@@ -698,15 +712,17 @@ func ItemCmd() *cobra.Command {
 
 	// ItemAddBookmark
 	func() { // [X] use default opts; [X] struct tag metadata
-		opts, defaultErr := ItemAddBookmarkOptions{}.WithDefaults()
+		opts := ItemAddBookmarkOptions{}.WithDefaults()
 		cmd := &cobra.Command{
 			Use:   "bookmark",
 			Short: "Add bookmark item",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if defaultErr != nil {
-					return defaultErr // should be good enough
+				if err := opts.Validate(); err != nil {
+					return err
 				}
+
 				err := ItemAddBookmark(cfg.BaseURL(), opts)
+
 				if err != nil {
 					return fmt.Errorf("failed to add bookmark: %w", err)
 				}
@@ -830,14 +846,15 @@ func ItemCmd() *cobra.Command {
 
 	// ItemUpdate
 	func() {
-		opts, defaultErr := ItemUpdateOptions{}.WithDefaults()
+		opts := ItemUpdateOptions{}
 		cmd := &cobra.Command{
 			Use:   "update",
 			Short: "Update item",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if defaultErr != nil {
-					return defaultErr // should be good enough
+				if err := opts.Validate(); err != nil {
+					return err
 				}
+
 				resp, err := ItemUpdate(cfg.BaseURL(), opts)
 				if err != nil {
 					return fmt.Errorf("failed to update item: %w", err)
