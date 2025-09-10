@@ -10,11 +10,6 @@ import (
 	"github.com/eissar/nest/core"
 )
 
-// appCmdOpts groups options specific to the “app” commands.
-type apiCmdOpts struct {
-	format f.FormatType
-}
-
 //	func SubCmdApi() *cobra.Command {
 //		var apiCmd = &cobra.Command{Use: "api"}
 //
