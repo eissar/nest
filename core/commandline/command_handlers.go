@@ -16,6 +16,7 @@ import (
 	f "github.com/eissar/nest/format"
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/eissar/nest/plugins/nest"
+	"github.com/eissar/nest/plugins/ytdlp"
 	"github.com/spf13/cobra"
 )
 
@@ -36,21 +37,6 @@ func List() *cobra.Command {
 		Use:   "list",
 		Short: "Lists items from the Eagle library",
 		Long:  "Retrieves and prints a list of items from the Eagle library in logfmt.\n",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg := config.GetConfig()
-			opts := api.ItemListOptions{
-				Limit:   limit,
-				Keyword: filter,
-			}
-
-			data, err := api.ItemList(cfg.BaseURL(), opts)
-			if err != nil {
-				return fmt.Errorf("while retrieving items: %w", err)
-			}
-
-			f.Format(o, data)
-			return nil
-		},
 	}
 
 	// TODO: improve argument parsing to accept commas like "1, 2" and "1,2"
@@ -62,6 +48,22 @@ func List() *cobra.Command {
 	listCmd.Flags().StringVarP(&properties, "properties", "p", "", "select properties to include in the output: "+f.HelpFmt(&api.ListItem{})+" default:"+f.HelpFmt(&defaultFields))
 
 	listCmd.Flags().VarP(&o, "format", "o", "output format")
+
+	listCmd.RunE = func(cmd *cobra.Command, args []string) error {
+		cfg := config.GetConfig()
+		opts := api.ItemListOptions{
+			Limit:   limit,
+			Keyword: filter,
+		}
+
+		data, err := api.ItemList(cfg.BaseURL(), opts)
+		if err != nil {
+			return fmt.Errorf("while retrieving items: %w", err)
+		}
+
+		f.Format(o, data)
+		return nil
+	}
 
 	return listCmd
 }
@@ -160,11 +162,12 @@ func Shutdown() *cobra.Command {
 func CmdAdd() *cobra.Command {
 	// These variables will hold the values from the flags.
 	var addName, addWebsite, addAnnotation, addFolderId string
-	var addPath string
+	var addTarget string
+	var yt bool // ?
 	addCmd := &cobra.Command{
-		Use:   "add [FILEPATH]",
-		Short: "Adds a file to Eagle",
-		Long: `Adds a file to your Eagle library with optional metadata.
+		Use:   "add [TARGET]",
+		Short: "Adds a item to Eagle",
+		Long: `Adds a item to your Eagle library with optional metadata.
 
 The path to the file can be provided as the first argument directly
 or by using the --file flag.`,
@@ -176,23 +179,26 @@ or by using the --file flag.`,
 				if cmd.Flags().Changed("file") {
 					return errors.New("cannot use both a positional argument and the --file flag")
 				}
-				addPath = args[0]
+				addTarget = args[0]
 			}
 
-			if addPath == "" {
+			if addTarget == "" {
 				return errors.New("a filepath must be provided either as an argument or with the --file flag")
 			}
 
+			if yt { // TODO: move
+				return nil
+			}
 			var err error
-			addPath, err = filepath.Abs(addPath)
+			addTarget, err = filepath.Abs(addTarget)
 			if err != nil {
 				return err
 			}
 
-			_, err = os.Stat(addPath)
+			_, err = os.Stat(addTarget)
 			if err != nil {
 				if errors.Is(err, os.ErrNotExist) {
-					return fmt.Errorf("addPath: invalid path at %s (invalid or unavailable filepath)", addPath)
+					return fmt.Errorf("addPath: invalid path at %s (invalid or unavailable filepath)", addTarget)
 				}
 			}
 			return nil
@@ -201,8 +207,14 @@ or by using the --file flag.`,
 
 			cfg := config.GetConfig()
 
+			if yt {
+				ytdlp.AssertAvailable()
+				ytdlp.Get(addTarget)
+				return nil
+			}
+
 			opts := api.ItemAddFromPathOptions{
-				Path:       addPath,
+				Path:       addTarget,
 				Name:       addName,
 				Website:    addWebsite,
 				Annotation: addAnnotation,
@@ -217,8 +229,9 @@ or by using the --file flag.`,
 			return nil
 		},
 	}
+	addCmd.Flags().BoolVarP(&yt, "ytdlp", "y", false, "use ytdlp to download the item.")
 	// Define all the flags for the 'add' command
-	addCmd.Flags().StringVarP(&addPath, "file", "f", "", "Filepath to add to Eagle")
+	addCmd.Flags().StringVarP(&addTarget, "file", "f", "", "Filepath to add to Eagle")
 	addCmd.Flags().StringVarP(&addName, "name", "n", "", "Set a custom name for the item")
 	addCmd.Flags().StringVar(&addWebsite, "website", "", "Set a source website URL")
 	addCmd.Flags().StringVar(&addAnnotation, "annotation", "", "Add an annotation or description")
