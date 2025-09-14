@@ -363,6 +363,7 @@ func CmdRemove() *cobra.Command {
 func Switch() *cobra.Command {
 	var timeout int
 	var targetLibraryName string
+	var targetLibraryPath FilePath
 
 	cfg := config.GetConfig()
 
@@ -380,29 +381,50 @@ func Switch() *cobra.Command {
 
 			if errors.Is(err, api.LibraryIsAlreadyTargetErr) {
 				fmt.Println(err.Error())
+				os.Exit(1)
 			}
 
+			fmt.Println()
 		}
 	}
 	switchCmd := &cobra.Command{
-		Use:   "switch [LIBRARY_NAME]",
+		Use:   "switch [LIBRARY_NAME|LIBRARY_PATH]",
 		Short: "Switches the active Eagle library",
 		Long:  `Switches to a different Eagle library from your history by its name.`,
 		Args:  cobra.ExactArgs(1),
 		PreRunE: func(cmd *cobra.Command, args []string) error {
-			if !cmd.Flags().Changed("name") {
-				// flag was not set with flag
+			if !cmd.Flags().Changed("name") && !cmd.Flags().Changed("path") {
+				// no explicit flags
 				targetLibraryName = args[0]
 			}
-
 			if targetLibraryName == "" {
-				return errors.New("name should not be an empty string")
+				return errors.New("input cannot be an empty string")
+			}
+			// if the input ends with .library, check if it is a path.
+			if strings.HasSuffix(strings.ToUpper(targetLibraryName), ".LIBRARY") {
+				if strings.ContainsAny(targetLibraryName, "\\/") {
+					targetLibraryPath = FilePath(targetLibraryName)
+				}
+				// TODO: probably don't need to switch to libraries in cwd
 			}
 
 			return nil
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
-			targetLibraryName = strings.ToUpper(targetLibraryName)
+			// prefer path > name
+			if targetLibraryPath.String() != "" {
+				for _, lib := range recentLibraries {
+					// lib can be backslash `\`
+					if filepath.ToSlash(lib) == targetLibraryPath.String() {
+						switchTo(lib)
+						return nil
+					}
+				}
+				return errors.New("library not found in recentLibraries (check available libraries in eagle GUI)")
+			}
+
+			targetLibraryName = strings.ToUpper(targetLibraryName) // set to upper for comparisons
+			// name in recentLibraries -> switchTo
 			for i, lib := range recentLibraries {
 				lib = strings.ToUpper(lib)
 
@@ -425,15 +447,13 @@ func Switch() *cobra.Command {
 					return nil
 				}
 			}
-			// not found in recentLibraries
-			return errors.New("invalid library name: library must be present in recentLibraries (check available libraries in eagle GUI)")
-
-			// return nil
+			return errors.New("library must be present in recentLibraries (check available libraries in eagle GUI)")
 		},
 	}
 
 	switchCmd.Flags().IntVarP(&timeout, "timeout", "t", 10, "The maximum amount of time to wait for library to switch.")
 	switchCmd.Flags().StringVarP(&targetLibraryName, "name", "n", "", "name of the library to switch to")
+	switchCmd.Flags().VarP(&targetLibraryPath, "path", "p", "path to the library to switch to")
 
 	return switchCmd
 }
