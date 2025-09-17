@@ -53,9 +53,9 @@ func RegisterGroupRoutes(server *echo.Echo) {
 		server.Group("/eagle"),
 	)
 
-	api.RegisterGroupRoutes(
-		server.Group("/api"),
-	)
+	// api.RegisterGroupRoutes(
+	// 	server.Group("/api"),
+	// )
 
 	templates.RegisterTemplateRoutes(
 		server.Group("/template"),
@@ -66,7 +66,7 @@ func RegisterGroupRoutes(server *echo.Echo) {
 func RegisterRootRoutes(nestConfig config.NestConfig, server *echo.Echo) {
 	// ROOT ROUTES
 	nest.RegisterRootRoutes(nestConfig, server)
-	api.RegisterRootRoutes(server)
+	// api.RegisterRootRoutes(server)
 	//server.GET("/eagle\\://item/:itemId", ServeThumbnailHandler(&n))
 
 	// ServerShutdown godoc

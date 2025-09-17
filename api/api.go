@@ -16,7 +16,6 @@ import (
 	"syscall"
 
 	"github.com/eissar/nest/api/endpoints"
-	"github.com/labstack/echo/v4"
 	"golang.org/x/sys/windows"
 )
 
@@ -209,8 +208,7 @@ func invokeEagleAPI[T any](req *http.Request, v *T) error {
 		var error_message any
 		err = json.NewDecoder(resp.Body).Decode(&error_message)
 		if err != nil {
-			// Warning: failed to decode JSON response, attempting to read as string
-			fmt.Println("[WARN] Could not decode error message.")
+			fmt.Println("[WARN] Could not decode error message. attempting to read response as string.")
 			bodyBytes, _ := io.ReadAll(resp.Body)
 			error_message = string(bodyBytes)
 		}
@@ -247,24 +245,3 @@ func invokeEagleAPI[T any](req *http.Request, v *T) error {
 
 	return nil
 }
-
-// #region routes
-
-func wrapperHandler(c echo.Context) error {
-	if c.Request().Method == "GET" {
-	}
-	return c.String(200, c.Request().URL.Path)
-}
-
-func RegisterGroupRoutes(g *echo.Group) {
-	g.GET("*", wrapperHandler)
-	//g.GET("/item/addFromURL", handleAddItemFromUrl)
-}
-
-func RegisterRootRoutes(server *echo.Echo) {
-	server.GET("/http\\:*", func(c echo.Context) error {
-		return c.String(200, c.Request().URL.Path)
-	})
-}
-
-// #endregion routes
