@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/eissar/nest/api"
+	"github.com/eissar/eagle-go"
 	"github.com/eissar/nest/config"
 	f "github.com/eissar/nest/format"
 	"github.com/spf13/cobra"
@@ -32,7 +32,7 @@ func ApplicationCmd() *cobra.Command {
 			Short: "Display detailed information about the running Eagle application.",
 			Long:  "Retrieves and prints detailed information about the Eagle application currently running. ",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				v, err := api.ApplicationInfo(cfg.BaseURL())
+				v, err := eagle.ApplicationInfo(cfg.BaseURL())
 
 				if err != nil {
 					log.Fatalf("Application: %v", err)
@@ -100,7 +100,7 @@ func FolderCmd() *cobra.Command {
 				var matchedFolderDetail interface{} // zero value : nil
 
 				cfg := config.GetConfig()
-				detail, err := api.FolderList(cfg.BaseURL())
+				detail, err := eagle.FolderList(cfg.BaseURL())
 				if err != nil {
 					return err
 				}
@@ -113,7 +113,7 @@ func FolderCmd() *cobra.Command {
 
 				if matchedFolderDetail == nil {
 					// we can check if they entered a smart folder
-					info, err := api.LibraryInfo(cfg.BaseURL())
+					info, err := eagle.LibraryInfo(cfg.BaseURL())
 					if err != nil {
 						return err
 					}
@@ -149,7 +149,7 @@ func FolderCmd() *cobra.Command {
 			Short: "Create a new folder",
 			Args:  cobra.ExactArgs(1),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				resp, err := api.FolderCreate(cfg.BaseURL(), name)
+				resp, err := eagle.FolderCreate(cfg.BaseURL(), name)
 				if err != nil {
 					log.Fatalf("FolderCreate: %v", err)
 				}
@@ -164,7 +164,7 @@ func FolderCmd() *cobra.Command {
 			Short: "Rename an existing folder",
 			Args:  cobra.ExactArgs(2),
 			RunE: func(cmd *cobra.Command, args []string) error {
-				if err := api.FolderRename(cfg.BaseURL(), id, newName); err != nil {
+				if err := eagle.FolderRename(cfg.BaseURL(), id, newName); err != nil {
 					log.Fatalf("FolderRename: %v", err)
 				}
 				return nil
@@ -175,7 +175,7 @@ func FolderCmd() *cobra.Command {
 		Use:   "update <id> <new-name> <new-description> <new-color>",
 		Short: "Update folder metadata",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if err := api.FolderUpdate(cfg.BaseURL(), id, newName, newDescription, newColor); err != nil {
+			if err := eagle.FolderUpdate(cfg.BaseURL(), id, newName, newDescription, newColor); err != nil {
 				log.Fatalf("FolderUpdate: %v", err)
 			}
 			return nil
@@ -187,7 +187,7 @@ func FolderCmd() *cobra.Command {
 		Short: "List recently accessed folders",
 		Long:  "List recently accessed folders.\nDoes not enumerate `smart` folders (use nest lib info) for now.",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			recent, err := api.FolderListRecent(cfg.BaseURL())
+			recent, err := eagle.FolderListRecent(cfg.BaseURL())
 			if err != nil {
 				log.Fatalf("FolderListRecent: %v", err)
 			}
@@ -199,7 +199,7 @@ func FolderCmd() *cobra.Command {
 		&cobra.Command{Use: "list",
 			Short: "List all folders",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				list, err := api.FolderList(cfg.BaseURL())
+				list, err := eagle.FolderList(cfg.BaseURL())
 				if err != nil {
 					log.Fatalf("FolderList: %v", err)
 				}
@@ -238,12 +238,12 @@ func ItemCmd() *cobra.Command {
 	item.PersistentFlags().VarP(&o, "format", "o", "output format")
 
 	func() { // [X] use default opts; [X] struct tag metadata
-		opts := api.ItemListOptions{}.WithDefaults()
+		opts := eagle.ItemListOptions{}.WithDefaults()
 		cmd := &cobra.Command{
 			Use:   "list",
 			Short: "List Items",
 			RunE: func(cmd *cobra.Command, args []string) error {
-				list, err := api.ItemList(cfg.BaseURL(), opts)
+				list, err := eagle.ItemList(cfg.BaseURL(), opts)
 				if err != nil {
 					log.Fatalf("FolderList: %v", err)
 				}
@@ -259,7 +259,7 @@ func ItemCmd() *cobra.Command {
 
 	// ItemAddFromUrl
 	func() { // [X] use default opts; [X] struct tag metadata
-		opts := api.ItemAddFromUrlOptions{}.WithDefaults()
+		opts := eagle.ItemAddFromUrlOptions{}.WithDefaults()
 		cmd := &cobra.Command{
 			Use:   "url [a]",
 			Short: "Add item from URL",
@@ -268,7 +268,7 @@ func ItemCmd() *cobra.Command {
 					return err
 				}
 
-				err := api.ItemAddFromUrl(cfg.BaseURL(), opts)
+				err := eagle.ItemAddFromUrl(cfg.BaseURL(), opts)
 				if err != nil {
 					return fmt.Errorf("failed to add item from URL: %w", err)
 				}
@@ -303,7 +303,7 @@ func ItemCmd() *cobra.Command {
 
 	// ItemAddFromPath
 	func() { // [X] use default opts; [X] struct tag metadata
-		opts := api.ItemAddFromPathOptions{}
+		opts := eagle.ItemAddFromPathOptions{}
 		cmd := &cobra.Command{
 			Use:   "path",
 			Short: "Add item from local path",
@@ -312,7 +312,7 @@ func ItemCmd() *cobra.Command {
 					return err
 				}
 
-				err := api.ItemAddFromPath(cfg.BaseURL(), opts)
+				err := eagle.ItemAddFromPath(cfg.BaseURL(), opts)
 				if err != nil {
 					return fmt.Errorf("failed to add item from path: %w", err)
 				}
@@ -345,7 +345,7 @@ func ItemCmd() *cobra.Command {
 
 	// ItemAddBookmark
 	func() { // [X] use default opts; [X] struct tag metadata
-		opts := api.ItemAddBookmarkOptions{}.WithDefaults()
+		opts := eagle.ItemAddBookmarkOptions{}.WithDefaults()
 		cmd := &cobra.Command{
 			Use:   "bookmark",
 			Short: "Add bookmark item",
@@ -354,7 +354,7 @@ func ItemCmd() *cobra.Command {
 					return err
 				}
 
-				err := api.ItemAddBookmark(cfg.BaseURL(), opts)
+				err := eagle.ItemAddBookmark(cfg.BaseURL(), opts)
 
 				if err != nil {
 					return fmt.Errorf("failed to add bookmark: %w", err)
@@ -377,7 +377,7 @@ func ItemCmd() *cobra.Command {
 				if len(ids) == 0 && len(args) > 0 {
 					ids = args
 				}
-				err := api.ItemMoveToTrash(cfg.BaseURL(), ids)
+				err := eagle.ItemMoveToTrash(cfg.BaseURL(), ids)
 				if err != nil {
 					return fmt.Errorf("failed to move items to trash: %w", err)
 				}
@@ -399,7 +399,7 @@ func ItemCmd() *cobra.Command {
 				if id == "" && len(args) > 0 {
 					id = args[0]
 				}
-				err := api.ItemRefreshPalette(cfg.BaseURL(), id)
+				err := eagle.ItemRefreshPalette(cfg.BaseURL(), id)
 				if err != nil {
 					return fmt.Errorf("failed to refresh palette: %w", err)
 				}
@@ -421,7 +421,7 @@ func ItemCmd() *cobra.Command {
 				if id == "" && len(args) > 0 {
 					id = args[0]
 				}
-				resp, err := api.ItemInfo(cfg.BaseURL(), id)
+				resp, err := eagle.ItemInfo(cfg.BaseURL(), id)
 				if err != nil {
 					return fmt.Errorf("failed to get item info: %w", err)
 				}
@@ -443,7 +443,7 @@ func ItemCmd() *cobra.Command {
 				if id == "" && len(args) > 0 {
 					id = args[0]
 				}
-				err := api.ItemRefreshThumbnail(cfg.BaseURL(), id)
+				err := eagle.ItemRefreshThumbnail(cfg.BaseURL(), id)
 				if err != nil {
 					return fmt.Errorf("failed to refresh thumbnail: %w", err)
 				}
@@ -465,7 +465,7 @@ func ItemCmd() *cobra.Command {
 				if itemId == "" && len(args) > 0 {
 					itemId = args[0]
 				}
-				thumbnail, err := api.ItemThumbnail(cfg.BaseURL(), itemId)
+				thumbnail, err := eagle.ItemThumbnail(cfg.BaseURL(), itemId)
 				if err != nil {
 					return fmt.Errorf("failed to get thumbnail: %w", err)
 				}
@@ -479,7 +479,7 @@ func ItemCmd() *cobra.Command {
 
 	// ItemUpdate
 	func() {
-		opts := api.ItemUpdateOptions{}
+		opts := eagle.ItemUpdateOptions{}
 		cmd := &cobra.Command{
 			Use:   "update",
 			Short: "Update item",
@@ -488,7 +488,7 @@ func ItemCmd() *cobra.Command {
 					return err
 				}
 
-				resp, err := api.ItemUpdate(cfg.BaseURL(), opts)
+				resp, err := eagle.ItemUpdate(cfg.BaseURL(), opts)
 				if err != nil {
 					return fmt.Errorf("failed to update item: %w", err)
 				}
@@ -520,7 +520,7 @@ func LibraryCmd() *cobra.Command {
 			Short: "Display current library details",
 			Args:  cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				data, err := api.LibraryInfo(cfg.BaseURL())
+				data, err := eagle.LibraryInfo(cfg.BaseURL())
 				if err != nil {
 					return err
 				}
@@ -538,7 +538,7 @@ func LibraryCmd() *cobra.Command {
 			Short: "List libraries in the recent list in the menu bar > libraries",
 			Args:  cobra.NoArgs,
 			RunE: func(cmd *cobra.Command, args []string) error {
-				data, err := api.LibraryHistory(cfg.BaseURL())
+				data, err := eagle.LibraryHistory(cfg.BaseURL())
 				if err != nil {
 					return err
 				}
@@ -564,7 +564,7 @@ func LibraryCmd() *cobra.Command {
 				if path == "" {
 					return fmt.Errorf("library path is required")
 				}
-				return api.LibrarySwitch(cfg.BaseURL(), path)
+				return eagle.LibrarySwitch(cfg.BaseURL(), path)
 			},
 		}
 		cmd.Flags().StringVarP(&libraryPath, "librarypath", "L", "", "path to library")

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/eissar/nest/api"
+	"github.com/eissar/eagle-go"
 )
 
 func OpenURI(uri string) error {
@@ -89,8 +89,8 @@ func Reveal(v string) error {
 	}
 
 	if !is_path {
-		fmt.Printf("api.IsValidItemID(%v): %v\n", pth, api.IsValidItemID(v))
-		if api.IsValidItemID(v) {
+		fmt.Printf("api.IsValidItemID(%v): %v\n", pth, eagle.IsValidItemID(v))
+		if eagle.IsValidItemID(v) {
 			is_id = true
 		}
 	}

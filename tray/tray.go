@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"fyne.io/systray"
-	"github.com/eissar/nest/api"
+	"github.com/eissar/eagle-go"
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/labstack/echo/v4"
@@ -67,7 +67,7 @@ func onReady() {
 	setTitle()
 
 	// TODO: Make this use or abide by cfg.Libraries.AutoLoad preference
-	libs, err := api.LibraryHistory(cfg.BaseURL())
+	libs, err := eagle.LibraryHistory(cfg.BaseURL())
 	if err != nil {
 		fmt.Printf("WARN: no library history could be found. library paths are missing.")
 	}

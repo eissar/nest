@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eissar/nest/api"
+	"github.com/eissar/eagle-go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -54,7 +54,7 @@ func isServerRunning(url string) bool {
 
 // TODO: add to command line (all below)
 func removeItem(baseUrl string, itemIds []string) error {
-	err := api.ItemMoveToTrash(baseUrl, itemIds)
+	err := eagle.ItemMoveToTrash(baseUrl, itemIds)
 	if err != nil {
 		return fmt.Errorf("failed to move item to trash: %s", err)
 	}

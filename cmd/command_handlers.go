@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eissar/nest/api"
+	"github.com/eissar/eagle-go"
 	"github.com/eissar/nest/config"
 	f "github.com/eissar/nest/format"
 	"github.com/eissar/nest/plugins/launch"
@@ -45,18 +45,18 @@ func List() *cobra.Command {
 	// we could make properties a positional argument, but I don't see the benefit
 	listCmd.Flags().IntVarP(&limit, "limit", "l", 10, "The maximum number of items to return")
 	listCmd.Flags().StringVarP(&filter, "filter", "f", "", "Filter items by keyword(s)")
-	listCmd.Flags().StringVarP(&properties, "properties", "p", "", "select properties to include in the output: "+f.HelpFmt(&api.ListItem{})+" default:"+f.HelpFmt(&defaultFields))
+	listCmd.Flags().StringVarP(&properties, "properties", "p", "", "select properties to include in the output: "+f.HelpFmt(&eagle.ListItem{})+" default:"+f.HelpFmt(&defaultFields))
 
 	listCmd.Flags().VarP(&o, "format", "o", "output format")
 
 	listCmd.RunE = func(cmd *cobra.Command, args []string) error {
 		cfg := config.GetConfig()
-		opts := api.ItemListOptions{
+		opts := eagle.ItemListOptions{
 			Limit:   limit,
 			Keyword: filter,
 		}
 
-		data, err := api.ItemList(cfg.BaseURL(), opts)
+		data, err := eagle.ItemList(cfg.BaseURL(), opts)
 		if err != nil {
 			return fmt.Errorf("while retrieving items: %w", err)
 		}
@@ -213,7 +213,7 @@ or by using the --file flag.`,
 				return nil
 			}
 
-			opts := api.ItemAddFromPathOptions{
+			opts := eagle.ItemAddFromPathOptions{
 				Path:       addTarget,
 				Name:       addName,
 				Website:    addWebsite,
@@ -221,7 +221,7 @@ or by using the --file flag.`,
 				FolderId:   addFolderId,
 			}
 
-			if err := api.ItemAddFromPath(cfg.BaseURL(), opts); err != nil {
+			if err := eagle.ItemAddFromPath(cfg.BaseURL(), opts); err != nil {
 				return err
 			}
 
@@ -256,13 +256,13 @@ Provide the paths to the files as arguments separated by spaces.`,
 			pths := args
 
 			cfg := config.GetConfig()
-			opts := []api.ItemAddFromPathOptions{}
+			opts := []eagle.ItemAddFromPathOptions{}
 
 			for _, v := range pths {
-				opts = append(opts, api.ItemAddFromPathOptions{Path: v})
+				opts = append(opts, eagle.ItemAddFromPathOptions{Path: v})
 			}
 
-			if err := api.ItemAddFromPaths(cfg.BaseURL(), opts); err != nil {
+			if err := eagle.ItemAddFromPaths(cfg.BaseURL(), opts); err != nil {
 				return fmt.Errorf("error while adding items in batch: %w", err)
 			}
 
@@ -283,7 +283,7 @@ func RecentLibraries() *cobra.Command {
 			//
 			// fmt.Print(cfg.Libraries)
 
-			recentLibraries, err := api.LibraryHistory(cfg.BaseURL())
+			recentLibraries, err := eagle.LibraryHistory(cfg.BaseURL())
 			if err != nil {
 				log.Fatalf("could not retrieve recent libaries err=%s", err.Error())
 			}
@@ -344,7 +344,7 @@ func CmdRemove() *cobra.Command {
 				return fmt.Errorf("error removing items: %w", err)
 			}
 
-			info, err := api.ItemInfo(cfg.BaseURL(), removeItemIds[0])
+			info, err := eagle.ItemInfo(cfg.BaseURL(), removeItemIds[0])
 			fmt.Println(info)
 			fmt.Printf("Items with IDs %v moved to Trash.\n", removeItemIds)
 			if err != nil {
@@ -368,7 +368,7 @@ func Switch() *cobra.Command {
 	cfg := config.GetConfig()
 
 	// TODO: use instead cfg.Libraries
-	recentLibraries, err := api.LibraryHistory(cfg.BaseURL())
+	recentLibraries, err := eagle.LibraryHistory(cfg.BaseURL())
 	if err != nil {
 		log.Fatalf("could not retrieve recent libaries err=%s", err.Error())
 	}
@@ -379,7 +379,7 @@ func Switch() *cobra.Command {
 		// err := api.SwitchLibrary(cfg.BaseURL(), libraryPath)
 		if err != nil {
 
-			if errors.Is(err, api.LibraryIsAlreadyTargetErr) {
+			if errors.Is(err, eagle.LibraryIsAlreadyTargetErr) {
 				fmt.Println(err.Error())
 				os.Exit(1)
 			}

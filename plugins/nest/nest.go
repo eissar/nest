@@ -13,7 +13,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/eissar/nest/api"
+	"github.com/eissar/eagle-go"
 	"github.com/eissar/nest/config"
 	"github.com/eissar/nest/plugins/launch"
 	"github.com/eissar/nest/plugins/pwsh"
@@ -79,7 +79,7 @@ func RegisterGroupRoutes(g *echo.Group) {
 	g.GET("/isValid/:id", func(c echo.Context) error {
 		id := c.Param("id")
 
-		if api.IsValidItemID(id) {
+		if eagle.IsValidItemID(id) {
 			return c.JSON(200, validResponse{Valid: true})
 		}
 		return c.JSON(200, validResponse{Valid: false})
@@ -253,7 +253,7 @@ func pollForSwitch(c context.Context, wg *sync.WaitGroup, pollingCh chan bool, t
 		case <-t.C: // tick
 			currLib, err := CurrentLibraryPath()
 			if err != nil {
-				if errors.Is(err, api.EagleNotOpenOrUnavailableErr) {
+				if errors.Is(err, eagle.EagleNotOpenOrUnavailableErr) {
 					messageCh <- "Eagle not open or unavailable (possibly in loading state)"
 				} else {
 					messageCh <- fmt.Sprintf("warning err=%v\n", err)
@@ -287,13 +287,13 @@ func LibrarySwitchSync(baseUrl string, libraryPath string, timeout int) error {
 	libraryPath = strings.TrimSuffix(filepath.Clean(libraryPath), `\`)
 
 	if currLibraryPath == libraryPath {
-		return api.GetCurrentLibraryIsAlreadyTargetError(currLibraryPath)
+		return eagle.GetCurrentLibraryIsAlreadyTargetError(currLibraryPath)
 	}
 
 	// switch library
 	timeoutCh := time.After(time.Duration(timeout) * time.Second) // timeout
 
-	err = api.LibrarySwitch(baseUrl, libraryPath)
+	err = eagle.LibrarySwitch(baseUrl, libraryPath)
 	if err != nil {
 		return fmt.Errorf("couldn't switch to lib=%s err=%w", libraryPath, err)
 	}
@@ -317,9 +317,9 @@ func LibrarySwitchSync(baseUrl string, libraryPath string, timeout int) error {
 }
 
 // returns current library path and name
-func CurrentLibrary() (*api.Library, error) {
+func CurrentLibrary() (*eagle.Library, error) {
 	cfg := config.GetConfig()
-	libInfo, err := api.LibraryInfo(cfg.BaseURL())
+	libInfo, err := eagle.LibraryInfo(cfg.BaseURL())
 	if err != nil {
 		return nil, fmt.Errorf("error getting library info err=%w", err)
 	}
@@ -339,7 +339,7 @@ func CurrentLibraryPath() (string, error) {
 
 func CurrentLibraryName() (string, error) {
 	cfg := config.GetConfig()
-	libInfo, err := api.LibraryInfo(cfg.BaseURL())
+	libInfo, err := eagle.LibraryInfo(cfg.BaseURL())
 	if err != nil {
 		return "", fmt.Errorf("error getting library info err=%w", err)
 	}

@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/eissar/nest/api"
+	"github.com/eissar/eagle-go"
 	"github.com/eissar/nest/config"
 )
 
@@ -124,7 +124,7 @@ type ThumbnailData struct {
 }
 
 func GetEagleThumbnail(cfg *config.NestConfig, itemId string) (string, error) {
-	thumbnail, err := api.ItemThumbnail(cfg.BaseURL(), itemId)
+	thumbnail, err := eagle.ItemThumbnail(cfg.BaseURL(), itemId)
 	if err != nil {
 		return "", fmt.Errorf("getEagleThumbnail: err=%w", err)
 	}
@@ -200,7 +200,7 @@ func GetEagleThumbnailFullRes(cfg *config.NestConfig, itemId string) (string, er
 
 func GetList(cfg *config.NestConfig) (any, error) {
 	// _, err := api.ItemList(cfg.BaseURL(), api.ItemListOptions{Limit: 5})
-	_, err := api.ItemList(cfg.BaseURL(), api.ItemListOptions{}.WithDefaults())
+	_, err := eagle.ItemList(cfg.BaseURL(), eagle.ItemListOptions{}.WithDefaults())
 
 	if err != nil {
 		log.Fatal(err.Error())

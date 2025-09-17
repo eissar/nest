@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"github.com/eissar/nest/api"
+	"github.com/eissar/eagle-go"
 	"github.com/eissar/nest/config"
 	// "github.com/spf13/cobra"
 )
@@ -60,12 +60,12 @@ func Get(target string) {
 	// direct it at a path and it will add everything automatically
 	// so we can use this hidden behavior to make this pretty simple
 	if containsSt {
-		opts := api.ItemAddFromPathOptions{Path: tempDir}
+		opts := eagle.ItemAddFromPathOptions{Path: tempDir}
 		opts.Validate()
 
 		cfg := config.GetConfig()
 
-		api.ItemAddFromPath(cfg.BaseURL(), opts)
+		eagle.ItemAddFromPath(cfg.BaseURL(), opts)
 	} else {
 		panic(fmt.Sprintf("tempdir at %s contains no items!", tempDir))
 	}
