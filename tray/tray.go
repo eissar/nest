@@ -1,4 +1,4 @@
-package trayicon
+package tray
 
 import (
 	"fmt"
