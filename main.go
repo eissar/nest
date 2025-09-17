@@ -1,14 +1,9 @@
 package main
 
 import (
-	cmd "github.com/eissar/nest/core/commandline"
+	cmd "github.com/eissar/nest/cmd"
 )
 
-// #region
-
 func main() {
-	// cmd.Cmd()
 	cmd.CmdCobra()
 }
-
-// #endregion
