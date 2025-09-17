@@ -2,12 +2,8 @@ package api
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/eissar/nest/api/endpoints"
-	"github.com/eissar/nest/config"
-	f "github.com/eissar/nest/format"
-	"github.com/spf13/cobra"
 )
 
 //	TODO:
@@ -41,40 +37,4 @@ func ApplicationInfo(baseUrl string) (ApplicationInfoData, error) {
 	}
 
 	return resp.Data, nil
-}
-
-// provides commands
-func ApplicationCmd() *cobra.Command {
-	cfg := config.GetConfig()
-
-	var o f.FormatType
-
-	app := &cobra.Command{
-		Use: "app",
-		// Short: "Manage items",
-		// Run: func(cmd *cobra.Command, args []string) {
-		// 	fmt.Println(cmd.Flags())
-		// },
-	}
-	// return []*cobra.Command{
-
-	func() {
-		cmd := &cobra.Command{
-			Use:   "info", //
-			Short: "Display detailed information about the running Eagle application.",
-			Long:  "Retrieves and prints detailed information about the Eagle application currently running. ",
-			RunE: func(cmd *cobra.Command, args []string) error {
-				v, err := ApplicationInfo(cfg.BaseURL())
-
-				if err != nil {
-					log.Fatalf("Application: %v", err)
-				}
-
-				f.Format(o, v)
-				return nil
-			},
-		}
-		app.AddCommand(cmd)
-	}()
-	return app
 }

@@ -10,8 +10,6 @@ import (
 	"strings"
 
 	"github.com/eissar/nest/api/endpoints"
-	"github.com/eissar/nest/config"
-	f "github.com/eissar/nest/format"
 	"github.com/spf13/cobra"
 )
 
@@ -203,92 +201,4 @@ func LibraryIcon(baseURL string) (string, error) {
 	}
 
 	return currentLibraryPath, nil
-}
-
-func LibraryCmd() *cobra.Command {
-	cfg := config.GetConfig()
-
-	var o f.FormatType
-
-	library := &cobra.Command{
-		Use:   "lib",
-		Short: "Manage Libraries",
-	}
-	library.PersistentFlags().VarP(&o, "format", "o", "output format")
-
-	func() { // LibraryInfo
-		cmd := &cobra.Command{
-			Use:   "info",
-			Short: "Display current library details",
-			Args:  cobra.NoArgs,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				data, err := LibraryInfo(cfg.BaseURL())
-				if err != nil {
-					return err
-				}
-				f.Format(o, data)
-				return nil
-			},
-		}
-
-		library.AddCommand(cmd)
-	}()
-
-	func() { // LibraryHistory
-		cmd := &cobra.Command{
-			Use:   "history",
-			Short: "List libraries in the recent list in the menu bar > libraries",
-			Args:  cobra.NoArgs,
-			RunE: func(cmd *cobra.Command, args []string) error {
-				data, err := LibraryHistory(cfg.BaseURL())
-				if err != nil {
-					return err
-				}
-				f.Format(o, data)
-				return nil
-			},
-		}
-		library.AddCommand(cmd)
-	}()
-
-	func() { // LibrarySwitch
-		var libraryPath string
-
-		cmd := &cobra.Command{
-			Use:   "switch [library-path]",
-			Short: "Change active library to the given path",
-			Args:  cobra.MaximumNArgs(1),
-			RunE: func(cmd *cobra.Command, args []string) error {
-				path := libraryPath
-				if len(args) > 0 {
-					path = args[0]
-				}
-				if path == "" {
-					return fmt.Errorf("library path is required")
-				}
-				return LibrarySwitch(cfg.BaseURL(), path)
-			},
-		}
-		cmd.Flags().StringVarP(&libraryPath, "librarypath", "L", "", "path to library")
-		library.AddCommand(cmd)
-	}()
-
-	// TODO: this endpoint always returns `library does not exist?`
-	// library.AddCommand(
-	// 	&cobra.Command{
-	// 		Use:   "icon",
-	// 		Short: "Return the URL of the current library’s icon",
-	// 		// Args:  cobra.NoArgs,
-	// 		RunE: func(cmd *cobra.Command, args []string) error {
-	// 			url, err := LibraryIcon(cfg.BaseURL())
-	// 			if err != nil {
-	// 				return err
-	// 			}
-	// 			cmd.Println(url)
-	// 			return nil
-	// 		},
-	// 	},
-	// )
-
-	return library
 }
