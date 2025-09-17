@@ -9,9 +9,6 @@ import (
 	"os"
 
 	"github.com/eissar/nest/api/endpoints"
-
-	// "github.com/eissar/nest/config"
-	f "github.com/eissar/nest/format"
 )
 
 // #region types
@@ -369,7 +366,7 @@ func ItemList(baseUrl string, opts ItemListOptions) ([]*ListItem, error) {
 	// TODO: validate parameters
 	//
 
-	params, err := f.StructToURLValues(opts)
+	params, err := structToURLValues(opts)
 	if err != nil {
 		return nil, fmt.Errorf("list: error converting parameters into url values err=%w", err)
 	}
