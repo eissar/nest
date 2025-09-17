@@ -5,7 +5,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/eissar/nest/api"
 	"github.com/eissar/nest/core"
 )
 
@@ -26,19 +25,19 @@ func CmdCobra() {
 	rootCmd.AddCommand(CmdAdd())
 	rootCmd.AddCommand(Config())
 	// rootCmd.AddCommand(Folder())
-	rootCmd.AddCommand(api.FolderCmd())
+	rootCmd.AddCommand(FolderCmd())
 	rootCmd.AddCommand(List())
 
 	rootCmd.AddCommand(RecentLibraries())
-	rootCmd.AddCommand(api.LibraryCmd())
-	rootCmd.AddCommand(api.ItemCmd())
+	rootCmd.AddCommand(LibraryCmd())
+	rootCmd.AddCommand(ItemCmd())
 
 	rootCmd.AddCommand(Reveal())
 	rootCmd.AddCommand(Shutdown())
 	rootCmd.AddCommand(Switch())
 
 	// rootCmd.AddCommand(SubCmdApi())
-	rootCmd.AddCommand(api.ApplicationCmd())
+	rootCmd.AddCommand(ApplicationCmd())
 
 	rootCmd.AddCommand(
 		&cobra.Command{
