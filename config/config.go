@@ -46,9 +46,12 @@ func (n NestConfig) BaseURL() string {
 // creating paths if they don't exist
 // or panics.
 func GetConfigPath() string {
-	prf, ok := os.LookupEnv("userprofile")
+	prf, ok := os.LookupEnv("USERPROFILE")
 	if !ok {
-		log.Fatalf("config.getPath: `userprofile` env variable is nil ?")
+		prf, ok = os.LookupEnv("HOME")
+		if !ok {
+			log.Fatalf("config.getPath: neither USERPROFILE nor HOME environment variables are set")
+		}
 	}
 
 	configPath := filepath.Join(prf, ".config", "nest")
@@ -63,17 +66,21 @@ func GetConfigPath() string {
 		}
 	}
 	if createFlag {
-		err := os.MkdirAll(configPath, 0666) //perm bits do nothing windows
+		err := os.MkdirAll(configPath, 0o755)
 		if err != nil {
 			log.Fatalf("config.getPath: %v", err.Error())
 		}
 	}
 	return configPath
 }
+
 func GetPath() string {
-	prf, ok := os.LookupEnv("userprofile")
+	prf, ok := os.LookupEnv("USERPROFILE")
 	if !ok {
-		log.Fatalf("config.getPath: `userprofile` env variable is nil ?")
+		prf, ok = os.LookupEnv("HOME")
+		if !ok {
+			log.Fatalf("config.getPath: neither USERPROFILE nor HOME environment variables are set")
+		}
 	}
 
 	configPath := filepath.Join(prf, ".config", "nest")
@@ -88,7 +95,7 @@ func GetPath() string {
 		}
 	}
 	if createFlag {
-		err := os.MkdirAll(configPath, 0666) //perm bits do nothing windows
+		err := os.MkdirAll(configPath, 0o755)
 		if err != nil {
 			log.Fatalf("config.getPath: %v", err.Error())
 		}
@@ -115,7 +122,7 @@ func initialConfig(libraryPaths []string) NestConfig {
 // load once during startup.
 // [ ] - validate config
 func GetConfigV0() NestConfig {
-	//fmt.Printf("path", GetConfigPath())
+	// fmt.Printf("path", GetConfigPath())
 	a := filepath.Join(GetConfigPath(), "config.json")
 	cfg, err := os.ReadFile(a)
 	if err != nil {
@@ -183,7 +190,7 @@ func PopulateJson[T any, P Ptr[T]](p string, v P) (int, error) {
 	return len(bytes), nil
 }
 
-//func PopulateLibraries(e Eagle)
+// func PopulateLibraries(e Eagle)
 
 // creates config path at
 // `~/.config/nest/config.json

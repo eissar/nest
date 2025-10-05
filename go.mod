@@ -6,18 +6,16 @@ require (
 	fyne.io/systray v1.11.0
 	github.com/blevesearch/bleve/v2 v2.4.4
 	github.com/eissar/browser-query v0.0.0-20250303221245-3e4013460475
+	github.com/eissar/eagle-go v0.0.6
 	github.com/fsnotify/fsnotify v1.8.0
 	github.com/labstack/echo/v4 v4.13.3
+	github.com/spf13/pflag v1.0.9
 	github.com/swaggo/echo-swagger v1.4.1
 	github.com/swaggo/swag v1.16.4
 	golang.org/x/net v0.36.0
 )
 
-require (
-	github.com/eissar/eagle-go v0.0.2 // indirect
-	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.9 // indirect
-)
+require github.com/inconshreveable/mousetrap v1.1.0 // indirect
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
