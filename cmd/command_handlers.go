@@ -25,6 +25,7 @@ func List() *cobra.Command {
 	// This variable will hold the value from the --limit flag.
 	var limit int
 	var filter string
+	var tags string
 	var properties string
 	var o f.FormatType // output format
 
@@ -45,6 +46,7 @@ func List() *cobra.Command {
 	// we could make properties a positional argument, but I don't see the benefit
 	listCmd.Flags().IntVarP(&limit, "limit", "l", 10, "The maximum number of items to return")
 	listCmd.Flags().StringVarP(&filter, "filter", "f", "", "Filter items by keyword(s)")
+	listCmd.Flags().StringVarP(&tags, "tag", "t", "", "Filter items by tag(s). Use comma to separate multiple tags: Design,Poster")
 	listCmd.Flags().StringVarP(&properties, "properties", "p", "", "select properties to include in the output: "+f.HelpFmt(&eagle.ListItem{})+" default:"+f.HelpFmt(&defaultFields))
 
 	listCmd.Flags().VarP(&o, "format", "o", "output format")
@@ -54,6 +56,7 @@ func List() *cobra.Command {
 		opts := eagle.ItemListOptions{
 			Limit:   limit,
 			Keyword: filter,
+			Tags:    tags,
 		}
 
 		data, err := eagle.ItemList(cfg.BaseURL(), opts)
